@@ -1,5 +1,7 @@
 local nb = require 'k2z/lib/nb/nb'
 include "lib/players/midi"
+
+
 Prms = {}
 
 -- todo add pattern copying and pasting
@@ -33,9 +35,8 @@ function Prms:add()
 			params:add_number('scale_'..i..'_deg_'..j,'scale_'..i..'_deg_'..j,0,7,default_value)
 		end
 	end
-
-	self:add_tracks()
 	add_midi_players()
+	self:add_tracks()
 end
 
 
