@@ -284,6 +284,7 @@ function note_out(t)
 	local player = params:lookup_param("voice_t"..t):get_player()
 	local velocity = 1.0
 	local duration = clock.get_beat_sec()*params:get('divisor_'.."note"..'_t'..t)*gate_len/4
+	player:set_slew(slide_amt/1000)
 	player:play_note(n, velocity, duration)
 end
 

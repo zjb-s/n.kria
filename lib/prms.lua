@@ -1,6 +1,5 @@
 local nb = require 'k2z/lib/nb/nb'
 include "lib/players/midi"
-
 Prms = {}
 
 -- todo add pattern copying and pasting
