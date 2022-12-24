@@ -119,6 +119,7 @@ kbuf = {} -- key state buffer, true/false
 rbuf = {} -- render buffer, states 0-15 on all 128 positions
 
 g = grid.connect()
+m = midi.connect()
 
 function init_grid_buffers()
 	for x=1,16 do
@@ -149,9 +150,22 @@ function key(n,d) Onboard:key(n,d) end
 function enc(n,d) Onboard:enc(n,d) end
 function g.key(x,y,z) gkeys:key(x,y,z) end
 
+val_buffers = {}
+function init_val_buffers()
+	for i=1,NUM_TRACKS do
+		table.insert(val_buffers,{})
+		for k,v in ipairs(combined_page_list) do
+			if v == 'scale' or v == 'patterns' then break end
+			val_buffers[i][v] = 
+				params:get('data_'..v..'_'..params:get('pos_'..v..'_t'..i)..'_t'..i)
+		end
+	end
+end
+
 function init()
 	init_grid_buffers()
 	Prms:add()
+	init_val_buffers()
 	clock.run(visual_ticker)
 	clock.run(step_ticker)
 	clock.run(intro)
@@ -236,7 +250,32 @@ function note_out(t)
 	end
 	n = n + 12*current_val(t,'octave')
 	if up_one_octave then n = n + 12 end
+
+	local gate_len = current_val(t,'gate') * params:get('data_gate_shift_t'..t) -- this will give you a weird range, feel free to use it however you want
+	local slide_amt =  util.linlin(1,7,1,120,current_val(t,'slide')) -- to match stock kria times
+
+	print('note is ',n)
+
 	-- naomi, i choose you!
+
+	clock.run(note_clock,n,t)
+end
+
+function note_clock(n,t)
+	m:note_on(n, 100, 12+t)
+	clock.sleep(0.1)
+	m:note_on(n, 0, 12+t)
+end
+
+function update_val(track,page)
+	val_buffers[track][page] =
+		params:get('data_'..page..'_'..params:get('pos_'..page..'_t'..track)..'_t'..track)
+
+	if page == 'trig' then
+		if current_val(track,'trig') == 1 then
+			note_out(track)
+		end
+	end
 end
 
 function advance()
@@ -249,10 +288,12 @@ function advance()
 			then
 				params:set('data_t'..t..'_'..v..'_counter',1)
 				params:set('pos_'..v..'_t'..t,new_pos_for_track(t,v))
+				if 	math.random(0,100)
+				< 	prob_map[params:get('data_'..v..'_prob_'..params:get('pos_'..v..'_t'..t)..'_t'..t)]
+				then
+					update_val(t,v)
+				end
 			end
-		end
-		if params:get('data_trig_'..params:get('pos_trig_t'..t)..'_t'..t) == 1 then
-			note_out(t)
 		end
 	end
 end
@@ -307,7 +348,7 @@ function get_page_name()
 end
 
 function current_val(track,page)
-	return params:get('data_'..page..'_'..params:get('pos_'..page..'_t'..track)..'_t'..track)
+	return val_buffers[track][page]
 end
 
 function get_mod_key()

@@ -179,7 +179,7 @@ function gkeys:prob_mod(x,y,z,t)
 	if z == 1 and y > 2 and y < 7 then
 		params:set('data_'..get_page_name()..'_prob_'..x..'_t'..at(),7-y)
 		-- todo finish probability implementation
-		post('odds: '.. 7-y .. '%')
+		post('odds: '.. prob_map[7-y] .. '%')
 	end
 end
 
