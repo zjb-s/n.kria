@@ -9,3 +9,4 @@ extensible native norns port of monome's Kria
 * write a getter function for data
 * overview page graphics
 * crow outputs
+* post note names when you adjust note
