@@ -30,7 +30,7 @@ function Onboard:key(n,d)
 				post('overview')
 			else
 				if n == 2 then
-					reset()
+					meta:reset()
 				elseif n == 3 then
 					params:delta('playing',1)
 					post((params:get('playing') == 1) and 'play' or 'stop')

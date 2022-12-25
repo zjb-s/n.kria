@@ -88,11 +88,11 @@ function gkeys:resolve_loop_keys(x,y,z,t)
 			loop_first = x
 		else
 			loop_last = x
-			edit_loop(t,loop_first, loop_last)
+			meta:edit_loop(t,loop_first, loop_last)
 		end
 	else -- release
 		if loop_last == -1 then
-			edit_loop(t,loop_first, loop_first)
+			meta:edit_loop(t,loop_first, loop_first)
 		else
 			for i=1,16 do
 				if kbuf[i][y] then
@@ -123,28 +123,28 @@ function gkeys:time_mod(x,y,z,t)
 		local pn = get_page_name()
 
 		if g1 == 0 and g2 == 1 then -- off/none
-			edit_divisor(at(),pn,x)
+			meta:edit_divisor(at(),pn,x)
 		elseif g1 == 1 and g2 == 1 then -- on/none
 			if pn == 'trig' or pn == 'note' then
-				edit_divisor(at(),'trig',x)
-				edit_divisor(at(),'note',x)
+				meta:edit_divisor(at(),'trig',x)
+				meta:edit_divisor(at(),'note',x)
 			else
-				edit_divisor(at(),pn,x)
+				meta:edit_divisor(at(),pn,x)
 			end
 		elseif g1 == 0 and g2 == 2 then --off/track
 			for _,v in ipairs(combined_page_list) do
 				if v ~= 'scale' and v ~= 'patterns' then
-					edit_divisor(at(),v,x)
+					meta:edit_divisor(at(),v,x)
 				end
 			end
 		elseif g1 == 1 and g2 == 2 then -- on/track
 			if pn == 'trig' or pn == 'note' then
-				edit_divisor(at(),'trig',x)
-				edit_divisor(at(),'note',x)
+				meta:edit_divisor(at(),'trig',x)
+				meta:edit_divisor(at(),'note',x)
 			else
 				for _,v in ipairs(combined_page_list) do
 					if v ~= 'trig' and v ~= 'note' and v ~= 'scale' and v ~= 'patterns' then
-						edit_divisor(at(),v,x)
+						meta:edit_divisor(at(),v,x)
 					end
 				end
 			end
@@ -152,19 +152,19 @@ function gkeys:time_mod(x,y,z,t)
 			for t=1,NUM_TRACKS do
 				for _,v in ipairs(combined_page_list) do
 					if v ~= 'scale' and v ~= 'patterns' then
-						edit_divisor(t,v,x)
+						meta:edit_divisor(t,v,x)
 					end
 				end
 			end
 		elseif g1 == 1 and g2 == 3 then -- on/all
 			for t=1,NUM_TRACKS do
 				if pn == 'trig' or pn == 'note' then
-					edit_divisor(t,'trig',x)
-					edit_divisor(t,'note',x)
+					meta:edit_divisor(t,'trig',x)
+					meta:edit_divisor(t,'note',x)
 				else
 					for _,v in ipairs(combined_page_list) do
 						if v ~= 'trig' and v ~= 'note' and v ~= 'scale' and v ~= 'patterns' then
-							edit_divisor(t,v,x)
+							meta:edit_divisor(t,v,x)
 						end
 					end
 				end
@@ -206,12 +206,12 @@ function gkeys:retrig_page(x,y,z,t)
 	local p = get_page_name()
 
 	if y == 1 or y == 7 then
-		delta_subtrig_count(t,x,(y==1 and 1 or -1))
+		meta:delta_subtrig_count(t,x,(y==1 and 1 or -1))
 	else
 		if 7-y > params:get('data_subtrig_count_'..x..'_t'..t) then
 			params:set('data_subtrig_count_'..x..'_t'..t,7-y)
 		end 
-		toggle_subtrig(t,x,7-y)
+		meta:toggle_subtrig(t,x,7-y)
 		post('subtrig '..7-y..' '..(params:get('data_subtrig_'..7-y..'_step_'..x..'_t'..t) == 1 and 'on' or 'off'))
 	end
 end
