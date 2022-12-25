@@ -1,3 +1,6 @@
+local nb = require 'k2z/lib/nb/nb'
+include "lib/players/midi"
+
 Prms = {}
 
 -- todo add pattern copying and pasting
@@ -33,7 +36,7 @@ function Prms:add()
 	end
 
 	self:add_tracks()
-
+	add_midi_players()
 end
 
 
@@ -41,6 +44,7 @@ function Prms:add_tracks()
 
 	for t=1,NUM_TRACKS do
 		params:add_separator('TRACK ' .. t)
+		nb:add_param("voice_t"..t, 't '..t.." voice")
 		params:add_option('playmode_t'..t,'t'..t..' play mode', play_modes,1)
 		params:add_binary('pipo_dir_t'..t,'pipo_dir_t'..t,'toggle',1)
 		params:add_binary('mute_t'..t, 'mute?', 'toggle', 0)

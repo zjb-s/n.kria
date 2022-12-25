@@ -3,15 +3,22 @@
 -- ~~~~~~~~~~ k2z ~~~~~~~~~~~~~~
 -- ~~~~~~~~~ by zbs ~~~~~~~~~~~~
 -- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
--- ~~~~~ a new kria port ~~~~~~~
--- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+-- ~~~ kria port native to lua ~~~
 -- 0.1 ~~~~~~~~~~~~~~~~~~~~~~~~~
+-- 
+-- k2: reset
+-- k3: play
+-- k1+k2: time overlay (ansible k1)
+-- k1:k3: config overlay (ansible k2)
+--
+-- thanks for everything, @tehn
 
 screen_graphics = include('lib/screen_graphics')
 grid_graphics = include('lib/grid_graphics')
 Prms = include('lib/prms')
 Onboard = include('lib/onboard')
 gkeys = include('lib/gkeys')
+nb = include("lib/nb/nb")
 mu = require 'musicutil'
 
 
@@ -93,19 +100,14 @@ time_desc = {
 }
 config_desc = {
 	{
-		'trig & note edits synced'
-	,	'note & trig edits free'
+		'note & trig edits free'
+	,	'trig & note edits synced'
 	},{
 		'all loops independent'
 	,	'loops synced inside tracks'
 	,	'all loops synced'
 	}
 }
-
-function resolve_menu_param_ranges()
-	params:lookup_param('screen_menu_pos').max = get_screen_page().len
-	params:lookup_param('screen_submenu_pos').max = get_screen_subpage().len
-end
 
 loop_first = -1
 loop_last = -1
@@ -114,6 +116,7 @@ waver_dir = 1
 shift = false
 
 pulse_indicator = 1 -- todo implement
+global_clock_counter = 1
 
 kbuf = {} -- key state buffer, true/false
 rbuf = {} -- render buffer, states 0-15 on all 128 positions
@@ -163,6 +166,7 @@ function init_val_buffers()
 end
 
 function init()
+	nb:init()
 	init_grid_buffers()
 	Prms:add()
 	init_val_buffers()
@@ -175,9 +179,36 @@ function edit_loop(track, first, last)
 	local f = math.min(first,last)
 	local l = math.max(first,last)
 	local p = get_page_name()
-	params:set('loop_first_'..p..'_t'..track,f)
-	params:set('loop_last_'..p..'_t'..track,l)
-	post('t'..track..' '..p..' loop: ['..f..'-'..l..']')
+
+	if params:get('loop_sync') == 1 then
+		if p == 'trig' or p == 'note' and params:get('note_sync') == 1 then
+			params:set('loop_first_note_t'..track,f)
+			params:set('loop_last_note_t'..track,l)
+			params:set('loop_first_trig_t'..track,f)
+			params:set('loop_last_trig_t'..track,l)
+			post('t'..track..' trig & note loops: ['..f..'-'..l..']')
+		else
+			params:set('loop_first_'..p..'_t'..track,f)
+			params:set('loop_last_'..p..'_t'..track,l)
+			post('t'..track..' '..p..' loop: ['..f..'-'..l..']')
+		end
+	elseif params:get('loop_sync') == 2 then
+		for k,v in ipairs(combined_page_list) do
+			if v == 'scale' or v == 'patterns' then break end
+			params:set('loop_first_'..v..'_t'..track,f)
+			params:set('loop_last_'..v..'_t'..track,l)
+		end
+		post('t'..track..' loops: ['..f..'-'..l..']')
+	elseif params:get('loop_sync') == 3 then
+		for t=1,NUM_TRACKS do
+			for k,v in ipairs(combined_page_list) do
+				if v == 'scale' or v == 'patterns' then break end
+				params:set('loop_first_'..v..'_t'..t,f)
+				params:set('loop_last_'..v..'_t'..t,l)
+			end
+		end
+		post('all loops: ['..f..'-'..l..']')
+	end
 end
 
 function new_pos_for_track(t,p) -- track,page
@@ -226,7 +257,6 @@ function new_pos_for_track(t,p) -- track,page
 end
 
 function make_scale()
-	-- todo can probably squish this significantly
 	local new_scale = {0,0,0,0,0,0,0}
 	local table_from_params = {}
 	local output_scale = {}
@@ -243,55 +273,49 @@ function note_out(t)
 	local s = make_scale()
 	local n = s[current_val(t,'note')] + s[current_val(t,'transpose')]
 	local up_one_octave = false
-	print('n before octave switching is '..n)
 	if n > 7 then
 		n = n - 7
 		up_one_octave = true
 	end
 	n = n + 12*current_val(t,'octave')
 	if up_one_octave then n = n + 12 end
-
 	local gate_len = current_val(t,'gate') * params:get('data_gate_shift_t'..t) -- this will give you a weird range, feel free to use it however you want
 	local slide_amt =  util.linlin(1,7,1,120,current_val(t,'slide')) -- to match stock kria times
-
-	print('note is ',n)
-
-	-- naomi, i choose you!
-
-	clock.run(note_clock,n,t)
-end
-
-function note_clock(n,t)
-	m:note_on(n, 100, 12+t)
-	clock.sleep(0.1)
-	m:note_on(n, 0, 12+t)
+	local player = params:lookup_param("voice_t"..t):get_player()
+	local velocity = 1.0
+	local duration = clock.get_beat_sec()*params:get('divisor_'.."note"..'_t'..t)*gate_len/4
+	player:play_note(n, velocity, duration)
 end
 
 function update_val(track,page)
 	val_buffers[track][page] =
-		params:get('data_'..page..'_'..params:get('pos_'..page..'_t'..track)..'_t'..track)
-
+	    params:get('data_'..page..'_'..params:get('pos_'..page..'_t'..track)..'_t'..track)
 	if page == 'trig' then
-		if current_val(track,'trig') == 1 then
-			note_out(track)
-		end
+	    if current_val(track,'trig') == 1 then
+	        note_out(track)
+	    end
 	end
 end
 
 function advance()
-	for t=1,NUM_TRACKS do
-		for k,v in ipairs(combined_page_list) do
-			if v == 'scale' or v == 'patterns' then break end
-			params:delta('data_t'..t..'_'..v..'_counter',1)
-			if 		params:get('data_t'..t..'_'..v..'_counter')
-				>	params:get('divisor_'..v..'_t'..t) 
-			then
-				params:set('data_t'..t..'_'..v..'_counter',1)
-				params:set('pos_'..v..'_t'..t,new_pos_for_track(t,v))
-				if 	math.random(0,100)
-				< 	prob_map[params:get('data_'..v..'_prob_'..params:get('pos_'..v..'_t'..t)..'_t'..t)]
+	global_clock_counter = global_clock_counter + 1
+	if global_clock_counter > params:get('global_clock_div') then
+		global_clock_counter = 1
+		
+		for t=1,NUM_TRACKS do
+			for k,v in ipairs(combined_page_list) do
+				if v == 'scale' or v == 'patterns' then break end
+				params:delta('data_t'..t..'_'..v..'_counter',1)
+				if 		params:get('data_t'..t..'_'..v..'_counter')
+					>	params:get('divisor_'..v..'_t'..t) 
 				then
-					update_val(t,v)
+					params:set('data_t'..t..'_'..v..'_counter',1)
+					params:set('pos_'..v..'_t'..t,new_pos_for_track(t,v))
+					if 	math.random(0,100)
+					< 	prob_map[params:get('data_'..v..'_prob_'..params:get('pos_'..v..'_t'..t)..'_t'..t)]
+					then
+						update_val(t,v)
+					end
 				end
 			end
 		end

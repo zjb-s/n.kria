@@ -130,8 +130,10 @@ function gkeys:time_mod(x,y,z,t)
 			if pn == 'trig' or pn == 'note' then
 				params:set('divisor_trig_t'..at(),x)
 				params:set('divisor_note_t'..at(),x)
+				post('trig & note divisor: '..params:get('divisor_trig_t'..at()))
 			else
 				params:set('divisor_'..pn..'_t'..at(),x)
+				post(pn .. ' time divisor: ' .. params:get('divisor_'..pn..'_t'..at()))
 			end
 		elseif g1 == 0 and g2 == 2 then --off/track
 			for _,v in ipairs(combined_page_list) do
@@ -139,16 +141,19 @@ function gkeys:time_mod(x,y,z,t)
 					params:set('divisor_'..v..'_t'..at(),x)
 				end
 			end
+			post(pn .. ' time divisor: ' .. params:get('divisor_'..pn..'_t'..at()))
 		elseif g1 == 1 and g2 == 2 then -- on/track
 			if pn == 'trig' or pn == 'note' then
 				params:set('divisor_trig_t'..at(),x)
 				params:set('divisor_note_t'..at(),x)
+				post('trig & note divisor: '..params:get('divisor_trig_t'..at()))
 			else
 				for _,v in ipairs(combined_page_list) do
 					if v ~= 'trig' and v ~= 'note' and v ~= 'scale' and v ~= 'patterns' then
 						params:set('divisor_'..v..'_t'..at(),x)
 					end
 				end
+				post(pn .. ' time divisor: ' .. params:get('divisor_'..pn..'_t'..at()))
 			end
 		elseif g1 == 0 and g2 == 3 then -- off/all
 			for t=1,NUM_TRACKS do
@@ -158,6 +163,7 @@ function gkeys:time_mod(x,y,z,t)
 					end
 				end
 			end
+			post('all divisors: ' .. params:get('divisor_trig_t'..at())) -- could use anything here not just trig
 		elseif g1 == 1 and g2 == 3 then -- on/all
 			for t=1,NUM_TRACKS do
 				if pn == 'trig' or pn == 'note' then
@@ -170,6 +176,11 @@ function gkeys:time_mod(x,y,z,t)
 						end
 					end
 				end
+			end
+			if pn == 'trig' or pn == 'note' then
+				post('all trig & note divisors: ' .. params:get('divisor_trig_t'..at()))
+			else
+				post('non trig/note divisors: ' .. params:get('divisor_octave_t'..at()))
 			end
 		end
 	end
@@ -214,8 +225,27 @@ function gkeys:retrig_page(x,y,z,t)
 end
 
 function gkeys:note_page(x,y,z,t)
-	params:set('data_note_'..x..'_t'..t, 8 - y)
-	post('note '..x..': '..8-y)
+	-- if params:get('note_sync') == 1 then
+	-- 	if params:get('data_note_'..x..'_t'..t) == 8-y then
+	-- 		params:set('data_trig_'..x..'_t'..t,0)
+	-- 		post('trig '..x..' '.. (params:get('data_trig_'..x..'_t'..t) == 1 and 'on' or 'off'))
+	-- 	else
+	-- 		params:set('data_note_'..x..'_t'..t, 8 - y)
+	-- 		params:set('data_trig_'..x..'_t'..t,1)
+	-- 		post('note & trig '..x..': '..8-y)
+	-- 	end
+	-- else
+	-- 	params:set('data_note_'..x..'_t'..t, 8 - y)
+	-- 	post('note '..x..': '..8-y)
+	-- end
+
+	if  params:get('data_note_'..x..'_t'..t) == 8-y and params:get('note_sync') == 1 then
+		params:delta('data_trig_'..x..'_t'..t, 1)
+		post('note & trig '..x..': '..8-y)
+	else
+		params:set('data_note_'..x..'_t'..t, 8 - y)
+		post('note '..x..': '..8-y)
+	end
 end
 
 function gkeys:transpose_page(x,y,z,t)

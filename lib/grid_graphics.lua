@@ -281,6 +281,9 @@ function Graphics:note()
 			local ly = l
 			if y == d then
 				ly = out_of_bounds(at(),'note',x) and LOW or HIGH
+				if params:get('note_sync') == 1 and params:get('data_trig_'..x..'_t'..at()) == 0 then
+					ly = out_of_bounds(at(),'note',x) and dim(LOW) or LOW
+				end
 			end
 			if get_mod_key() == 'loop' and not out_of_bounds(at(),'note',x) then
 				ly = highlight(ly)
