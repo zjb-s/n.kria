@@ -72,7 +72,7 @@ function Prms:add_tracks()
 		end
 
 		-- data
-		params:add_group('t'.. t .. ' raw data', 233)
+		params:add_group('t'.. t .. ' raw data', 329)
 		for k,v in ipairs(combined_page_list) do
 			if v == 'scale' or v == 'pattern' then break end -- no need for more params for these pages
 			if v == 'octave' then 
@@ -94,9 +94,12 @@ function Prms:add_tracks()
 					)
 				end
 				if v == 'retrig' then
-					params:add_number('data_subtrig_count_'..i..'_t'..t,'data_subtrigs_'..i..'_t'..t,1,0,4)
-					for st=1,4 do
-						params:add_binary('data_subtrig_'..st..'_step_'..i..'_t'..t,'toggle')
+					params:add_number('data_subtrig_count_'..i..'_t'..t,'data_subtrigs_'..i..'_t'..t,0,5,1)
+					for st=1,5 do
+						params:add_binary('data_subtrig_'..st..'_step_'..i..'_t'..t,'data_subtrig_'..st..'_step_'..i..'_t'..t,'toggle')
+						if st==1 then
+							params:set('data_subtrig_'..st..'_step_'..i..'_t'..t,1)
+						end
 					end
 				end
 				params:add_number('data_'..v..'_prob_'..i..'_t'..t,'data_prob_'..v..'_t'..t,1,4,4)

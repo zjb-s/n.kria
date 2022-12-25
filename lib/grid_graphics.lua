@@ -246,27 +246,54 @@ function Graphics:pattern()
 	-- todo
 end
 
+-- function Graphics:retrig()
+-- 	for x=1,16 do
+-- 		local d = params:get('data_retrig_'..x..'_t'..at())
+-- 		local l = HIGH
+-- 		if d >= 0 and d <= 6 then
+-- 			for i=(7-d),7 do
+-- 				buf(x,i,l)
+-- 				l = l - 2
+-- 			end
+-- 		end
+
+-- 		if params:get('pos_retrig_t'..at()) == x and params:get('playing') == 1 then
+-- 			l = MED
+-- 		else
+-- 			l = LOW
+-- 		end
+
+-- 		if params:get('mod') == 2 and not out_of_bounds(at(),'retrig',x) then
+-- 			l = highlight(l)
+-- 		end
+-- 		buf(x,7,l)
+-- 	end
+-- end
+
 function Graphics:retrig()
 	for x=1,16 do
-		local d = params:get('data_retrig_'..x..'_t'..at())
-		local l = HIGH
-		if d >= 0 and d <= 6 then
-			for i=(7-d),7 do
-				buf(x,i,l)
-				l = l - 2
+		for y=1,7 do
+			local l = OFF
+			local oob = out_of_bounds(at(),'retrig',x)
+			if y == 1 or y == 7 then
+				l = kbuf[x][y] and HIGH or LOW 
+				if params:get('pos_retrig_t'..at()) == x and params:get('playing') == 1 then
+					l = highlight(l)
+				end
+			else
+				if params:get('data_subtrig_count_'..x..'_t'..at()) >= 7-y then
+					if params:get('data_subtrig_'..7-y..'_step_'..x..'_t'..at()) == 1 then
+						l = oob and MED or HIGH
+					else
+						l = oob and LOW or MED
+					end
+				end
+				if params:get('mod') == 2 and not out_of_bounds(at(),'retrig',x) then
+					l = highlight(l)
+				end
 			end
+			buf(x,y,l)
 		end
-
-		if params:get('pos_retrig_t'..at()) == x and params:get('playing') == 1 then
-			l = MED
-		else
-			l = LOW
-		end
-
-		if params:get('mod') == 2 and not out_of_bounds(at(),'retrig',x) then
-			l = highlight(l)
-		end
-		buf(x,7,l)
 	end
 end
 

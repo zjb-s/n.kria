@@ -226,6 +226,32 @@ function edit_loop(track, first, last)
 	end
 end
 
+function toggle_subtrig(track,step,subtrig)
+	params:delta('data_subtrig_'..subtrig..'_step_'..step..'_t'..track,1)
+	for i=params:get('data_subtrig_count_'..step..'_t'..track),1,-1 do
+		if params:get('data_subtrig_'..i..'_step_'..step..'_t'..track) == 0 then
+			-- print('decrementing subtrig count')
+			delta_subtrig_count(track,step,-1)
+		else
+			break
+		end
+	end
+end
+
+function delta_subtrig_count(track,step,delta)
+	edit_subtrig_count(track,step,params:get('data_subtrig_count_'..step..'_t'..track) + delta)
+end
+
+function edit_subtrig_count(track,step,new_val)
+	params:set('data_subtrig_count_'..step..'_t'..track,new_val)
+	for i=1,5 do
+		if	params:get('data_subtrig_'..i..'_step_'..step..'_t'..track) == 1 and i > new_val then
+			params:set('data_subtrig_'..i..'_step_'..step..'_t'..track,0)
+		end
+	end
+	post('subtrig count s'..step..'t'..track..' '.. params:get('data_subtrig_count_'..step..'_t'..track))
+end
+
 function new_pos_for_track(t,p) -- track,page
 	local old_pos = params:get('pos_'..p..'_t'..t)
 	local first = params:get('loop_first_'..p..'_t'..t)
@@ -296,20 +322,21 @@ function note_out(t)
 	if up_one_octave then n = n + 12 end
 	local gate_len = current_val(t,'gate') * params:get('data_gate_shift_t'..t) -- this will give you a weird range, feel free to use it however you want
 	local slide_amt =  util.linlin(1,7,1,120,current_val(t,'slide')) -- to match stock kria times
-	local player = params:lookup_param("voice_t"..t):get_player()
-	local velocity = 1.0
-	local duration = clock.get_beat_sec()*params:get('divisor_'.."note"..'_t'..t)*gate_len/4
-	player:set_slew(slide_amt/1000)
-	player:play_note(n, velocity, gate_len)
+	
+	clock.run(note_clock,t,n,gate_len,slide_amt)
 end
 
-function update_val(track,page)
-	val_buffers[track][page] =
-	    params:get('data_'..page..'_'..params:get('pos_'..page..'_t'..track)..'_t'..track)
-	if page == 'trig' then
-	    if current_val(track,'trig') == 1 then
-	        note_out(track)
-	    end
+function note_clock(track,note,gate_len,slide_amt) 
+	local player = params:lookup_param("voice_t"..track):get_player()
+	local velocity = 1.0
+	local pos = params:get('pos_retrig_t'..track)
+	local subdivision = params:get('data_subtrig_count_'..pos..'_t'..track)
+	for i=1,subdivision do
+		if params:get('data_subtrig_'..i..'_step_'..pos..'_t'..track) == 1 then
+			player:set_slew(slide_amt/1000)
+			player:play_note(note, velocity, gate_len/subdivision)
+		end
+		clock.sleep((clock.get_beat_sec()/(subdivision+1))/3)
 	end
 end
 
@@ -340,7 +367,7 @@ function advance()
 				then
 					params:set('data_t'..t..'_'..v..'_counter',1)
 					params:set('pos_'..v..'_t'..t,new_pos_for_track(t,v))
-					if 	math.random(0,100)
+					if 	math.random(0,99)
 					< 	prob_map[params:get('data_'..v..'_prob_'..params:get('pos_'..v..'_t'..t)..'_t'..t)]
 					then
 						update_val(t,v)

@@ -214,29 +214,21 @@ function gkeys:trig_page(x,y,z,t)
 end
 
 function gkeys:retrig_page(x,y,z,t)
-	if params:get('data_retrig_'..x..'_t'..t) == 7-y then
-		params:set('data_retrig_'..x..'_t'..t, -1)
+
+	local p = get_page_name()
+
+	if y == 1 or y == 7 then
+		delta_subtrig_count(t,x,(y==1 and 1 or -1))
 	else
-		params:set('data_retrig_'..x..'_t'..t, (7 - y))
+		if 7-y > params:get('data_subtrig_count_'..x..'_t'..t) then
+			params:set('data_subtrig_count_'..x..'_t'..t,7-y)
+		end 
+		toggle_subtrig(t,x,7-y)
+		post('subtrig '..7-y..' '..(params:get('data_subtrig_'..7-y..'_step_'..x..'_t'..t) == 1 and 'on' or 'off'))
 	end
-	-- todo finish retrig implementation
 end
 
 function gkeys:note_page(x,y,z,t)
-	-- if params:get('note_sync') == 1 then
-	-- 	if params:get('data_note_'..x..'_t'..t) == 8-y then
-	-- 		params:set('data_trig_'..x..'_t'..t,0)
-	-- 		post('trig '..x..' '.. (params:get('data_trig_'..x..'_t'..t) == 1 and 'on' or 'off'))
-	-- 	else
-	-- 		params:set('data_note_'..x..'_t'..t, 8 - y)
-	-- 		params:set('data_trig_'..x..'_t'..t,1)
-	-- 		post('note & trig '..x..': '..8-y)
-	-- 	end
-	-- else
-	-- 	params:set('data_note_'..x..'_t'..t, 8 - y)
-	-- 	post('note '..x..': '..8-y)
-	-- end
-
 	if  params:get('data_note_'..x..'_t'..t) == 8-y and params:get('note_sync') == 1 then
 		params:delta('data_trig_'..x..'_t'..t, 1)
 		post('note & trig '..x..': '..8-y)
