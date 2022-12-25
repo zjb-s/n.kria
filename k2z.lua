@@ -299,7 +299,18 @@ function note_out(t)
 	local player = params:lookup_param("voice_t"..t):get_player()
 	local velocity = 1.0
 	local duration = clock.get_beat_sec()*params:get('divisor_'.."note"..'_t'..t)*gate_len/4
-	player:play_note(n, velocity, duration)
+	player:set_slew(slide_amt/1000)
+	player:play_note(n, velocity, gate_len)
+end
+
+function update_val(track,page)
+	val_buffers[track][page] =
+	    params:get('data_'..page..'_'..params:get('pos_'..page..'_t'..track)..'_t'..track)
+	if page == 'trig' then
+	    if current_val(track,'trig') == 1 then
+	        note_out(track)
+	    end
+	end
 end
 
 function update_val(track,page)
