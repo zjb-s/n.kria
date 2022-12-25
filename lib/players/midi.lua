@@ -17,9 +17,11 @@ function add_midi_players()
             end
             function player:active()
                 params:show("midi_voice_"..i)
+                _menu.rebuild_params()
             end
             function player:inactive()
                 params:hide("midi_voice_"..i)
+                _menu.rebuild_params()
             end
             nb.players[v.name] = player
         end

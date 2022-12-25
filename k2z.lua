@@ -341,23 +341,32 @@ function note_out(t)
 	end
 	n = n + 12*current_val(t,'octave')
 	if up_one_octave then n = n + 12 end
-	local gate_len = current_val(t,'gate') * params:get('data_gate_shift_t'..t) -- this will give you a weird range, feel free to use it however you want
+	local gate_len = current_val(t,'gate') -- this will give you a weird range, feel free to use it however you want
+	local gate_multiplier = params:get('data_gate_shift_t'..t) 
 	local slide_amt =  util.linlin(1,7,1,120,current_val(t,'slide')) -- to match stock kria times
-	
-	clock.run(note_clock,t,n,gate_len,slide_amt)
+	local duration = util.clamp(gate_len-1, 0, 4)/16
+	if gate_len == 1 or gate_len == 6 then
+		duration = duration + 0.02 -- this turns the longest notes into ties, and the shortest into blips, at mult of 1
+	else
+		duration = duration - 0.02
+	end
+	duration = duration * gate_multiplier
+	clock.run(note_clock, t, n, duration, slide_amt)
 end
 
-function note_clock(track,note,gate_len,slide_amt) 
+function note_clock(track,note,duration,slide_amt) 
 	local player = params:lookup_param("voice_t"..track):get_player()
 	local velocity = 1.0
+	local divider = params:get('divisor_'..'trig'..'_t'..track)
 	local pos = params:get('pos_retrig_t'..track)
 	local subdivision = params:get('data_subtrig_count_'..pos..'_t'..track)
+	-- if track == 2 then print(subdivision) end
 	for i=1,subdivision do
 		if params:get('data_subtrig_'..i..'_step_'..pos..'_t'..track) == 1 then
 			player:set_slew(slide_amt/1000)
-			player:play_note(note, velocity, gate_len/subdivision)
+			player:play_note(note, velocity, duration/subdivision)
 		end
-		clock.sleep((clock.get_beat_sec()/(subdivision+1))/3)
+		clock.sleep(clock.get_beat_sec()*divider/(4*subdivision))
 	end
 end
 

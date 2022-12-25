@@ -57,6 +57,9 @@ function player:count_up()
     end
 end
 
+function player:stop_all()
+end
+
 function player:count_down()
     if self.name ~= nil then
         if refcounts[self.name] ~= nil then
