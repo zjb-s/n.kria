@@ -190,6 +190,16 @@ function reset()
 	post('reset')
 end
 
+function edit_divisor(track,page,new_val)
+	if params:get('div_cue') == 1 then
+		params:set('cued_divisor_'..page..'_t'..track,new_val)
+		post('cued: '..page..' divisor: '..new_val)
+	else
+		params:set('divisor_'..page..'_t'..track,new_val)
+		post(page..' divisor: '..new_val)
+	end
+end
+
 function edit_loop(track, first, last)
 	local f = math.min(first,last)
 	local l = math.max(first,last)
@@ -252,31 +262,37 @@ function edit_subtrig_count(track,step,new_val)
 	post('subtrig count s'..step..'t'..track..' '.. params:get('data_subtrig_count_'..step..'_t'..track))
 end
 
-function new_pos_for_track(t,p) -- track,page
+function advance_page(t,p) -- track,page
 	local old_pos = params:get('pos_'..p..'_t'..t)
 	local first = params:get('loop_first_'..p..'_t'..t)
 	local last = params:get('loop_last_'..p..'_t'..t)
-	local mode = params:get('playmode_t'..t)
+	local mode = play_modes[params:get('playmode_t'..t)]
 	local new_pos;
+	local resetting = false
 
-	if mode == 1 then -- forward
+	if mode == 'forward' then
 		new_pos = old_pos + 1
 		if out_of_bounds(t,p,new_pos) then
 			new_pos = first
+			resetting = true
 		end
-	elseif mode == 2 then -- reverse
+	elseif mode == 'reverse' then
 		new_pos = old_pos - 1
 		if out_of_bounds(t,p,new_pos) then
 			new_pos = last
+			resetting = true
 		end
-	elseif mode == 3 then -- triangle
+	elseif mode == 'triangle' then
 		local delta = params:get('pipo_dir_t'..t) == 1 and 1 or -1
 		new_pos = old_pos + delta
 		if out_of_bounds(t,p,new_pos) then 
-			new_pos = (delta == 0) and first or last
+			--print(delta)
+			new_pos = (delta == -1) and last-1 or first+1
+			print('new pos is',new_pos,'first is',first,'last is',last)
 			params:delta('pipo_dir_t'..t,1)
+			resetting = true
 		end
-	elseif mode == 4 then -- drunk
+	elseif mode == 'drunk' then 
 		local delta
 		if new_pos == first then delta = 1
 		elseif new_pos == last then delta = -1
@@ -290,12 +306,17 @@ function new_pos_for_track(t,p) -- track,page
 		end
 		-- ^ have to do it this way vs out_of_bounds() because we want to get to the closest boundary, not necessarily first or last step in loop.
 
-	elseif mode == 5 then --random
-		pos = util.round(math.random(first,last))
+	elseif mode == 'random' then 
+		new_pos = util.round(math.random(first,last))
 	end
 
-	return new_pos
-end
+	if resetting and params:get('cued_divisor_'..p..'_t'..t) ~= 0 then
+		params:set('divisor_'..p..'_t'..t, params:get('cued_divisor_'..p..'_t'..t))
+		params:set('cued_divisor_'..p..'_t'..t,0)
+	end
+
+	params:set('pos_'..p..'_t'..t,new_pos)
+end -- todo there's something very wrong with triangle mode...
 
 function make_scale()
 	local new_scale = {0,0,0,0,0,0,0}
@@ -350,7 +371,7 @@ function update_val(track,page)
 	end
 end
 
-function advance()
+function advance_all()
 	global_clock_counter = global_clock_counter + 1
 	if global_clock_counter > params:get('global_clock_div') then
 		global_clock_counter = 1
@@ -366,7 +387,8 @@ function advance()
 					>	params:get('divisor_'..v..'_t'..t) 
 				then
 					params:set('data_t'..t..'_'..v..'_counter',1)
-					params:set('pos_'..v..'_t'..t,new_pos_for_track(t,v))
+					advance_page(t,v)
+					-- params:set('pos_'..v..'_t'..t,new_pos_for_track(t,v))
 					if 	math.random(0,99)
 					< 	prob_map[params:get('data_'..v..'_prob_'..params:get('pos_'..v..'_t'..t)..'_t'..t)]
 					then
@@ -382,7 +404,7 @@ function step_ticker()
 	while true do
 		clock.sync(1/4)
 		if params:get('playing') == 1 then
-			advance()
+			advance_all()
 		end
 	end
 end

@@ -123,63 +123,51 @@ function gkeys:time_mod(x,y,z,t)
 		local pn = get_page_name()
 
 		if g1 == 0 and g2 == 1 then -- off/none
-			params:set('divisor_'..pn..'_t'..at(),x)
-			post(pn .. ' time divisor: ' .. params:get('divisor_'..pn..'_t'..at()))
+			edit_divisor(at(),pn,x)
 		elseif g1 == 1 and g2 == 1 then -- on/none
 			if pn == 'trig' or pn == 'note' then
-				params:set('divisor_trig_t'..at(),x)
-				params:set('divisor_note_t'..at(),x)
-				post('trig & note divisor: '..params:get('divisor_trig_t'..at()))
+				edit_divisor(at(),'trig',x)
+				edit_divisor(at(),'note',x)
 			else
-				params:set('divisor_'..pn..'_t'..at(),x)
-				post(pn .. ' time divisor: ' .. params:get('divisor_'..pn..'_t'..at()))
+				edit_divisor(at(),pn,x)
 			end
 		elseif g1 == 0 and g2 == 2 then --off/track
 			for _,v in ipairs(combined_page_list) do
 				if v ~= 'scale' and v ~= 'patterns' then
-					params:set('divisor_'..v..'_t'..at(),x)
+					edit_divisor(at(),v,x)
 				end
 			end
-			post(pn .. ' time divisor: ' .. params:get('divisor_'..pn..'_t'..at()))
 		elseif g1 == 1 and g2 == 2 then -- on/track
 			if pn == 'trig' or pn == 'note' then
-				params:set('divisor_trig_t'..at(),x)
-				params:set('divisor_note_t'..at(),x)
-				post('trig & note divisor: '..params:get('divisor_trig_t'..at()))
+				edit_divisor(at(),'trig',x)
+				edit_divisor(at(),'note',x)
 			else
 				for _,v in ipairs(combined_page_list) do
 					if v ~= 'trig' and v ~= 'note' and v ~= 'scale' and v ~= 'patterns' then
-						params:set('divisor_'..v..'_t'..at(),x)
+						edit_divisor(at(),v,x)
 					end
 				end
-				post(pn .. ' time divisor: ' .. params:get('divisor_'..pn..'_t'..at()))
 			end
 		elseif g1 == 0 and g2 == 3 then -- off/all
 			for t=1,NUM_TRACKS do
 				for _,v in ipairs(combined_page_list) do
 					if v ~= 'scale' and v ~= 'patterns' then
-						params:set('divisor_'..v..'_t'..t,x)
+						edit_divisor(t,v,x)
 					end
 				end
 			end
-			post('all divisors: ' .. params:get('divisor_trig_t'..at())) -- could use anything here not just trig
 		elseif g1 == 1 and g2 == 3 then -- on/all
 			for t=1,NUM_TRACKS do
 				if pn == 'trig' or pn == 'note' then
-					params:set('divisor_trig_t'..t,x)
-					params:set('divisor_note_t'..t,x)
+					edit_divisor(t,'trig',x)
+					edit_divisor(t,'note',x)
 				else
 					for _,v in ipairs(combined_page_list) do
 						if v ~= 'trig' and v ~= 'note' and v ~= 'scale' and v ~= 'patterns' then
-							params:set('divisor_'..v..'_t'..t,x)
+							edit_divisor(t,v,x)
 						end
 					end
 				end
-			end
-			if pn == 'trig' or pn == 'note' then
-				post('all trig & note divisors: ' .. params:get('divisor_trig_t'..at()))
-			else
-				post('non trig/note divisors: ' .. params:get('divisor_octave_t'..at()))
 			end
 		end
 	end

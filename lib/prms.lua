@@ -65,11 +65,13 @@ function Prms:add_tracks()
 		end
 
 		-- divisors
-		params:add_group('t'..t..' divisors', 7)
+		params:add_group('t'..t..' divisors', 14)
 		for k,v in ipairs(combined_page_list) do
 			if v == 'scale' or v == 'pattern' then break end
 			params:add_number('divisor_'..v..'_t'..t, 't'..t..' '..v..' divisor', 1,16,1)
+			params:add_number('cued_divisor_'..v..'_t'..t, 't'..t..' '..v..' divisor', 0,16,0)
 		end
+
 
 		-- data
 		params:add_group('t'.. t .. ' raw data', 329)
