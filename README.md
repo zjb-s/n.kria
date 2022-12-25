@@ -10,3 +10,5 @@ extensible native norns port of monome's Kria
 * overview page graphics
 * crow outputs
 * post note names when you adjust note
+* clock tracks from other tracks
+* transpose tracks from other tracks
