@@ -39,6 +39,13 @@ function Prms:add()
 	self:add_tracks()
 end
 
+params.action_read = function(filename, name, pset_number)
+	for _, player in pairs(nb:get_players()) do
+		print("PLAYER")
+		tab.print(player)
+		player:stop_all()
+	end
+end
 
 function Prms:add_tracks()
 

@@ -73,4 +73,12 @@ function nb:add_param(param_id, param_name)
     end)
 end
 
+function nb:get_players()
+    local ret = {}
+    for k, v in pairs(self.players) do
+        ret[k] = player_lib:new(v)
+    end
+    return ret
+end
+
 return nb
