@@ -22,6 +22,9 @@ end
 function player:pitch_bend(note, amount)
 end
 
+function player:set_slew(s)
+end
+
 function player:active()
     self.active = true
     self.active_routine = clock.run(function()

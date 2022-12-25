@@ -273,10 +273,6 @@ function note_out(t)
 	local s = make_scale()
 	local n = s[current_val(t,'note')] + s[current_val(t,'transpose')]
 	local up_one_octave = false
-<<<<<<< HEAD
-=======
-	-- print('n before octave switching is '..n)
->>>>>>> 2f6e3a3 (Add midi player, figure out emplaitress timing)
 	if n > 7 then
 		n = n - 7
 		up_one_octave = true
@@ -288,12 +284,8 @@ function note_out(t)
 	local player = params:lookup_param("voice_t"..t):get_player()
 	local velocity = 1.0
 	local duration = clock.get_beat_sec()*params:get('divisor_'.."note"..'_t'..t)*gate_len/4
-<<<<<<< HEAD
 	player:set_slew(slide_amt/1000)
 	player:play_note(n, velocity, gate_len)
-=======
-	player:play_note(n, velocity, duration)
->>>>>>> 2f6e3a3 (Add midi player, figure out emplaitress timing)
 end
 
 function update_val(track,page)
