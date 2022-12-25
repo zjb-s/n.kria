@@ -10,4 +10,4 @@ extensible native norns port of monome's Kria
 * overview page graphics
 * div cue
 * gate ties
-* more outputs
+* crow outputs
