@@ -1,5 +1,5 @@
 # k2z
-extensible native lua port of monome's Kria
+extensible native norns port of monome's Kria
 
 # roadmap
 * patterns
