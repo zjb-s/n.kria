@@ -2,7 +2,6 @@
 extensible native lua port of monome's Kria
 
 # roadmap
-* pulse indicator
 * retrig 
 * patterns
 * pattern copying and pasting
