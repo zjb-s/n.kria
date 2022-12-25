@@ -30,13 +30,7 @@ function Onboard:key(n,d)
 				post('overview')
 			else
 				if n == 2 then
-					for t=1,NUM_TRACKS do
-						for k,v in ipairs(combined_page_list) do
-							if v == 'scale' or v == 'patterns' then break end
-							params:set('pos_'..v..'_t'..t, params:get('loop_last_'..v..'_t'..t))
-						end
-						post('reset')
-					end
+					reset()
 				elseif n == 3 then
 					params:delta('playing',1)
 					post((params:get('playing') == 1) and 'play' or 'stop')

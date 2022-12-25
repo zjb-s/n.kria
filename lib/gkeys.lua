@@ -116,7 +116,6 @@ function gkeys:resolve_loop_keys(x,y,z,t)
 end
 
 function gkeys:time_mod(x,y,z,t)
-	-- todo finish post implementation
 	if z == 1 and y == 2 then
 
 		local g1 = params:get('note_div_sync')
@@ -189,7 +188,6 @@ end
 function gkeys:prob_mod(x,y,z,t)
 	if z == 1 and y > 2 and y < 7 then
 		params:set('data_'..get_page_name()..'_prob_'..x..'_t'..at(),7-y)
-		-- todo finish probability implementation
 		post('odds: '.. prob_map[7-y] .. '%')
 	end
 end

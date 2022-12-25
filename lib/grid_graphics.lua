@@ -126,6 +126,8 @@ function Graphics:config_1()
 		buf(10,6,HIGH)
 	end
 
+	buf(pulse_indicator,1,HIGH)
+
 	self:time(params:get('global_clock_div'))
 
 end

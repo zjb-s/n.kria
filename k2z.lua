@@ -18,6 +18,7 @@ grid_graphics = include('lib/grid_graphics')
 Prms = include('lib/prms')
 Onboard = include('lib/onboard')
 gkeys = include('lib/gkeys')
+meta = include('lib/meta')
 nb = include("lib/nb/nb")
 mu = require 'musicutil'
 
@@ -165,6 +166,9 @@ function init_val_buffers()
 	end
 end
 
+function clock.transport.start() params:set('playing',1); post('play') end
+function clock.transport.stop() params:set('playing',0); post('stop') end
+
 function init()
 	nb:init()
 	init_grid_buffers()
@@ -173,6 +177,17 @@ function init()
 	clock.run(visual_ticker)
 	clock.run(step_ticker)
 	clock.run(intro)
+end
+
+function reset()
+	for t=1,NUM_TRACKS do
+		for k,v in ipairs(combined_page_list) do
+			if v == 'scale' or v == 'patterns' then break end
+			params:set('pos_'..v..'_t'..t, params:get('loop_last_'..v..'_t'..t))
+		end
+	end
+	pulse_indicator = 1
+	post('reset')
 end
 
 function edit_loop(track, first, last)
@@ -301,6 +316,9 @@ function advance()
 	global_clock_counter = global_clock_counter + 1
 	if global_clock_counter > params:get('global_clock_div') then
 		global_clock_counter = 1
+
+		pulse_indicator = pulse_indicator + 1
+		if pulse_indicator > 16 then pulse_indicator = 1 end
 		
 		for t=1,NUM_TRACKS do
 			for k,v in ipairs(combined_page_list) do

@@ -93,6 +93,12 @@ function Prms:add_tracks()
 					,	page_ranges[k][3]
 					)
 				end
+				if v == 'retrig' then
+					params:add_number('data_subtrig_count_'..i..'_t'..t,'data_subtrigs_'..i..'_t'..t,1,0,4)
+					for st=1,4 do
+						params:add_binary('data_subtrig_'..st..'_step_'..i..'_t'..t,'toggle')
+					end
+				end
 				params:add_number('data_'..v..'_prob_'..i..'_t'..t,'data_prob_'..v..'_t'..t,1,4,4)
 			end
 		end
