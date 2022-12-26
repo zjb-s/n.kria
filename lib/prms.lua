@@ -1,4 +1,4 @@
-local nb = require 'k2z/lib/nb/nb'
+local nb = include('k2z/lib/nb/lib/nb')
 include "lib/players/midi"
 
 
@@ -36,14 +36,14 @@ function Prms:add()
 			params:add_number('scale_'..i..'_deg_'..j,'scale_'..i..'_deg_'..j,0,7,default_value)
 		end
 	end
-	add_midi_players()
 	self:add_tracks()
+	params:add_separator("voices")
+	nb:add_player_params()
 end
 
 params.action_read = function(filename, name, pset_number)
 	for _, player in pairs(nb:get_players()) do
-		print("PLAYER")
-		tab.print(player)
+		-- tab.print(player)
 		player:stop_all()
 	end
 end

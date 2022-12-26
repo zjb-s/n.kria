@@ -19,7 +19,7 @@ Prms = include('lib/prms')
 Onboard = include('lib/onboard')
 gkeys = include('lib/gkeys')
 meta = include('lib/meta')
-nb = include("lib/nb/nb")
+nb = include("lib/nb/lib/nb")
 mu = require 'musicutil'
 
 
