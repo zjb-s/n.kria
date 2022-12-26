@@ -14,3 +14,4 @@ extensible native norns port of monome's Kria
 * transpose tracks from other tracks
 * implement octave shifter
 * add randomization of pages, tracks or patterns
+* swing
