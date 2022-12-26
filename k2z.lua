@@ -22,6 +22,8 @@ meta = include('lib/meta')
 nb = include("lib/nb/nb")
 mu = require 'musicutil'
 
+local status, matrix = pcall(require, 'matrix/lib/matrix')
+if not status then matrix = nil end
 
 -- grid level macros
 OFF=0
@@ -183,12 +185,21 @@ function clock.transport.stop() params:set('playing',0); post('stop') end
 
 function init()
 	nb:init()
+	add_modulation_sources()
 	init_grid_buffers()
 	Prms:add()
 	init_val_buffers()
 	clock.run(visual_ticker)
 	clock.run(step_ticker)
 	clock.run(intro)
+end
+
+
+function add_modulation_sources()
+	if matrix == nil then return end
+	for i=1,NUM_TRACKS do
+		matrix:add_binary("pitch_t"..i, "track "..i.." cv")
+	end
 end
 
 function make_scale()
@@ -210,6 +221,10 @@ function note_clock(track,note,duration,slide_amt)
 	local divider = data:get_page_val(track,'trig','divisor')
 	local pos = data:get_page_val(track,'retrig','pos')
 	local subdivision = params:get('data_subtrig_count_'..pos..'_t'..track)
+	if track == 1 then print(note) end
+	if matrix ~= nil then
+		matrix:set("pitch_t"..track, (note - 36)/(127-36))
+	end
 	for i=1,subdivision do
 		if params:get('data_subtrig_'..i..'_step_'..pos..'_t'..track) == 1 then
 			player:set_slew(slide_amt/1000)
