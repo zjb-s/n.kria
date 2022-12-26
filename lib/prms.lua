@@ -47,50 +47,50 @@ params.action_read = function(filename, name, pset_number)
 	end
 end
 
+track_params = {
+	'mute'
+,	'play_mode'
+,	'pipo_dir'
+,	'octave_shift'
+,	'gate_shift'
+}
+page_params = {
+	'pos'
+,	'loop_first'
+,	'loop_last'
+,	'divisor'
+,	'cued_divisor'
+,	'counter'
+}
+step_params = {
+	'trig'
+,	'note'
+,	'octave'
+,	'gate'
+,	'retrig'
+,	'subtrig_count'
+}
+
+
 function Prms:add_tracks()
 
 	for t=1,NUM_TRACKS do
 		params:add_separator('TRACK ' .. t)
 		nb:add_param("voice_t"..t, 't '..t.." voice")
-		params:add_option('playmode_t'..t,'t'..t..' play mode', play_modes,1)
-		params:add_binary('pipo_dir_t'..t,'pipo_dir_t'..t,'toggle',1)
 		params:add_binary('mute_t'..t, 'mute?', 'toggle', 0)
-
-
-		-- positions
-		params:add_group('t'..t..' positions', 7)
-		for k,v in ipairs(combined_page_list) do
-			params:add_number('pos_'..v..'_t'..t, 't'..t..' '..v..' pos', 1, 16,1)
-		end
-
-		-- loops
-		params:add_group('t'..t..' loops', 14)
+		params:add_option('play_mode_t'..t,'t'..t..' play mode', play_modes,1)
+		params:add_binary('pipo_dir_t'..t,'pipo_dir_t'..t,'toggle',1)
+		params:hide('pipo_dir_t'..t)
+		params:add_number('octave_shift_t'..t,'octave_shift_t'..t, 1, 5, 3)
+		params:add_number('gate_shift_t'..t,'gate_shift_t'..t,1,16,8)
 		for k,v in ipairs(combined_page_list) do
 			if v == 'scale' or v == 'pattern' then break end
+			params:add_number('pos_'..v..'_t'..t, 't'..t..' '..v..' pos', 1, 16,1)
 			params:add_number('loop_first_'..v..'_t'..t, 'loop_first_'..v..'_t'..t, 1, 16,1)
 			params:add_number('loop_last_'..v..'_t'..t, 'loop_last_'..v..'_t'..t, 1, 16,6)
-		end
-
-		-- divisors
-		params:add_group('t'..t..' divisors', 14)
-		for k,v in ipairs(combined_page_list) do
-			if v == 'scale' or v == 'pattern' then break end
 			params:add_number('divisor_'..v..'_t'..t, 't'..t..' '..v..' divisor', 1,16,1)
 			params:add_number('cued_divisor_'..v..'_t'..t, 't'..t..' '..v..' divisor', 0,16,0)
-		end
-
-
-		-- data
-		params:add_group('t'.. t .. ' raw data', 329)
-		for k,v in ipairs(combined_page_list) do
-			if v == 'scale' or v == 'pattern' then break end -- no need for more params for these pages
-			if v == 'octave' then 
-				params:add_number('data_octave_shift_t'..t,'data_octave_shift_t'..t, 1, 5, 3)
-			elseif v == 'gate' then
-				params:add_number('data_gate_shift_t'..t,'data_gate_shift_t'..t,1,16,8)
-			end
-
-			params:add_number('data_t'..t..'_'..v..'_counter','data_t'..t..'_'..v..'_counter',1,99,1)
+			params:add_number('counter_'..v..'_t'..t,'counter_'..v..'_t'..t,1,99,1)
 
 			for i=1,16 do
 				if v == 'trig' then -- just for trig page...

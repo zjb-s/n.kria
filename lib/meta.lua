@@ -4,7 +4,7 @@ function Meta:reset()
 	for t=1,NUM_TRACKS do
 		for k,v in ipairs(combined_page_list) do
 			if v == 'scale' or v == 'patterns' then break end
-			params:set('pos_'..v..'_t'..t, params:get('loop_last_'..v..'_t'..t))
+			data:set_page_val(t,v,'pos',data:get_page_val(t,v,'loop_last'))
 		end
 	end
 	pulse_indicator = 1
@@ -22,7 +22,8 @@ function Meta:note_out(t)
 	n = n + 12*current_val(t,'octave')
 	if up_one_octave then n = n + 12 end
 	local gate_len = current_val(t,'gate') -- this will give you a weird range, feel free to use it however you want
-	local gate_multiplier = params:get('data_gate_shift_t'..t) 
+	-- local gate_multiplier = params:get('data_gate_shift_t'..t) 
+	local gate_multiplier = data:get_track_val(t,'gate_shift')
 	local slide_amt =  util.linlin(1,7,1,120,current_val(t,'slide')) -- to match stock kria times
 	local duration = util.clamp(gate_len-1, 0, 4)/16
 	if gate_len == 1 or gate_len == 6 then
@@ -45,16 +46,11 @@ function Meta:advance_all()
 		for t=1,NUM_TRACKS do
 			for k,v in ipairs(combined_page_list) do
 				if v == 'scale' or v == 'patterns' then break end
-				params:delta('data_t'..t..'_'..v..'_counter',1)
-				if 		params:get('data_t'..t..'_'..v..'_counter')
-					>	params:get('divisor_'..v..'_t'..t) 
-				then
-					params:set('data_t'..t..'_'..v..'_counter',1)
+				data:delta_page_val(t,v,'counter',1)
+				if data:get_page_val(t,v,'counter') > data:get_page_val(t,v,'divisor') then
+					data:set_page_val(t,v,'counter',1)
 					self:advance_page(t,v)
-					-- params:set('pos_'..v..'_t'..t,new_pos_for_track(t,v))
-					if 	math.random(0,99)
-					< 	prob_map[params:get('data_'..v..'_prob_'..params:get('pos_'..v..'_t'..t)..'_t'..t)]
-					then
+					if 	math.random(0,99) < prob_map[params:get('data_'..v..'_prob_'..data:get_page_val(t,v,'pos')..'_t'..at())] then
 						update_val(t,v)
 					end
 				end
@@ -64,10 +60,10 @@ function Meta:advance_all()
 end
 
 function Meta:advance_page(t,p) -- track,page
-	local old_pos = params:get('pos_'..p..'_t'..t)
-	local first = params:get('loop_first_'..p..'_t'..t)
-	local last = params:get('loop_last_'..p..'_t'..t)
-	local mode = play_modes[params:get('playmode_t'..t)]
+	local old_pos = data:get_page_val(t,p,'pos')
+	local first = data:get_page_val(t,p,'loop_first')
+	local last = data:get_page_val(t,p,'loop_last')
+	local mode = play_modes[data:get_track_val(t,'play_mode')]
 	local new_pos;
 	local resetting = false
 
@@ -84,13 +80,13 @@ function Meta:advance_page(t,p) -- track,page
 			resetting = true
 		end
 	elseif mode == 'triangle' then
-		local delta = params:get('pipo_dir_t'..t) == 1 and 1 or -1
+		local delta = data:get_track_val(t,'pipo_dir') == 1 and 1 or -1
 		new_pos = old_pos + delta
 		if out_of_bounds(t,p,new_pos) then 
 			--print(delta)
 			new_pos = (delta == -1) and last-1 or first+1
 			print('new pos is',new_pos,'first is',first,'last is',last)
-			params:delta('pipo_dir_t'..t,1)
+			data:delta_track_val(t,'pipo_dir',1)
 			resetting = true
 		end
 	elseif mode == 'drunk' then 
@@ -111,9 +107,9 @@ function Meta:advance_page(t,p) -- track,page
 		new_pos = util.round(math.random(first,last))
 	end
 
-	if resetting and params:get('cued_divisor_'..p..'_t'..t) ~= 0 then
-		params:set('divisor_'..p..'_t'..t, params:get('cued_divisor_'..p..'_t'..t))
-		params:set('cued_divisor_'..p..'_t'..t,0)
+	if resetting and data:get_page_val(t,p,'cued_divisor') ~= 0 then
+		data:set_page_val(t,p,'divisor',data:get_page_val(t,p,'cued_divisor'))
+		data:set_page_val(t,p,'cued_divisor',0)
 	end
 
 	params:set('pos_'..p..'_t'..t,new_pos)
@@ -148,10 +144,10 @@ end
 
 function Meta:edit_divisor(track,page,new_val)
 	if params:get('div_cue') == 1 then
-		params:set('cued_divisor_'..page..'_t'..track,new_val)
+		data:set_page_val(track,page,'cued_divisor',new_val)
 		post('cued: '..page..' divisor: '..new_val)
 	else
-		params:set('divisor_'..page..'_t'..track,new_val)
+		data:set_page_val(track,page,'divisor',new_val)
 		post(page..' divisor: '..new_val)
 	end
 end
@@ -160,32 +156,33 @@ function Meta:edit_loop(track, first, last)
 	local f = math.min(first,last)
 	local l = math.max(first,last)
 	local p = get_page_name()
+	local loopsync = div_sync_modes[params:get('loop_sync')]
 
-	if params:get('loop_sync') == 1 then
+	if loopsync == 'none' then
 		if p == 'trig' or p == 'note' and params:get('note_sync') == 1 then
-			params:set('loop_first_note_t'..track,f)
-			params:set('loop_last_note_t'..track,l)
-			params:set('loop_first_trig_t'..track,f)
-			params:set('loop_last_trig_t'..track,l)
+			data:set_page_val(track,'note','loop_first',f)
+			data:set_page_val(track,'note','loop_last',l)
+			data:set_page_val(track,'trig','loop_first',f)
+			data:set_page_val(track,'trig','loop_last',l)
 			post('t'..track..' trig & note loops: ['..f..'-'..l..']')
 		else
-			params:set('loop_first_'..p..'_t'..track,f)
-			params:set('loop_last_'..p..'_t'..track,l)
+			data:set_page_val(track,p,'loop_first',f)
+			data:set_page_val(track,p,'loop_last',l)
 			post('t'..track..' '..p..' loop: ['..f..'-'..l..']')
 		end
-	elseif params:get('loop_sync') == 2 then
+	elseif loopsync == 'track' then
 		for k,v in ipairs(combined_page_list) do
 			if v == 'scale' or v == 'patterns' then break end
-			params:set('loop_first_'..v..'_t'..track,f)
-			params:set('loop_last_'..v..'_t'..track,l)
+			data:set_page_val(track,v,'loop_first',f)
+			data:set_page_val(track,v,'loop_last',l)
 		end
 		post('t'..track..' loops: ['..f..'-'..l..']')
-	elseif params:get('loop_sync') == 3 then
+	elseif loopsync == 'all' then
 		for t=1,NUM_TRACKS do
 			for k,v in ipairs(combined_page_list) do
 				if v == 'scale' or v == 'patterns' then break end
-				params:set('loop_first_'..v..'_t'..t,f)
-				params:set('loop_last_'..v..'_t'..t,l)
+				data:set_page_val(track,v,'loop_first',f)
+				data:set_page_val(track,v,'loop_last',l)
 			end
 		end
 		post('all loops: ['..f..'-'..l..']')

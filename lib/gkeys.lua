@@ -44,8 +44,8 @@ end
 
 function gkeys:track_select(x,y,z,t)
 	if kbuf[11][8] then -- loop mod
-		params:delta('mute_t'..x, 1)
-		post('t'..x..' '..((params:get('mute_t'..x) == 1) and 'mute' or 'unmute'))
+		data:delta_track_val(x,'mute',1)
+		post('t'..x..' '..((data:get_track_val(x,'mute') == 1) and 'mute' or 'unmute'))
 	else
 		params:set('active_track', x)
 		post('track ' .. x)
@@ -197,14 +197,12 @@ function gkeys:scale_overlay(x,y,z,t)
 end
 
 function gkeys:trig_page(x,y,z,t)
-	params:delta('data_trig_'..x..'_t'..t, 1)
-	post('trig '..x..' '.. (params:get('data_trig_'..x..'_t'..t) == 1 and 'on' or 'off'))
+	data:delta_step_val(t,'trig',x,1)
+	post('trig '..x..' '.. (data:get_step_val(t,'trig',x) == 1 and 'on' or 'off'))
 end
 
 function gkeys:retrig_page(x,y,z,t)
-
 	local p = get_page_name()
-
 	if y == 1 or y == 7 then
 		meta:delta_subtrig_count(t,x,(y==1 and 1 or -1))
 	else
@@ -217,41 +215,41 @@ function gkeys:retrig_page(x,y,z,t)
 end
 
 function gkeys:note_page(x,y,z,t)
-	if  params:get('data_note_'..x..'_t'..t) == 8-y and params:get('note_sync') == 1 then
-		params:delta('data_trig_'..x..'_t'..t, 1)
+	if  data:get_step_val(t,'note',x) == 8-y and params:get('note_sync') == 1 then
+		data:delta_step_val(t,'trig',x,1)
 		post('note & trig '..x..': '..8-y)
 	else
-		params:set('data_note_'..x..'_t'..t, 8 - y)
+		data:set_step_val(t,'note',x,8-y)
 		post('note '..x..': '..8-y)
 	end
 end
 
 function gkeys:transpose_page(x,y,z,t)
-	params:set('data_transpose_'..x..'_t'..t, 8 - y)
+	data:set_step_val(t,'transpose',x,8-y)
 	post('transpose '..x..': '..8-y)
 end
 
 function gkeys:octave_page(x,y,z,t)
 	if y > 1 and y < 8 then
-		params:set('data_octave_'..x..'_t'..t, 8 - y)
+		data:set_step_val(t,'octave',x,8-y)
 		post('octave '..x..': '..8-y)
 	elseif y == 1 and x <= 5 then
-		params:set('data_octave_shift_t'..t, x)
-		post('t'..at()..' octave shift: '..x)
+		data:set_track_val(t,'octave_shift',x)
+		post('t'..t..' octave shift: '..x)
 	end
 end
 
 function gkeys:slide_page(x,y,z,t)
-	params:set('data_slide_'..x..'_t'..t, 8 - y)
+	data:set_step_val(t,'slide',x,8-y)
 	post('slide '..x..': '..8-y)
 end
 
 function gkeys:gate_page(x,y,z,t)
 	if y > 1 and y < 8 then
-		params:set('data_gate_'..x..'_t'..t, (-1)+y)
+		data:set_step_val(t,'gate',x,(-1)+y)
 		post('gate duration '..x..': '..(-1)+y)
 	elseif y == 1 then
-		params:set('data_gate_shift_t'..t,x)
+		data:set_track_val(t,'gate_shift',x)
 		post('t'..at()..' duration multiplier: '..x)
 	end
 end

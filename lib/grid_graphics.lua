@@ -7,7 +7,7 @@ function Graphics:trig()
 	for t=1,NUM_TRACKS do
 		for x=1,16 do
 			l = OFF
-			local this_trig_on = params:get('data_trig_'..x..'_t'..t) == 1
+			local this_trig_on = data:get_step_val(t,'trig',x) == 1
 			local oob = out_of_bounds(t,'trig',x)
 			if this_trig_on then
 				if oob then
@@ -23,7 +23,8 @@ function Graphics:trig()
 				end
 			end
 
-			if x == params:get('pos_trig_t'..t) and params:get('playing') == 1 then
+			if x == data:get_page_val(t,'trig','pos') and params:get('playing') == 1 then
+				
 				l = highlight(l)
 			end
 			if get_mod_key() == 'loop' and not oob then
@@ -155,7 +156,7 @@ function Graphics:tracks()
 	local l
 	for i=1,NUM_TRACKS do
 		l = i == at() and HIGH or MED
-		if params:get('mute_t'..i) == 1 then
+		if data:get_track_val(i,'mute') == 1 then
 			l = util.round(l/4)
 		end
 		buf(i,8,l)
@@ -195,7 +196,7 @@ end
 
 function Graphics:time(D)
 	local l
-	local d = D or params:get('divisor_'..get_page_name()..'_t'..at())
+	local d = D or data:get_page_val(at(),get_page_name(),'divisor')
 	local amount = util.round(HIGH/d)
 	for x=1,16 do
 		if x > d then 
@@ -229,7 +230,7 @@ function Graphics:scale()
 		buf(1,t,LOW)
 		buf(7,t,LOW)
 		for x=1,5 do
-			local l = params:get('playmode_t'..t) == x and HIGH or MED
+			local l = data:get_track_val(t,'play_mode') == x and HIGH or MED
 			buf(x+1,t,l)
 		end
 	end
@@ -246,30 +247,6 @@ function Graphics:pattern()
 	-- todo
 end
 
--- function Graphics:retrig()
--- 	for x=1,16 do
--- 		local d = params:get('data_retrig_'..x..'_t'..at())
--- 		local l = HIGH
--- 		if d >= 0 and d <= 6 then
--- 			for i=(7-d),7 do
--- 				buf(x,i,l)
--- 				l = l - 2
--- 			end
--- 		end
-
--- 		if params:get('pos_retrig_t'..at()) == x and params:get('playing') == 1 then
--- 			l = MED
--- 		else
--- 			l = LOW
--- 		end
-
--- 		if params:get('mod') == 2 and not out_of_bounds(at(),'retrig',x) then
--- 			l = highlight(l)
--- 		end
--- 		buf(x,7,l)
--- 	end
--- end
-
 function Graphics:retrig()
 	for x=1,16 do
 		for y=1,7 do
@@ -277,7 +254,7 @@ function Graphics:retrig()
 			local oob = out_of_bounds(at(),'retrig',x)
 			if y == 1 or y == 7 then
 				l = kbuf[x][y] and HIGH or LOW 
-				if params:get('pos_retrig_t'..at()) == x and params:get('playing') == 1 then
+				if data:get_page_val(at(),'retrig','pos') == x and params:get('playing') == 1 then
 					l = highlight(l)
 				end
 			else
@@ -300,8 +277,8 @@ end
 function Graphics:note()
 	local l
 	for x=1,16 do
-		local d = params:get('data_note_'..x..'_t'..at())
-		if x == params:get('pos_note_t'..at()) and params:get('playing') == 1 then 
+		local d = data:get_step_val(at(),'note',x)
+		if x == data:get_page_val(at(),'note','pos') and params:get('playing') == 1 then 
 			l = LOW
 		else
 			l = OFF
@@ -310,7 +287,7 @@ function Graphics:note()
 			local ly = l
 			if y == d then
 				ly = out_of_bounds(at(),'note',x) and LOW or HIGH
-				if params:get('note_sync') == 1 and params:get('data_trig_'..x..'_t'..at()) == 0 then
+				if params:get('note_sync') == 1 and data:get_step_val(at(),'trig',x) == 0 then
 					ly = out_of_bounds(at(),'note',x) and dim(LOW) or LOW
 				end
 			end
@@ -325,8 +302,8 @@ end
 function Graphics:transpose() -- identical to above, might want to fold them together
 	local l
 	for x=1,16 do
-		local d = params:get('data_transpose_'..x..'_t'..at())
-		if x == params:get('pos_transpose_t'..at()) and params:get('playing') == 1 then 
+		local d = data:get_step_val(at(),'transpose',x)
+		if x == data:get_page_val(at(),'transpose','pos') and params:get('playing') == 1 then 
 			l = LOW
 		else
 			l = OFF
@@ -345,13 +322,12 @@ function Graphics:transpose() -- identical to above, might want to fold them tog
 end
 
 function Graphics:octave()
-	local d = params:get('data_octave_shift_t'..at()) 
 	-- todo implement octave shift
 	for i=1,5 do
-		buf(i,1,(params:get('data_octave_shift_t'..at())==i and MED or LOW))
+		buf(i,1,data:get_track_val(at(),'octave_shift')==i and MED or LOW)
 	end
 	for x=1,16 do
-		d = params:get('data_octave_'..x..'_t'..at())
+		local d = data:get_step_val(at(),'octave',x)
 		local oob = out_of_bounds(at(),'octave',x)
 		for i=1,6 do
 			local l = OFF
@@ -373,7 +349,7 @@ function Graphics:octave()
 			if get_mod_key() == 'loop' and (not oob) then
 				l = highlight(l)
 			end
-			if x == params:get('pos_octave_t'..at()) and params:get('playing') == 1 then
+			if x == data:get_page_val(at(),'octave','pos') and params:get('playing') == 1 then
 				l = highlight(l)
 			end
 			buf(x,8-i,l)
@@ -384,7 +360,7 @@ end
 function Graphics:slide()
 	for x=1,16 do
 		local l = OFF
-		local d = params:get('data_slide_'..x..'_t'..at())
+		local d = data:get_step_val(at(),'slide',x)
 		local oob = out_of_bounds(at(),'slide',x)
 		local l_accum = 0
 		local l_delta = util.round(HIGH/d)
@@ -408,7 +384,7 @@ function Graphics:slide()
 			if get_mod_key() == 'loop' and not oob then
 				l = highlight(l)
 			end
-			if x == params:get('pos_slide_t'..at()) and params:get('playing') == 1 then
+			if x == data:get_page_val(at(),'slide','pos') and params:get('playing') == 1 then
 				l = highlight(l)
 			end
 			buf(x,8-y,l)
@@ -417,7 +393,7 @@ function Graphics:slide()
 end
 
 function Graphics:gate()
-	local s = params:get('data_gate_shift_t'..at())
+	local s = data:get_track_val(at(),'gate_shift')
 	for i=1,s do
 		local l = LOW
 		if i == s then
@@ -430,7 +406,7 @@ function Graphics:gate()
 
 	for x=1,16 do
 		local l = OFF
-		local d = params:get('data_gate_'..x..'_t'..at())
+		local d = data:get_step_val(at(),'gate',x)
 		local oob = out_of_bounds(at(),'gate',x)
 		local l_accum = 0
 		local l_delta = util.round(HIGH/d)
@@ -454,7 +430,7 @@ function Graphics:gate()
 			if get_mod_key() == 'loop' and not oob then
 				l = highlight(l)
 			end
-			if x == params:get('pos_gate_t'..at()) and params:get('playing') == 1 then
+			if x == data:get_page_val(at(),'gate','pos') and params:get('playing') == 1 then
 				l = highlight(l)
 			end
 			buf(x,1+y,l)

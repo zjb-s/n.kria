@@ -110,6 +110,18 @@ config_desc = {
 	}
 }
 
+data = {}
+function data:get_track_val(track,name) return params:get(name..'_t'..track) end
+function data:get_page_val(track,page,name) return params:get(name..'_'..page..'_t'..track) end
+function data:get_step_val(track,page,step) return params:get('data_'..page..'_'..step..'_t'..track) end
+function data:set_track_val(track,name,new_val) params:set(name..'_t'..track,new_val) end
+function data:set_page_val(track,page,name,new_val) params:set(name..'_'..page..'_t'..track,new_val) end
+function data:set_step_val(track,page,step,new_val) params:set('data_'..page..'_'..step..'_t'..track,new_val) end
+function data:delta_track_val(track,name,d) params:delta(name..'_t'..track,d) end
+function data:delta_page_val(track,page,name,d) params:delta(name..'_'..page..'_t'..track,d) end
+function data:delta_step_val(track,page,step,d) params:delta('data_'..page..'_'..step..'_t'..track,d) end
+-- no support for probability or subtrigs
+
 loop_first = -1
 loop_last = -1
 wavery_light = MED
@@ -195,10 +207,9 @@ end
 function note_clock(track,note,duration,slide_amt) 
 	local player = params:lookup_param("voice_t"..track):get_player()
 	local velocity = 1.0
-	local divider = params:get('divisor_'..'trig'..'_t'..track)
-	local pos = params:get('pos_retrig_t'..track)
+	local divider = data:get_page_val(track,'trig','divisor')
+	local pos = data:get_page_val(track,'retrig','pos')
 	local subdivision = params:get('data_subtrig_count_'..pos..'_t'..track)
-	-- if track == 2 then print(subdivision) end
 	for i=1,subdivision do
 		if params:get('data_subtrig_'..i..'_step_'..pos..'_t'..track) == 1 then
 			player:set_slew(slide_amt/1000)
@@ -252,8 +263,8 @@ end
 
 function out_of_bounds(track,p,value)
 	-- returns true if value is out of bounds on page p, track
-	return 	(value < params:get('loop_first_'..p..'_t'..track))
-	or		(value > params:get('loop_last_'..p..'_t'..track))
+	return 	(value < data:get_page_val(track,p,'loop_first'))
+	or 		(value > data:get_page_val(track,p,'loop_last'))
 end
 
 function get_page_name()
