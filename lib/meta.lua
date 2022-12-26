@@ -42,8 +42,11 @@ function Meta:advance_all()
 
 		pulse_indicator = pulse_indicator + 1
 		if pulse_indicator > 16 then pulse_indicator = 1 end
+
+		local old_pos = {}
 		
 		for t=1,NUM_TRACKS do
+			old_pos[t] = data:get_page_val(t,'trig','pos')
 			for k,v in ipairs(combined_page_list) do
 				if v == 'scale' or v == 'patterns' then break end
 				data:delta_page_val(t,v,'counter',1)
@@ -54,6 +57,12 @@ function Meta:advance_all()
 						update_val(t,v)
 					end
 				end
+			end
+		end
+
+		for t=1,4 do
+			if old_pos[t] ~= data:get_page_val(t,'trig','pos') and data:get_track_val(t,'mute') == 0 then
+				self:note_out(t)
 			end
 		end
 	end
