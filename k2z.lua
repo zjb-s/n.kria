@@ -192,15 +192,21 @@ function init()
 end
 
 function make_scale()
-	local new_scale = {0,0,0,0,0,0,0}
 	local table_from_params = {}
-	local output_scale = {}
 	for i=1,7 do
 		table.insert(table_from_params,params:get('scale_'..params:get('scale_num')..'_deg_'..i))
 	end
+	local new_scale = {
+		[1] = 0
+	,	[8] = 12
+	}
+	params:set('root_note',table_from_params[1])
 	for i=2,7 do
 		new_scale[i] = new_scale[i-1] + table_from_params[i]
+		new_scale[i+7] = new_scale[i] + 12
 	end
+	-- print('new scale is')
+	-- tab.print(new_scale)
 	return new_scale
 end
 
@@ -222,11 +228,6 @@ end
 function update_val(track,page)
 	val_buffers[track][page] =
 	    params:get('data_'..page..'_'..params:get('pos_'..page..'_t'..track)..'_t'..track)
-	if page == 'trig' then
-	    if current_val(track,'trig') == 1 then
-	        meta:note_out(track)
-	    end
-	end
 end
 
 function step_ticker()

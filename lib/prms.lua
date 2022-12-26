@@ -11,6 +11,7 @@ Prms = {}
 function Prms:add()
 
 	params:add_separator('GLOBAL')
+	params:add_number('root_note','root note',0,11,0)
 	params:add_number('page', 'page', 1,6,1)
 	params:add_binary('alt_page','alt page?', 'toggle')
 	params:add_binary('playing', 'playing?', 'toggle')

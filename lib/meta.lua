@@ -5,6 +5,7 @@ function Meta:reset()
 		for k,v in ipairs(combined_page_list) do
 			if v == 'scale' or v == 'patterns' then break end
 			data:set_page_val(t,v,'pos',data:get_page_val(t,v,'loop_last'))
+			data:set_page_val(t,v,'counter',data:get_page_val(t,v,'divisor'))
 		end
 	end
 	pulse_indicator = 1
@@ -13,14 +14,10 @@ end
 
 function Meta:note_out(t)
 	local s = make_scale()
-	local n = s[current_val(t,'note')] + s[current_val(t,'transpose')]
-	local up_one_octave = false
-	if n > 7 then
-		n = n - 7
-		up_one_octave = true
-	end
+	local n = s[current_val(t,'note') + (current_val(t,'transpose')-1)]
+	print('note is',n)
 	n = n + 12*current_val(t,'octave')
-	if up_one_octave then n = n + 12 end
+
 	local gate_len = current_val(t,'gate') -- this will give you a weird range, feel free to use it however you want
 	-- local gate_multiplier = params:get('data_gate_shift_t'..t) 
 	local gate_multiplier = data:get_track_val(t,'gate_shift')
@@ -43,25 +40,28 @@ function Meta:advance_all()
 		pulse_indicator = pulse_indicator + 1
 		if pulse_indicator > 16 then pulse_indicator = 1 end
 
-		local old_pos = {}
+		local will_track_fire = {}
 		
 		for t=1,NUM_TRACKS do
-			old_pos[t] = data:get_page_val(t,'trig','pos')
 			for k,v in ipairs(combined_page_list) do
 				if v == 'scale' or v == 'patterns' then break end
 				data:delta_page_val(t,v,'counter',1)
 				if data:get_page_val(t,v,'counter') > data:get_page_val(t,v,'divisor') then
 					data:set_page_val(t,v,'counter',1)
 					self:advance_page(t,v)
-					if 	math.random(0,99) < prob_map[params:get('data_'..v..'_prob_'..data:get_page_val(t,v,'pos')..'_t'..at())] then
-						update_val(t,v)
-					end
+					update_val(t,v)
+					if v == 'trig' then will_track_fire[t] = true end
 				end
 			end
 		end
 
 		for t=1,4 do
-			if old_pos[t] ~= data:get_page_val(t,'trig','pos') and data:get_track_val(t,'mute') == 0 then
+			if 	will_track_fire[t]
+			and data:get_track_val(t,'mute') == 0
+			and	current_val(t,'trig') == 1
+			and math.random(0,99) < prob_map[params:get('data_trig_prob_'..data:get_page_val(t,'trig','pos')..'_t'..at())]
+			then
+				-- print('playing note on track '..t)
 				self:note_out(t)
 			end
 		end
