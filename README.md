@@ -12,4 +12,5 @@ extensible native norns port of monome's Kria
 * post note names when you adjust note
 * clock tracks from other tracks
 * transpose tracks from other tracks
-* octave shifter
+* implement octave shifter
+* add randomization of pages, tracks or patterns
