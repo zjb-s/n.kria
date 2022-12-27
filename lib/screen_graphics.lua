@@ -1,13 +1,16 @@
-Graphics = {}
+Graphics = {
+	history = {} -- keys are unique. values are like {track: 1, note: "A", beats: 234}
+}
 
 function Graphics:render()
 	s = screen
 	s.clear()
 	
+	self:note_history()
 	self:post()
 	self:bpm_window()
 	self:scale()
-	self:notes()
+	-- self:notes()
 
 	if params:get('overlay') == 2 then
 		self:description_window()
@@ -20,15 +23,40 @@ function Graphics:render()
 	s.update()
 end
 
+function Graphics:add_history(track, note, beats)
+	local key = note..track..beats
+	self.history[key] = {
+		note=note,
+		track=track,
+		beats=beats,
+	}
+end
+
+function Graphics:note_history()
+	local now = clock.get_beats()
+	s.aa(1)
+	for k, hist in pairs(self.history) do
+		local ago = (now - hist.beats)
+		if ago > 5 then
+			self.history[k] = nil
+		else
+			s.level(HIGH)
+			s.move(hist.track*20, 54 - (54/4.0)*ago)
+			s.text(hist.note)
+		end
+	end
+	-- s.aa(0)
+end
+
 function Graphics:scale()
 	s.level(LOW)
-	s.rect(0,51,128,-9)
+	s.rect(0,0,12,53)
 	s.fill()
 
 	s.level(MED)
 	for i=1,7 do
-		s.move(4+((i-1)*18),49)
-		s.text(mu.note_num_to_name(make_scale()[i+params:get('root_note')]))
+		s.move(2,7*i+1)
+		s.text(mu.note_num_to_name(make_scale()[(8-i)+params:get('root_note')]))
 	end
 end
 
@@ -96,24 +124,35 @@ end
 
 function Graphics:bpm_window()
 	s.level(blink.e2 and HIGH or MED)
-	s.rect(0,39,64,-9)
+	s.rect(96,0,32,9)
 	s.fill()
-	
 	s.level(OFF)
-	s.move(14,37)
+	s.move(111,8)
 	s.text_center('BPM')
-	s.move(46,37)
-	s.text_center(util.round(params:get('clock_tempo')))
-	
-
-	s.level(blink.e3 and HIGH or LOW)
-	s.rect(64,39,64,-9)
+	s.level(blink.e2 and HIGH or LOW)
+	s.rect(96,9,32,9)
 	s.fill()
-	s.level(blink.e3 and OFF or MED)
-	s.move(80,37)
+	s.move(111,16)
+	s.level(OFF)
+	s.text_center(util.round(params:get('clock_tempo')))
+
+	s.level(blink.e3 and HIGH or MED)
+	s.rect(96,20,32,9)
+	s.fill()
+	s.level(OFF)
+	s.move(111,28)
 	s.text_center('SWING')
-	s.move(112,37)
+	s.level(blink.e3 and HIGH or LOW)
+	s.rect(96,29,32,9)
+	s.fill()
+	s.move(111,36)
+	s.level(OFF)
 	s.text_center(params:get('swing')..'%')
+	-- s.level(blink.e3 and OFF or MED)
+	-- s.move(80,37)
+	-- s.text_center('SWING')
+	-- s.move(112,37)
+	-- s.text_center(params:get('swing')..'%')
 
 end
 
