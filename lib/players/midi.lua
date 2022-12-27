@@ -7,8 +7,10 @@ function add_midi_players()
             local player = {
                 conn = conn
             }
-            params:add_group("midi_voice_"..i, "midi: "..v.name, 1)
-            params:add_number("midi_chan_"..i, "channel", 1, 16)
+            function player:add_params()
+                params:add_group("midi_voice_"..i, "midi: "..v.name, 1)
+                params:add_number("midi_chan_"..i, "channel", 1, 16)
+            end
             function player:note_on(note, vel)
                 self.conn:note_on(note, util.clamp(math.floor(127*vel), 0, 127))
             end

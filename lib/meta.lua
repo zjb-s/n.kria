@@ -15,7 +15,7 @@ end
 function Meta:note_out(t)
 	local s = make_scale()
 	local n = s[current_val(t,'note') + (current_val(t,'transpose')-1)]
-	print('note is',n)
+	-- print('note is',n)
 	n = n + 12*current_val(t,'octave')
 
 	local gate_len = current_val(t,'gate') -- this will give you a weird range, feel free to use it however you want
@@ -94,7 +94,7 @@ function Meta:advance_page(t,p) -- track,page
 		if out_of_bounds(t,p,new_pos) then 
 			--print(delta)
 			new_pos = (delta == -1) and last-1 or first+1
-			print('new pos is',new_pos,'first is',first,'last is',last)
+			-- print('new pos is',new_pos,'first is',first,'last is',last)
 			data:delta_track_val(t,'pipo_dir',1)
 			resetting = true
 		end
