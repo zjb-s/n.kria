@@ -6,6 +6,9 @@ function Graphics:render()
 	
 	self:post()
 	self:bpm_window()
+	self:scale()
+	self:notes()
+
 	if params:get('overlay') == 2 then
 		self:description_window()
 		self:time_descriptions()
@@ -13,7 +16,24 @@ function Graphics:render()
 		self:description_window()
 		self:config_descriptions()
 	end
+
 	s.update()
+end
+
+function Graphics:scale()
+	s.level(LOW)
+	s.rect(0,52,128,-9)
+	s.fill()
+
+	s.level(MED)
+	for i=1,7 do
+		s.move(4+((i-1)*18),50)
+		s.text(mu.note_num_to_name(make_scale()[i]))
+	end
+end
+
+function Graphics:notes()
+	--todo
 end
 
 function Graphics:config_descriptions()
@@ -88,22 +108,6 @@ function Graphics:post()
 	s.text('\u{0bb}')
 	s.move(8,62)
 	s.text(string.upper(post_buffer))
-end
-
-function Graphics:overview(s)
-	-- todo	
-end
-
-function Graphics:options_glyphs(s)
-	local p = get_screen_subpage()
-	local l
-	if p.name == 'time' then
-		l = params:get('note_div_sync') == 1 and MED or LOW
-		s.level(l)
-		s.line_width(4)
-		s.rect(38,6,19,19)
-		s.stroke()
-	end
 end
 
 return Graphics

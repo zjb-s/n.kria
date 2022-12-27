@@ -17,6 +17,8 @@ function Meta:note_out(t)
 	local n = s[current_val(t,'note') + (current_val(t,'transpose')-1)]
 	-- print('note is',n)
 	n = n + 12*current_val(t,'octave')
+	n = n + params:get('root_note')
+	data:set_track_val(t,'last_note',n)
 
 	local gate_len = current_val(t,'gate') -- this will give you a weird range, feel free to use it however you want
 	-- local gate_multiplier = params:get('data_gate_shift_t'..t) 
@@ -49,7 +51,6 @@ function Meta:advance_all()
 				if data:get_page_val(t,v,'counter') > data:get_page_val(t,v,'divisor') then
 					data:set_page_val(t,v,'counter',1)
 					self:advance_page(t,v)
-					update_val(t,v)
 					if v == 'trig' then will_track_fire[t] = true end
 				end
 			end
@@ -59,8 +60,8 @@ function Meta:advance_all()
 			if 	will_track_fire[t]
 			and data:get_track_val(t,'mute') == 0
 			and	current_val(t,'trig') == 1
-			and math.random(0,99) < prob_map[params:get('data_trig_prob_'..data:get_page_val(t,'trig','pos')..'_t'..at())]
-			then
+			and math.random(0,99) < prob_map[params:get('data_trig_prob_'..data:get_page_val(t,'trig','pos')..'_t'..at()..'_p'..ap())]
+			then -- ^^ this is truly unbearable and must be stopped lol
 				-- print('playing note on track '..t)
 				self:note_out(t)
 			end
@@ -120,15 +121,14 @@ function Meta:advance_page(t,p) -- track,page
 		data:set_page_val(t,p,'divisor',data:get_page_val(t,p,'cued_divisor'))
 		data:set_page_val(t,p,'cued_divisor',0)
 	end
-
-	params:set('pos_'..p..'_t'..t,new_pos)
+	data:set_page_val(t,p,'pos',new_pos)
 end -- todo there's something very wrong with triangle mode...
 
 
 function Meta:toggle_subtrig(track,step,subtrig)
-	params:delta('data_subtrig_'..subtrig..'_step_'..step..'_t'..track,1)
-	for i=params:get('data_subtrig_count_'..step..'_t'..track),1,-1 do
-		if params:get('data_subtrig_'..i..'_step_'..step..'_t'..track) == 0 then
+	params:delta('data_subtrig_'..subtrig..'_step_'..step..'_t'..track..'_p'..ap(),1)
+	for i=params:get('data_subtrig_count_'..step..'_t'..track..'_p'..ap()),1,-1 do
+		if params:get('data_subtrig_'..i..'_step_'..step..'_t'..track..'_p'..ap()) == 0 then
 			-- print('decrementing subtrig count')
 			self:delta_subtrig_count(track,step,-1)
 		else
@@ -138,17 +138,17 @@ function Meta:toggle_subtrig(track,step,subtrig)
 end
 
 function Meta:delta_subtrig_count(track,step,delta)
-	self:edit_subtrig_count(track,step,params:get('data_subtrig_count_'..step..'_t'..track) + delta)
+	self:edit_subtrig_count(track,step,params:get('data_subtrig_count_'..step..'_t'..track..'_p'..ap()) + delta)
 end
 
 function Meta:edit_subtrig_count(track,step,new_val)
-	params:set('data_subtrig_count_'..step..'_t'..track,new_val)
+	params:set('data_subtrig_count_'..step..'_t'..track..'_p'..ap(),new_val)
 	for i=1,5 do
-		if	params:get('data_subtrig_'..i..'_step_'..step..'_t'..track) == 1 and i > new_val then
-			params:set('data_subtrig_'..i..'_step_'..step..'_t'..track,0)
+		if	params:get('data_subtrig_'..i..'_step_'..step..'_t'..track..'_p'..ap()) == 1 and i > new_val then
+			params:set('data_subtrig_'..i..'_step_'..step..'_t'..track..'_p'..ap(),0)
 		end
 	end
-	post('subtrig count s'..step..'t'..track..' '.. params:get('data_subtrig_count_'..step..'_t'..track))
+	post('subtrig count s'..step..'t'..track..' '.. params:get('data_subtrig_count_'..step..'_t'..track..'_p'..ap()))
 end
 
 function Meta:edit_divisor(track,page,new_val)

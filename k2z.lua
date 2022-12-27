@@ -6,10 +6,16 @@
 -- ~~~ kria port native to lua ~~~
 -- 0.1 ~~~~~~~~~~~~~~~~~~~~~~~~~
 -- 
+-- k1: shift
 -- k2: reset
 -- k3: play
--- k1+k2: time overlay (ansible k1)
--- k1:k3: config overlay (ansible k2)
+-- shift+k2: time overlay (ansible k1)
+-- shift+k3: config overlay (ansible k2)
+--
+-- e1: tempo
+-- e2: nothing
+-- e3: nothing
+-- shift+e1: swing
 --
 -- thanks for everything, @tehn
 
@@ -114,14 +120,14 @@ config_desc = {
 
 data = {}
 function data:get_track_val(track,name) return params:get(name..'_t'..track) end
-function data:get_page_val(track,page,name) return params:get(name..'_'..page..'_t'..track) end
-function data:get_step_val(track,page,step) return params:get('data_'..page..'_'..step..'_t'..track) end
+function data:get_page_val(track,page,name) return params:get(name..'_'..page..'_t'..track..'_p'..ap()) end
+function data:get_step_val(track,page,step) return params:get('data_'..page..'_'..step..'_t'..track..'_p'..ap()) end
 function data:set_track_val(track,name,new_val) params:set(name..'_t'..track,new_val) end
-function data:set_page_val(track,page,name,new_val) params:set(name..'_'..page..'_t'..track,new_val) end
-function data:set_step_val(track,page,step,new_val) params:set('data_'..page..'_'..step..'_t'..track,new_val) end
+function data:set_page_val(track,page,name,new_val) params:set(name..'_'..page..'_t'..track..'_p'..ap(),new_val) end
+function data:set_step_val(track,page,step,new_val) params:set('data_'..page..'_'..step..'_t'..track..'_p'..ap(),new_val) end
 function data:delta_track_val(track,name,d) params:delta(name..'_t'..track,d) end
-function data:delta_page_val(track,page,name,d) params:delta(name..'_'..page..'_t'..track,d) end
-function data:delta_step_val(track,page,step,d) params:delta('data_'..page..'_'..step..'_t'..track,d) end
+function data:delta_page_val(track,page,name,d) params:delta(name..'_'..page..'_t'..track..'_p'..ap(),d) end
+function data:delta_step_val(track,page,step,d) params:delta('data_'..page..'_'..step..'_t'..track..'_p'..ap(),d) end
 -- no support for probability or subtrigs
 
 loop_first = -1
@@ -161,24 +167,12 @@ function intro()
 	clock.sleep(2)
 	post('based on kria by @tehn')
 	clock.sleep(2)
-	post(':-)')
+	post('see splash for controls')
 end
 
 function key(n,d) Onboard:key(n,d) end
 function enc(n,d) Onboard:enc(n,d) end
 function g.key(x,y,z) gkeys:key(x,y,z) end
-
-val_buffers = {}
-function init_val_buffers()
-	for i=1,NUM_TRACKS do
-		table.insert(val_buffers,{})
-		for k,v in ipairs(combined_page_list) do
-			if v == 'scale' or v == 'patterns' then break end
-			val_buffers[i][v] = 
-				params:get('data_'..v..'_'..params:get('pos_'..v..'_t'..i)..'_t'..i)
-		end
-	end
-end
 
 function clock.transport.start() params:set('playing',1); post('play') end
 function clock.transport.stop() params:set('playing',0); post('stop') end
@@ -188,7 +182,7 @@ function init()
 	add_modulation_sources()
 	init_grid_buffers()
 	Prms:add()
-	init_val_buffers()
+	--init_val_buffers()
 	clock.run(visual_ticker)
 	clock.run(step_ticker)
 	clock.run(intro)
@@ -226,13 +220,13 @@ function note_clock(track,note,duration,slide_amt)
 	local velocity = 1.0
 	local divider = data:get_page_val(track,'trig','divisor')
 	local pos = data:get_page_val(track,'retrig','pos')
-	local subdivision = params:get('data_subtrig_count_'..pos..'_t'..track)
-	if track == 1 then print(note) end
+	local subdivision = params:get('data_subtrig_count_'..pos..'_t'..track..'_p'..ap())
+	--if track == 1 then print(note) end
 	if matrix ~= nil then
 		matrix:set("pitch_t"..track, (note - 36)/(127-36))
 	end
 	for i=1,subdivision do
-		if params:get('data_subtrig_'..i..'_step_'..pos..'_t'..track) == 1 then
+		if params:get('data_subtrig_'..i..'_step_'..pos..'_t'..track..'_p'..ap()) == 1 then
 			player:set_slew(slide_amt/1000)
 			player:play_note(note, velocity, duration/subdivision)
 		end
@@ -240,14 +234,16 @@ function note_clock(track,note,duration,slide_amt)
 	end
 end
 
-function update_val(track,page)
-	val_buffers[track][page] =
-	    params:get('data_'..page..'_'..params:get('pos_'..page..'_t'..track)..'_t'..track)
-end
-
 function step_ticker()
 	while true do
 		clock.sync(1/4)
+		if params:get('swing_this_step') == 1 then
+			params:set('swing_this_step',0)
+			local amt = (clock.get_beat_sec()/4)*((params:get('swing')-50)/100)
+			clock.sleep(amt)
+		else
+			params:set('swing_this_step',1)
+		end
 		if params:get('playing') == 1 then
 			meta:advance_all()
 		end
@@ -277,6 +273,10 @@ function at() -- get active track
 	return params:get('active_track')
 end
 
+function ap() -- get active pattern
+	return params:get('active_pattern')
+end
+
 function out_of_bounds(track,p,value)
 	-- returns true if value is out of bounds on page p, track
 	return 	(value < data:get_page_val(track,p,'loop_first'))
@@ -294,7 +294,8 @@ function get_page_name()
 end
 
 function current_val(track,page)
-	return val_buffers[track][page]
+	--return val_buffers[track][page]
+	return data:get_step_val(track,page,data:get_page_val(track,page,'pos'))
 end
 
 function get_mod_key()

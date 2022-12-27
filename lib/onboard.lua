@@ -2,7 +2,13 @@ local Onboard = {}
 
 function Onboard:enc(n,d)
 	if n == 1 then
-		params:delta('clock_tempo',d)
+		if shift then
+			params:delta('swing',d)
+			post('swing: ' .. params:get('swing'))
+		else
+			params:delta('clock_tempo',d)
+			post('tempo: ' .. util.round(params:get('clock_tempo')))
+		end
 	end	
 end
 
