@@ -41,7 +41,7 @@ function Graphics:note_history()
 			self.history[k] = nil
 		else
 			s.level(HIGH)
-			s.move(hist.track*20, 50 - (50/4)*ago)
+			s.move(hist.track*20, 54 - (54/4.0)*ago)
 			s.text(hist.note)
 		end
 	end
