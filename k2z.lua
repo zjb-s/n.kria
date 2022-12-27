@@ -279,11 +279,11 @@ function note_clock(track,note,duration,slide_amt)
 		matrix:set("pitch_t"..track, (note - 36)/(127-36))
 	end
 	local note_str = mu.note_num_to_name(note, true)
-	screen_graphics:add_history(track, note_str, clock.get_beats())
 	for i=1,subdivision do
 		if params:get('data_subtrig_'..i..'_step_'..pos..'_t'..track..'_p'..ap()) == 1 then
 			player:set_slew(slide_amt/1000)
 			player:play_note(note, velocity, duration/subdivision)
+			screen_graphics:add_history(track, note_str, clock.get_beats())
 		end
 		clock.sleep(clock.get_beat_sec()*divider/(4*subdivision))
 	end
