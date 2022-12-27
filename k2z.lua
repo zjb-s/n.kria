@@ -12,10 +12,9 @@
 -- shift+k2: time overlay (ansible k1)
 -- shift+k3: config overlay (ansible k2)
 --
--- e1: tempo
--- e2: nothing
--- e3: nothing
--- shift+e1: swing
+-- e1: nothing
+-- e2: tempo
+-- e3: swing
 --
 -- thanks for everything, @tehn
 
@@ -135,6 +134,11 @@ loop_last = -1
 wavery_light = MED
 waver_dir = 1
 shift = false
+blink = {
+	e1 = false
+,	e2 = false
+,	e3 = false
+}
 
 pulse_indicator = 1 -- todo implement
 global_clock_counter = 1
@@ -168,6 +172,12 @@ function intro()
 	post('based on kria by @tehn')
 	clock.sleep(2)
 	post('see splash for controls')
+end
+
+function touched_enc(n)
+	blink['e'..n] = true
+	clock.sleep(1/4)
+	blink['e'..n] = false
 end
 
 function key(n,d) Onboard:key(n,d) end
@@ -231,6 +241,7 @@ function note_clock(track,note,duration,slide_amt)
 			player:play_note(note, velocity, duration/subdivision)
 		end
 		clock.sleep(clock.get_beat_sec()*divider/(4*subdivision))
+
 	end
 end
 

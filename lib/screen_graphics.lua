@@ -22,18 +22,42 @@ end
 
 function Graphics:scale()
 	s.level(LOW)
-	s.rect(0,52,128,-9)
+	s.rect(0,51,128,-9)
 	s.fill()
 
 	s.level(MED)
 	for i=1,7 do
-		s.move(4+((i-1)*18),50)
-		s.text(mu.note_num_to_name(make_scale()[i]))
+		s.move(4+((i-1)*18),49)
+		s.text(mu.note_num_to_name(make_scale()[i+params:get('root_note')]))
 	end
 end
 
 function Graphics:notes()
-	--todo
+	local track_names = {'one','two','three','four'}
+	local x = {1,34,67,100}
+	local y = 2
+	local window_width = 28
+	local window_height = 25
+	for t=1,4 do
+		s.line_width(1)
+		s.level(MED)
+		-- todo make this blink high instead of med when a note fires
+		s.rect(x[t],y,window_width,window_height)
+		s.fill()
+		s.level(LOW)
+		s.rect(x[t],y,window_width,window_height)
+		s.stroke()
+		s.rect(x[t],y+window_height/2,window_width,window_height/2)
+		s.fill()
+
+		s.move(x[t]+(window_width/2)-1,(window_height/2)-2)
+		s.level(OFF)
+		s.text_center(string.upper(track_names[t]))
+
+		s.move(x[t]+(window_width/2)-1,(window_height)-2)
+		s.level(MED)
+		s.text_center(mu.note_num_to_name(data:get_track_val(t,'last_note')))
+	end
 end
 
 function Graphics:config_descriptions()
@@ -71,22 +95,25 @@ function Graphics:time_descriptions()
 end
 
 function Graphics:bpm_window()
-	s.line_width(1)
-	s.level(HIGH)
-	s.rect(1,3,31,25)
+	s.level(blink.e2 and HIGH or MED)
+	s.rect(0,39,64,-9)
 	s.fill()
-	s.level(LOW)
-	s.rect(1,3,31,26)
-	s.stroke()
-	s.rect(1,16,31,12)
-	s.fill()
-
+	
 	s.level(OFF)
-	s.move(15,12)
+	s.move(14,37)
 	s.text_center('BPM')
-	s.level(HIGH)
-	s.move(15,25)
+	s.move(46,37)
 	s.text_center(util.round(params:get('clock_tempo')))
+	
+
+	s.level(blink.e3 and HIGH or LOW)
+	s.rect(64,39,64,-9)
+	s.fill()
+	s.level(blink.e3 and OFF or MED)
+	s.move(80,37)
+	s.text_center('SWING')
+	s.move(112,37)
+	s.text_center(params:get('swing')..'%')
 
 end
 

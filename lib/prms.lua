@@ -125,6 +125,8 @@ function Prms:add_tracks()
 					params:add_number('data_'..v..'_prob_'..i..'_t'..t..'_p'..p,'data_prob_'..v..'_t'..t,1,4,4)
 				end
 			end
+
+			params:hide('P'..p..' T'..t..' DATA')
 		end
 	end
 end

@@ -192,7 +192,11 @@ function gkeys:scale_overlay(x,y,z,t)
 
 	elseif x > 8 and z == 1 then -- scale editor
 		params:set('scale_'..params:get('scale_num')..'_deg_'..8-y, x-9)
-
+		if y == 7 then
+			post('root note: '..mu.note_num_to_name(params:get('root_note')))
+		else
+			post('scale stride, degree '..8-y..': '..x-9)
+		end
 	end
 end
 
@@ -220,7 +224,8 @@ function gkeys:note_page(x,y,z,t)
 		post('note & trig '..x..': '..8-y)
 	else
 		data:set_step_val(t,'note',x,8-y)
-		post('note '..x..': '..8-y)
+		local n = mu.note_num_to_name(make_scale()[(8-y)+params:get('root_note')])
+		post('note '..x..': '..8-y.. ' ['..n..']')
 	end
 end
 
