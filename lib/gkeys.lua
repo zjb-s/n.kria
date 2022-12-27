@@ -22,7 +22,7 @@ function gkeys:time_overlay(x,y,z,t)
 			post('tempo '..(x == 8 and '-' or '+')..'1bpm')
 		elseif y == 2 then
 			params:set('global_clock_div',x)
-			post('global clock divisor: ' .. params:get('global_clock_div'))
+			post('global clock divisor: ' .. division_names[params:get('global_clock_div')])
 		end
 	end
 end
@@ -43,7 +43,8 @@ function gkeys:config_overlay(x,y,z,t)
 end
 
 function gkeys:track_select(x,y,z,t)
-	if kbuf[11][8] then -- loop mod
+	last_touched_track = x
+	if get_mod_key() == 'loop' then
 		data:delta_track_val(x,'mute',1)
 		post('t'..x..' '..((data:get_track_val(x,'mute') == 1) and 'mute' or 'unmute'))
 	else
@@ -187,12 +188,16 @@ function gkeys:scale_overlay(x,y,z,t)
 		post('selected scale '..n)
 
 	elseif x > 1 and x < 7 and y < 5 and z == 1 then -- play modes
-		params:set('playmode_t'..y, x-1)
+		params:set('play_mode_t'..y, x-1)
 		post('t'..y..' playmode: '..play_modes[x-1])
 
 	elseif x > 8 and z == 1 then -- scale editor
 		params:set('scale_'..params:get('scale_num')..'_deg_'..8-y, x-9)
-
+		if y == 7 then
+			post('root note: '..mu.note_num_to_name(params:get('root_note')))
+		else
+			post('scale stride, degree '..8-y..': '..x-9)
+		end
 	end
 end
 
@@ -206,11 +211,11 @@ function gkeys:retrig_page(x,y,z,t)
 	if y == 1 or y == 7 then
 		meta:delta_subtrig_count(t,x,(y==1 and 1 or -1))
 	else
-		if 7-y > params:get('data_subtrig_count_'..x..'_t'..t) then
-			params:set('data_subtrig_count_'..x..'_t'..t,7-y)
+		if 7-y > data:get_unique(t,'subtrig_count',x) then
+			data:set_unique(t,'subtrig_count',x,7-y)
 		end 
 		meta:toggle_subtrig(t,x,7-y)
-		post('subtrig '..7-y..' '..(params:get('data_subtrig_'..7-y..'_step_'..x..'_t'..t) == 1 and 'on' or 'off'))
+		post('subtrig '..7-y..' '..(data:get_unique(t,'subtrig',x,7-y) and 'on' or 'off'))
 	end
 end
 
@@ -220,7 +225,8 @@ function gkeys:note_page(x,y,z,t)
 		post('note & trig '..x..': '..8-y)
 	else
 		data:set_step_val(t,'note',x,8-y)
-		post('note '..x..': '..8-y)
+		local n = mu.note_num_to_name(make_scale()[(8-y)+params:get('root_note')])
+		post('note '..x..': '..8-y.. ' ['..n..']')
 	end
 end
 
@@ -265,11 +271,11 @@ function gkeys:key(x,y,z)
 	end
 
 	-- key processing
-	if params:get('overlay') == 2 then
+	if get_overlay() == 'time' then
 		self:time_overlay(x,y,z,t)
-	elseif params:get('overlay') == 3 then
+	elseif get_overlay() == 'options' then
 		self:config_overlay(x,y,z,t)
-	elseif params:get('overlay') == 1 then -- no overlay
+	elseif get_overlay() == 'none' then -- no overlay
 		if 	z == 1 and y == 8 and x <= NUM_TRACKS then
 			self:track_select(x,y,z,t)
 		elseif z == 1 and y == 8 and ((x >= 6 and x <= 9) or x > 14) then

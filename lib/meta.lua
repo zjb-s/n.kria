@@ -154,10 +154,10 @@ end
 function Meta:edit_divisor(track,page,new_val)
 	if params:get('div_cue') == 1 then
 		data:set_page_val(track,page,'cued_divisor',new_val)
-		post('cued: '..page..' divisor: '..new_val)
+		post('cued: '..page..' divisor: '..division_names[new_val])
 	else
 		data:set_page_val(track,page,'divisor',new_val)
-		post(page..' divisor: '..new_val)
+		post(page..' divisor: '..division_names[new_val])
 	end
 end
 
@@ -196,6 +196,61 @@ function Meta:edit_loop(track, first, last)
 		end
 		post('all loops: ['..f..'-'..l..']')
 	end
+end
+
+function Meta:copy_track()
+	local t = last_touched_track
+	for k,v in ipairs(combined_page_list) do
+		if v == 'scale' or v == 'patterns' then break end
+		track_clipboard[v] = {}
+		track_clipboard[v]['pos'] = data:get_page_val(t,v,'pos')
+		track_clipboard[v]['loop_first'] = data:get_page_val(t,v,'loop_first')
+		track_clipboard[v]['loop_last'] = data:get_page_val(t,v,'loop_last')
+		track_clipboard[v]['divisor'] = data:get_page_val(t,v,'divisor')
+		track_clipboard[v]['cued_divisor'] = data:get_page_val(t,v,'cued_divisor')
+		track_clipboard[v]['counter'] = data:get_page_val(t,v,'counter')
+		track_clipboard[v].vals = {}
+		track_clipboard[v].probs = {}
+		if v == 'retrig' then
+			track_clipboard[v].subtrig_counts = {}
+			track_clipboard[v].subtrigs = {}
+		end
+		for i=1,16 do
+			table.insert(track_clipboard[v].vals,data:get_step_val(t,v,i))
+			table.insert(track_clipboard[v].probs,data:get_unique(t,v..'_prob',i))
+			if v == 'retrig' then
+				table.insert(track_clipboard[v].subtrig_counts,data:get_unique(t,'subtrig_count',i))
+				table.insert(track_clipboard[v].subtrigs,{})
+				for j=1,5 do
+					table.insert(track_clipboard[v].subtrigs[i],data:get_unique(t,'subtrig',i,j))
+				end
+			end
+		end
+	end
+	post('copied track '..t)
+end
+
+function Meta:paste_track()
+	local t = last_touched_track
+	for k,v in ipairs(combined_page_list) do
+		if v == 'scale' or v == 'patterns' then break end
+		data:set_page_val(t,v,'pos',track_clipboard[v].pos)
+		data:set_page_val(t,v,'loop_first',track_clipboard[v].loop_first)
+		data:set_page_val(t,v,'loop_last',track_clipboard[v].loop_last)
+		data:set_page_val(t,v,'divisor',track_clipboard[v].divisor)
+		data:set_page_val(t,v,'cued_divisor',track_clipboard[v].cued_divisor)
+		data:set_page_val(t,v,'counter',track_clipboard[v].counter)
+		for i=1,16 do
+			data:set_step_val(t,v,i,track_clipboard[v].vals[i])
+			data:set_unique(t,v..'_prob',i,track_clipboard[v].probs[i])
+			if v == 'retrig' then
+				for j=1,5 do
+					data:set_unique(t,'subtrig',i,j,track_clipboard[v].subtrigs[j])
+				end
+			end
+		end
+	end
+	post('pasted on track '..t)
 end
 
 return Meta

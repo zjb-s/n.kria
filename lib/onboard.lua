@@ -1,15 +1,28 @@
 local Onboard = {}
 
 function Onboard:enc(n,d)
+	-- if n == 1 then
+	-- 	if shift then
+	-- 		params:delta('swing',d)
+	-- 		post('swing: ' .. params:get('swing'))
+	-- 	else
+	-- 		params:delta('clock_tempo',d)
+	-- 		post('tempo: ' .. util.round(params:get('clock_tempo')))
+	-- 	end
+	-- end	
 	if n == 1 then
-		if shift then
-			params:delta('swing',d)
-			post('swing: ' .. params:get('swing'))
-		else
-			params:delta('clock_tempo',d)
-			post('tempo: ' .. util.round(params:get('clock_tempo')))
-		end
-	end	
+		-- nothing
+	elseif n == 2 then
+		params:delta('clock_tempo',d)
+		post('tempo: ' .. util.round(params:get('clock_tempo')))
+		if e2_clock then clock.cancel(e2_clock) end
+		e2_clock = clock.run(touched_enc,2)
+	elseif n == 3 then
+		params:delta('swing',d)
+		post('swing: ' .. params:get('swing'))
+		if e3_clock then clock.cancel(e3_clock) end
+		e3_clock = clock.run(touched_enc,3)
+	end
 end
 
 function Onboard:key(n,d)
@@ -36,10 +49,18 @@ function Onboard:key(n,d)
 				post('overview')
 			else
 				if n == 2 then
-					meta:reset()
+					if kbuf[1][8] or kbuf[2][8] or kbuf[3][8] or kbuf[4][8] then
+						meta:copy_track()
+					else
+						meta:reset()
+					end
 				elseif n == 3 then
-					params:delta('playing',1)
-					post((params:get('playing') == 1) and 'play' or 'stop')
+					if kbuf[1][8] or kbuf[2][8] or kbuf[3][8] or kbuf[4][8] then
+						meta:paste_track()
+					else
+						params:delta('playing',1)
+						post((params:get('playing') == 1) and 'play' or 'stop')
+					end
 				end
 			end
 		end

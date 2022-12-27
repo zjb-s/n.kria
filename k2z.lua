@@ -12,10 +12,9 @@
 -- shift+k2: time overlay (ansible k1)
 -- shift+k3: config overlay (ansible k2)
 --
--- e1: tempo
--- e2: nothing
--- e3: nothing
--- shift+e1: swing
+-- e1: nothing
+-- e2: tempo
+-- e3: swing
 --
 -- thanks for everything, @tehn
 
@@ -44,6 +43,24 @@ NUM_SCALES = 16
 
 post_buffer = 'k2z v0.1'
 
+division_names = {
+	'1/16'
+,	'1/8'
+,	'1/8.'
+,	'1/4'
+,	'5/16'
+,	'1/4.'
+,	'7/16'
+,	'1/2'
+,	'9/16'
+,	'5/8'
+,	'11/16'
+,	'1/2.'
+,	'13/16'
+,	'7/8'
+,	'15/16'
+,	'1/1'
+}
 scale_defaults = {
 	{0,2,2,1,2,2,2}
 ,	{0,2,1,2,2,2,1}
@@ -87,6 +104,7 @@ mod_names = {'none','loop','time','prob'}
 play_modes = {'forward', 'reverse', 'triangle', 'drunk', 'random'}
 prob_map = {0, 25, 50, 100}
 div_sync_modes = {'none','track','all'}
+overlay_names = {'none','time','options','copy/paste'}
 
 time_desc = {
 	{	
@@ -130,11 +148,39 @@ function data:delta_page_val(track,page,name,d) params:delta(name..'_'..page..'_
 function data:delta_step_val(track,page,step,d) params:delta('data_'..page..'_'..step..'_t'..track..'_p'..ap(),d) end
 -- no support for probability or subtrigs
 
+function data:get_unique(track,page,step,aux)
+	if page == 'subtrig' then
+		return params:get('data_subtrig_'..aux..'_step_'..step..'_t'..track..'_p'..ap()) == 1
+	elseif page == 'subtrig_count' then
+		return params:get('data_subtrig_count_'..step..'_t'..track..'_p'..ap())
+	elseif string.sub(page,-4,-1) == 'prob' then
+		return params:get('data_'..page..'_'..step..'_t'..track..'_p'..ap())
+	end
+end
+
+function data:set_unique(track,page,step,aux,aux2)
+	if page == 'subtrig' then
+		params:set('data_subtrig_'..aux..'_step_'..step..'_t'..track..'_p'..ap(),aux2 and 1 or 0)
+	elseif page == 'subtrig_count' then
+		params:set('data_subtrig_count_'..step..'_t'..track..'_p'..ap(),aux)
+	elseif string.sub(page,-4,-1) == 'prob' then
+		params:get('data_'..page..'_'..step..'_t'..track..'_p'..ap(),aux)
+	end
+end
+
 loop_first = -1
 loop_last = -1
 wavery_light = MED
 waver_dir = 1
 shift = false
+last_touched_track = 1
+blink = {
+	e1 = false
+,	e2 = false
+,	e3 = false
+}
+track_clipboard = {}
+pattern_clipboard = {}
 
 pulse_indicator = 1 -- todo implement
 global_clock_counter = 1
@@ -170,6 +216,12 @@ function intro()
 	post('see splash for controls')
 end
 
+function touched_enc(n)
+	blink['e'..n] = true
+	clock.sleep(1/4)
+	blink['e'..n] = false
+end
+
 function key(n,d) Onboard:key(n,d) end
 function enc(n,d) Onboard:enc(n,d) end
 function g.key(x,y,z) gkeys:key(x,y,z) end
@@ -182,7 +234,7 @@ function init()
 	add_modulation_sources()
 	init_grid_buffers()
 	Prms:add()
-	--init_val_buffers()
+	meta:copy_track()
 	clock.run(visual_ticker)
 	clock.run(step_ticker)
 	clock.run(intro)
@@ -231,6 +283,7 @@ function note_clock(track,note,duration,slide_amt)
 			player:play_note(note, velocity, duration/subdivision)
 		end
 		clock.sleep(clock.get_beat_sec()*divider/(4*subdivision))
+
 	end
 end
 
@@ -300,6 +353,14 @@ end
 
 function get_mod_key()
 	return mod_names[params:get('mod')]
+end
+
+function get_overlay()
+	return overlay_names[params:get('overlay')]
+end
+
+function set_overlay(n)
+	params:set('overlay',tab.key(overlay_names,n))
 end
 
 function highlight(l) -- level number

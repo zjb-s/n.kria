@@ -258,8 +258,8 @@ function Graphics:retrig()
 					l = highlight(l)
 				end
 			else
-				if params:get('data_subtrig_count_'..x..'_t'..at()) >= 7-y then
-					if params:get('data_subtrig_'..7-y..'_step_'..x..'_t'..at()) == 1 then
+				if data:get_unique(at(),'subtrig_count',x) >= 7-y then
+					if data:get_unique(at(),'subtrig',x,7-y) then
 						l = oob and MED or HIGH
 					else
 						l = oob and LOW or MED
