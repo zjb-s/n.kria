@@ -1,6 +1,4 @@
 local nb = include('k2z/lib/nb/lib/nb')
-include "lib/players/midi"
-
 
 Prms = {}
 
