@@ -268,7 +268,7 @@ function make_scale()
 	return new_scale
 end
 
-function note_clock(track,note,duration,slide_amt)
+function note_clock(track,note,duration,slide_or_modulate)
 	local player = params:lookup_param("voice_t"..track):get_player()
 	local velocity = 1.0
 	local divider = data:get_page_val(track,'trig','divisor')
@@ -279,11 +279,17 @@ function note_clock(track,note,duration,slide_amt)
 		matrix:set("pitch_t"..track, (note - 36)/(127-36))
 	end
 	local note_str = mu.note_num_to_name(note, true)
-	screen_graphics:add_history(track, note_str, clock.get_beats())
+	local description = player:describe()
 	for i=1,subdivision do
 		if params:get('data_subtrig_'..i..'_step_'..pos..'_t'..track..'_p'..ap()) == 1 then
-			player:set_slew(slide_amt/1000)
+			if description.supports_slew then
+				local slide_amt = util.linlin(1,7,1,120,slide_or_modulate) -- to match stock kria times
+				player:set_slew(slide_amt/1000)
+			else
+				player:modulate(util.linlin(1,7,0,1,slide_or_modulate))
+			end
 			player:play_note(note, velocity, duration/subdivision)
+			screen_graphics:add_history(track, note_str, clock.get_beats())
 		end
 		clock.sleep(clock.get_beat_sec()*divider/(4*subdivision))
 	end
@@ -344,6 +350,17 @@ function get_page_name()
 		p = alt_page_names[params:get('page')]
 	else
 		p = page_names[params:get('page')]
+	end
+	return p
+end
+
+function get_display_page_name()
+	local p = get_page_name()
+	if p == "slide" then
+		local description = params:lookup_param("voice_t"..at()):get_player():describe()
+		if not description.supports_slew then
+			p = description.modulate_description
+		end
 	end
 	return p
 end
