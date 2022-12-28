@@ -25,7 +25,7 @@ function Meta:note_out(t)
 	local gate_len = current_val(t,'gate') -- this will give you a weird range, feel free to use it however you want
 	-- local gate_multiplier = params:get('data_gate_shift_t'..t) 
 	local gate_multiplier = data:get_track_val(t,'gate_shift')
-	local slide_amt =  util.linlin(1,7,1,120,current_val(t,'slide')) -- to match stock kria times
+	local slide_or_modulate = current_val(t,'slide') -- to match stock kria times
 	local duration = util.clamp(gate_len-1, 0, 4)/16
 	if gate_len == 1 or gate_len == 6 then
 		duration = duration + 0.02 -- this turns the longest notes into ties, and the shortest into blips, at mult of 1
@@ -33,7 +33,7 @@ function Meta:note_out(t)
 		duration = duration - 0.02
 	end
 	duration = duration * gate_multiplier
-	clock.run(note_clock, t, n, duration, slide_amt)
+	clock.run(note_clock, t, n, duration, slide_or_modulate)
 end
 
 function Meta:advance_all()
@@ -175,10 +175,10 @@ end
 function Meta:edit_divisor(track,page,new_val)
 	if params:get('div_cue') == 1 then
 		data:set_page_val(track,page,'cued_divisor',new_val)
-		post('cued: '..page..' divisor: '..division_names[new_val])
+		post('cued: '..get_display_page_name()..' divisor: '..division_names[new_val])
 	else
 		data:set_page_val(track,page,'divisor',new_val)
-		post(page..' divisor: '..division_names[new_val])
+		post(get_display_page_name()..' divisor: '..division_names[new_val])
 	end
 end
 
@@ -202,7 +202,7 @@ function Meta:edit_loop(track, first, last)
 		else
 			data:set_page_val(track,p,'loop_first',f)
 			data:set_page_val(track,p,'loop_last',l)
-			post('t'..track..' '..p..' loop: ['..f..'-'..l..']')
+			post('t'..track..' '..get_display_page_name()..' loop: ['..f..'-'..l..']')
 		end
 	elseif loopsync == 'track' then
 		for k,v in ipairs(combined_page_list) do

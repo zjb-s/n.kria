@@ -63,8 +63,7 @@ function gkeys:page_select(x,y,z,t)
 			params:delta('ms_active')
 		end
 	end
-	post(get_page_name())
-	if params:get('ms_active') == 1 and x == 16 then post('meta-sequence') end
+	post(get_display_page_name())
 end
 
 function gkeys:resolve_mod_keys(x,y,z,t) -- intentionally prioritizes leftmost held mod key
@@ -131,7 +130,7 @@ function gkeys:time_mod(x,y,z,t)
 
 		local g1 = params:get('note_div_sync')
 		local g2 = params:get('div_sync')
-		local pn = get_page_name()
+		local pn = get_page_name(false)
 
 		if g1 == 0 and g2 == 1 then -- off/none
 			meta:edit_divisor(at(),pn,x)
@@ -261,7 +260,6 @@ function gkeys:trig_page(x,y,z,t)
 end
 
 function gkeys:retrig_page(x,y,z,t)
-	local p = get_page_name()
 	if y == 1 or y == 7 then
 		meta:delta_subtrig_count(t,x,(y==1 and 1 or -1))
 	else
@@ -301,7 +299,13 @@ end
 
 function gkeys:slide_page(x,y,z,t)
 	data:set_step_val(t,'slide',x,8-y)
-	post('slide '..x..': '..8-y)
+	local player = params:lookup_param("voice_t"..t):get_player()
+	local description = player:describe()
+	if description.supports_slew then
+		post('slide '..x..': '..8-y)
+	else
+		post(description.modulate_description .. ' ' .. x .. ": "..8-y)
+	end
 end
 
 function gkeys:gate_page(x,y,z,t)
