@@ -50,13 +50,13 @@ function Onboard:key(n,d)
 			else
 				if n == 2 then
 					if kbuf[1][8] or kbuf[2][8] or kbuf[3][8] or kbuf[4][8] then
-						meta:copy_track()
+						track_clipboard = meta:get_track_copy() 
 					else
 						meta:reset()
 					end
 				elseif n == 3 then
 					if kbuf[1][8] or kbuf[2][8] or kbuf[3][8] or kbuf[4][8] then
-						meta:paste_track()
+						meta:paste_onto_track(last_touched_track,track_clipboard)
 					else
 						params:delta('playing',1)
 						post((params:get('playing') == 1) and 'play' or 'stop')

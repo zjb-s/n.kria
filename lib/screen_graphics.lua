@@ -50,7 +50,7 @@ end
 
 function Graphics:scale()
 	s.level(LOW)
-	s.rect(0,0,12,53)
+	s.rect(0,0,14,53)
 	s.fill()
 
 	s.level(MED)

@@ -3,7 +3,7 @@ local nb = include('k2z/lib/nb/lib/nb')
 Prms = {}
 
 -- todo add pattern copying and pasting
--- todo add option for keeping loop,rate,etc between patterns or not
+-- todo add option for keeping loop,rate,etc between pattern or not
 -- todo overhaul this whole page to allow recursion: i want to add 16 copies of the whole "tracks" section but i don't think i can with the current architecture.
 
 function Prms:add()
@@ -25,16 +25,32 @@ function Prms:add()
 	params:add_binary('note_sync','NOTE SYNC', 'toggle')
 	params:add_option('loop_sync','LOOP SYNC',div_sync_modes)
 	
-	params:add_group('GLOBAL DATA',8)
+	params:add_group('GLOBAL DATA',11)
 	params:add_binary('swing_this_step','swing_this_step','toggle')
 	params:add_number('active_track', 'active track', 1,NUM_TRACKS,1)
 	params:add_option('mod','mod key held', mod_names, 1)
 	params:add_number('scale_num','selected scale',1,NUM_SCALES,1)
-	params:add_number('active_pattern','pattern',1,NUM_PATTERNS,1)
 	params:add_option('overlay','overlay',overlay_names,1)
 	params:add_number('page', 'page', 1,6,1)
 	params:add_binary('alt_page','alt page?', 'toggle')
+	params:add_number('active_pattern','pattern',1,NUM_PATTERNS,1)
+	params:add_number('cued_pattern','cued pattern',0,99,1)
+	params:add_number('pattern_quant','pattern_quant',1,16,1)
+	params:add_number('pattern_quant_pos','pattern_quant_pos',1,16,1)
 	params:hide('GLOBAL DATA')
+
+	params:add_group('ms_data',133) -- meta-sequence
+	params:add_number('ms_first','ms_loop_first',1,64,1)
+	params:add_number('ms_last','ms_loop_last',1,64,4)
+	params:add_number('ms_pos','ms_pos',1,64,1)
+	params:add_number('ms_cursor','ms_cursor',1,64,1)
+	params:add_number('ms_duration_pos','ms_duration_pos',1,99,1)
+	params:add_binary('ms_active','ms_active','toggle')
+	for i=1,64 do
+		params:add_number('ms_pattern_'..i,'ms_'..i..'_pattern',1,64,1)
+		params:add_number('ms_duration_'..i,'ms_'..i..'_duration',1,16,1)
+	end
+	--params:hide('ms_data')
 
 	params:add_group('scale data', 112)
 	for i=1,16 do

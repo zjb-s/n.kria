@@ -39,9 +39,9 @@ function Graphics:render()
 
 	-- \/\/ these are in order of precedence \/\/
 	local p = get_page_name()
-	if params:get('overlay') == 2 then
+	if get_overlay() == 'time' then
 		self:config_1()
-	elseif params:get('overlay') == 3 then
+	elseif get_overlay == 'options' then
 		self:config_2()
 	elseif params:get('mod') == 3 then
 		self:time()
@@ -55,10 +55,15 @@ function Graphics:render()
 	elseif p == 'slide' then self:slide()
 	elseif p == 'gate' then self:gate()
 	elseif p == 'scale' then self:scale()
-	elseif p == 'pattern' then self:pattern()
+	elseif p == 'pattern' then 
+		if params:get('ms_active') == 1 then
+			self:meta_sequence()
+		else
+			self:pattern()
+		end
 	end
 
-	if params:get('overlay') == 1 then 
+	if get_overlay() == 'none' then 
 		self:tracks()
 		self:pages()
 		self:modifiers()
@@ -213,7 +218,7 @@ end
 function Graphics:prob()
 	local d
 	for x=1,16 do
-		d = params:get('data_'..get_page_name()..'_prob_'..x..'_t'..at())
+		d = data:get_unique(at(),get_page_name()..'_prob',x)
 		buf(x,6,LOW)
 		buf(x,7-d,HIGH)
 	end
@@ -243,8 +248,84 @@ function Graphics:scale()
 	end
 end
 
+function Graphics:meta_sequence()
+	for x=1,16 do -- pattern bank
+		local l = OFF
+		if x == params:get('ms_pattern_'..params:get('ms_cursor')) then
+			l = HIGH
+		else
+			l = LOW
+		end
+		buf(x,1,l)
+	end
+
+	for x=1,16 do -- cue clock
+		local l = OFF
+		if x == params:get('pattern_quant_pos') then
+			l = HIGH
+		elseif x == params:get('pattern_quant') then
+			l = MED
+		elseif x < params:get('pattern_quant') then
+			l = LOW
+		end
+		buf(x,2,l)
+	end
+
+	for x=1,16 do -- duration
+		local l = OFF
+		if x == params:get('ms_duration_pos') then
+			l = HIGH
+		elseif x == params:get('ms_duration_'..params:get('ms_cursor')) then
+			l = MED
+		elseif x < params:get('ms_duration_'..params:get('ms_cursor')) then
+			l = LOW
+		end
+		buf(x,7,l)
+	end
+
+	for x=1,16 do
+		for y=1,4 do
+			local n = x+((y-1)*16)
+			local l = OFF
+			local oob = not ((n>=params:get('ms_first')) and (n<=params:get('ms_last')))
+			if n == params:get('ms_cursor') then
+				l = HIGH
+			elseif n == params:get('ms_pos') then
+				-- l = params:get('playing') == 1 and wavery_light or MED 
+				l = MED
+			elseif not oob then
+				l = LOW
+				if get_mod_key() == 'loop' then l = highlight(l) end
+			end
+			buf(x,y+2,l)
+		end
+	end
+end
+
 function Graphics:pattern()
-	-- todo
+	for x=1,16 do -- pattern bank
+		local l = OFF
+		if x == params:get('active_pattern') then
+			l = HIGH
+		elseif x == params:get('cued_pattern') then
+			l = wavery_light
+		else
+			l = LOW
+		end
+		buf(x,1,l)
+	end
+
+	for x=1,16 do -- cue clock
+		local l = OFF
+		if x == params:get('pattern_quant_pos') then
+			l = HIGH
+		elseif x == params:get('pattern_quant') then
+			l = MED
+		elseif x < params:get('pattern_quant') then
+			l = LOW
+		end
+		buf(x,2,l)
+	end
 end
 
 function Graphics:retrig()

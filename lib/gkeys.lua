@@ -59,54 +59,64 @@ function gkeys:page_select(x,y,z,t)
 	else
 		params:set('page',page_map[x])
 		params:set('alt_page',0)
+		if x == 16 and shift then
+			params:delta('ms_active')
+		end
 	end
 	post(get_page_name())
+	if params:get('ms_active') == 1 and x == 16 then post('meta-sequence') end
 end
 
 function gkeys:resolve_mod_keys(x,y,z,t) -- intentionally prioritizes leftmost held mod key
-	if params:get('page') < 5 then
-		local mod_key_held = 0
-		for i=1,3 do
-			if kbuf[10+i][8] then
-				mod_key_held = i
-				break
-			end
+	local mod_key_held = 0
+	for i=1,3 do
+		if kbuf[10+i][8] then
+			mod_key_held = i
+			break
 		end
-		params:set('mod', mod_key_held+1)
-		if mod_key_held == 0 then
-			loop_first = -1
-			loop_last = -1
-		end
-		if params:get('mod') ~= 1 then
-			post(mod_names[params:get('mod')] .. ' mod')
-		end
+	end
+	params:set('mod', mod_key_held+1)
+	if mod_key_held == 0 then
+		loop_first = -1
+		loop_last = -1
+	end
+	if params:get('mod') ~= 1 then
+		post(mod_names[params:get('mod')] .. ' mod')
 	end
 end
 
 function gkeys:resolve_loop_keys(x,y,z,t)
 	if z == 1 then -- press
 		if loop_first == -1 then
-			loop_first = x
+			if get_page_name() == 'pattern' then
+				loop_first = x+((y-3)*16)
+			else
+				loop_first = x
+			end
 		else
-			loop_last = x
+			if get_page_name() == 'pattern' then
+				loop_last = x+((y-3)*16)
+			else
+				loop_last = x
+			end
 			meta:edit_loop(t,loop_first, loop_last)
 		end
 	else -- release
 		if loop_last == -1 then
 			meta:edit_loop(t,loop_first, loop_first)
 		else
-			for i=1,16 do
-				if kbuf[i][y] then
-					break
+			for x=1,16 do
+				for y=1,7 do
+					if kbuf[x][y] then break end
 				end
-				if i == 16 then
+				if x == 16 then
 					loop_first = -1
 				end
 			end
 		end
-		for i=1,16 do
-			if kbuf[i][y] then
-				break
+		for x=1,16 do
+			for y=1,7 do
+				if kbuf[x][y] then break end
 			end
 			if i == 16 then
 				loop_first = -1
@@ -134,7 +144,7 @@ function gkeys:time_mod(x,y,z,t)
 			end
 		elseif g1 == 0 and g2 == 2 then --off/track
 			for _,v in ipairs(combined_page_list) do
-				if v ~= 'scale' and v ~= 'patterns' then
+				if v ~= 'scale' and v ~= 'pattern' then
 					meta:edit_divisor(at(),v,x)
 				end
 			end
@@ -144,7 +154,7 @@ function gkeys:time_mod(x,y,z,t)
 				meta:edit_divisor(at(),'note',x)
 			else
 				for _,v in ipairs(combined_page_list) do
-					if v ~= 'trig' and v ~= 'note' and v ~= 'scale' and v ~= 'patterns' then
+					if v ~= 'trig' and v ~= 'note' and v ~= 'scale' and v ~= 'pattern' then
 						meta:edit_divisor(at(),v,x)
 					end
 				end
@@ -152,7 +162,7 @@ function gkeys:time_mod(x,y,z,t)
 		elseif g1 == 0 and g2 == 3 then -- off/all
 			for t=1,NUM_TRACKS do
 				for _,v in ipairs(combined_page_list) do
-					if v ~= 'scale' and v ~= 'patterns' then
+					if v ~= 'scale' and v ~= 'pattern' then
 						meta:edit_divisor(t,v,x)
 					end
 				end
@@ -164,7 +174,7 @@ function gkeys:time_mod(x,y,z,t)
 					meta:edit_divisor(t,'note',x)
 				else
 					for _,v in ipairs(combined_page_list) do
-						if v ~= 'trig' and v ~= 'note' and v ~= 'scale' and v ~= 'patterns' then
+						if v ~= 'trig' and v ~= 'note' and v ~= 'scale' and v ~= 'pattern' then
 							meta:edit_divisor(t,v,x)
 						end
 					end
@@ -197,6 +207,50 @@ function gkeys:scale_overlay(x,y,z,t)
 			post('root note: '..mu.note_num_to_name(params:get('root_note')))
 		else
 			post('scale stride, degree '..8-y..': '..x-9)
+		end
+	end
+end
+
+function pattern_longpress_clock(x) -- here for compatibility/tutorialization, don't remove
+	print('starting clock')
+	clock.sleep(0.5)
+	if kbuf[x][1] then
+		post('use shift+pattern to save!')
+	end
+end
+
+function gkeys:pattern_overlay(x,y,z,t)
+	if z == 1 then
+		if y == 1 then
+			if pattern_longpress then clock.cancel(pattern_longpress) end
+			pattern_longpress = clock.run(pattern_longpress_clock,x)
+			if shift then
+				meta:save_pattern_into_slot(x)
+			else
+				meta:switch_to_pattern(x)
+			end
+		elseif y == 2 then
+			params:set('pattern_quant',x)
+			post('cue clock: '..x)
+		end
+	end
+end
+
+function gkeys:meta_sequence(x,y,z,t)
+	if z == 1 then
+		if y == 1 then
+			params:set('ms_pattern_'..params:get('ms_cursor'),x)
+			post('meta step '..params:get('ms_cursor')..' pattern: '..params:get('ms_pattern_'..params:get('ms_cursor')))
+		elseif y == 2 then
+			params:set('pattern_quant',x)
+			post('cue clock: '..x)
+		elseif y > 2 and y < 7 then
+			params:set('ms_cursor',x+((y-3)*16))
+			last_touched_ms_step = x+((y-3)*16)
+			post('meta-sequence cursor: '..params:get('ms_cursor'))
+		elseif y == 7 then
+			params:set('ms_duration_'..params:get('ms_cursor'),x)
+			post('meta step '..params:get('ms_cursor')..' duration: '..params:get('ms_duration_'..params:get('ms_cursor')))
 		end
 	end
 end
@@ -291,6 +345,12 @@ function gkeys:key(x,y,z)
 				self:prob_mod(x,y,z,t)
 			elseif get_page_name() == 'scale' then
 				self:scale_overlay(x,y,z,t)
+			elseif get_page_name() == 'pattern' then
+				if params:get('ms_active') == 1 then
+					self:meta_sequence(x,y,z,t)
+				else
+					self:pattern_overlay(x,y,z,t)
+				end
 			else -- loop mod not held
 				if z == 1 then
 					if get_page_name() == 'trig' then

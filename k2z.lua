@@ -25,6 +25,7 @@ Prms = include('lib/prms')
 Onboard = include('lib/onboard')
 gkeys = include('lib/gkeys')
 meta = include('lib/meta')
+data = include('lib/data_functions')
 nb = include("lib/nb/lib/nb")
 mu = require 'musicutil'
 
@@ -98,9 +99,9 @@ page_map = {
 ,	[15] = 5
 ,	[16] = 6
 }
-page_names = {'trig', 'note', 'octave', 'gate','scale','patterns'}
+page_names = {'trig', 'note', 'octave', 'gate','scale','pattern'}
 alt_page_names = {'retrig', 'transpose', 'slide'}
-combined_page_list = {'trig','note','octave','gate','retrig','transpose','slide','scale','patterns'}
+combined_page_list = {'trig','note','octave','gate','retrig','transpose','slide','scale','pattern'}
 mod_names = {'none','loop','time','prob'}
 play_modes = {'forward', 'reverse', 'triangle', 'drunk', 'random'}
 prob_map = {0, 25, 50, 100}
@@ -137,44 +138,13 @@ config_desc = {
 	}
 }
 
-data = {}
-function data:get_track_val(track,name) return params:get(name..'_t'..track) end
-function data:get_page_val(track,page,name) return params:get(name..'_'..page..'_t'..track..'_p'..ap()) end
-function data:get_step_val(track,page,step) return params:get('data_'..page..'_'..step..'_t'..track..'_p'..ap()) end
-function data:set_track_val(track,name,new_val) params:set(name..'_t'..track,new_val) end
-function data:set_page_val(track,page,name,new_val) params:set(name..'_'..page..'_t'..track..'_p'..ap(),new_val) end
-function data:set_step_val(track,page,step,new_val) params:set('data_'..page..'_'..step..'_t'..track..'_p'..ap(),new_val) end
-function data:delta_track_val(track,name,d) params:delta(name..'_t'..track,d) end
-function data:delta_page_val(track,page,name,d) params:delta(name..'_'..page..'_t'..track..'_p'..ap(),d) end
-function data:delta_step_val(track,page,step,d) params:delta('data_'..page..'_'..step..'_t'..track..'_p'..ap(),d) end
--- no support for probability or subtrigs
-
-function data:get_unique(track,page,step,aux)
-	if page == 'subtrig' then
-		return params:get('data_subtrig_'..aux..'_step_'..step..'_t'..track..'_p'..ap()) == 1
-	elseif page == 'subtrig_count' then
-		return params:get('data_subtrig_count_'..step..'_t'..track..'_p'..ap())
-	elseif string.sub(page,-4,-1) == 'prob' then
-		return params:get('data_'..page..'_'..step..'_t'..track..'_p'..ap())
-	end
-end
-
-function data:set_unique(track,page,step,aux,aux2)
-	if page == 'subtrig' then
-		params:set('data_subtrig_'..aux..'_step_'..step..'_t'..track..'_p'..ap(),aux2 and 1 or 0)
-	elseif page == 'subtrig_count' then
-		params:set('data_subtrig_count_'..step..'_t'..track..'_p'..ap(),aux)
-	elseif string.sub(page,-4,-1) == 'prob' then
-		params:get('data_'..page..'_'..step..'_t'..track..'_p'..ap(),aux)
-	end
-end
-
 loop_first = -1
 loop_last = -1
 wavery_light = MED
 waver_dir = 1
 shift = false
 last_touched_track = 1
+last_touched_ms_step = 1
 blink = {
 	e1 = false
 ,	e2 = false
@@ -182,6 +152,7 @@ blink = {
 }
 track_clipboard = {}
 pattern_clipboard = {}
+ms_step_clipboard = {}
 
 pulse_indicator = 1 -- todo implement
 global_clock_counter = 1
@@ -231,11 +202,11 @@ function clock.transport.start() params:set('playing',1); post('play') end
 function clock.transport.stop() params:set('playing',0); post('stop') end
 
 function init()
+	Prms:add()
+	track_clipboard = meta:get_track_copy()
 	nb:init()
 	add_modulation_sources()
 	init_grid_buffers()
-	Prms:add()
-	meta:copy_track()
 	clock.run(visual_ticker)
 	clock.run(step_ticker)
 	clock.run(intro)
@@ -273,7 +244,7 @@ function note_clock(track,note,duration,slide_amt)
 	local velocity = 1.0
 	local divider = data:get_page_val(track,'trig','divisor')
 	local pos = data:get_page_val(track,'retrig','pos')
-	local subdivision = params:get('data_subtrig_count_'..pos..'_t'..track..'_p'..ap())
+	local subdivision = data:get_unique(track,'subtrig_count',pos)
 	--if track == 1 then print(note) end
 	if matrix ~= nil then
 		matrix:set("pitch_t"..track, (note - 36)/(127-36))
@@ -281,7 +252,7 @@ function note_clock(track,note,duration,slide_amt)
 	local note_str = mu.note_num_to_name(note, true)
 	screen_graphics:add_history(track, note_str, clock.get_beats())
 	for i=1,subdivision do
-		if params:get('data_subtrig_'..i..'_step_'..pos..'_t'..track..'_p'..ap()) == 1 then
+		if data:get_unique(track,'subtrig',pos,i) then
 			player:set_slew(slide_amt/1000)
 			player:play_note(note, velocity, duration/subdivision)
 		end
@@ -291,6 +262,7 @@ end
 
 function step_ticker()
 	while true do
+		data.pattern = ap()
 		clock.sync(1/4)
 		if params:get('swing_this_step') == 1 then
 			params:set('swing_this_step',0)

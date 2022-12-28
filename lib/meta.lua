@@ -9,6 +9,8 @@ function Meta:reset()
 		end
 	end
 	pulse_indicator = 1
+	params:set('pattern_quant_pos',1)
+	params:set('ms_duration_pos',1)
 	post('reset')
 end
 
@@ -42,6 +44,29 @@ function Meta:advance_all()
 		pulse_indicator = pulse_indicator + 1
 		if pulse_indicator > 16 then pulse_indicator = 1 end
 
+		params:delta('pattern_quant_pos',1)
+		if params:get('pattern_quant_pos') > params:get('pattern_quant') then
+			params:set('pattern_quant_pos',1)
+			if params:get('cued_pattern') ~= 0 then
+				params:set('active_pattern',params:get('cued_pattern'))
+				params:set('cued_pattern',0)
+				post('pattern '..ap()..' active')
+
+			end
+			if params:get('ms_active') == 1 then
+				params:delta('ms_duration_pos',1)
+				if params:get('ms_duration_pos') > params:get('ms_duration_'..params:get('ms_pos')) then
+					params:set('ms_duration_pos',1)
+					params:delta('ms_pos',1)
+					if params:get('ms_pos') > params:get('ms_last') or params:get('ms_pos') < params:get('ms_first') then
+						params:set('ms_pos',1)
+					end
+				end
+				params:set('active_pattern',params:get('ms_pattern_'..params:get('ms_pos')))
+			end
+		end
+
+
 		local will_track_fire = {}
 		
 		for t=1,NUM_TRACKS do
@@ -60,9 +85,8 @@ function Meta:advance_all()
 			if 	will_track_fire[t]
 			and data:get_track_val(t,'mute') == 0
 			and	current_val(t,'trig') == 1
-			and math.random(0,99) < prob_map[params:get('data_trig_prob_'..data:get_page_val(t,'trig','pos')..'_t'..at()..'_p'..ap())]
-			then -- ^^ this is truly unbearable and must be stopped lol
-				-- print('playing note on track '..t)
+			and math.random(0,99) < prob_map[data:get_unique(t,'trig_prob',data:get_page_val(t,'trig','pos'))]
+			then 
 				self:note_out(t)
 			end
 		end
@@ -93,9 +117,7 @@ function Meta:advance_page(t,p) -- track,page
 		local delta = data:get_track_val(t,'pipo_dir') == 1 and 1 or -1
 		new_pos = old_pos + delta
 		if out_of_bounds(t,p,new_pos) then 
-			--print(delta)
 			new_pos = (delta == -1) and last-1 or first+1
-			-- print('new pos is',new_pos,'first is',first,'last is',last)
 			data:delta_track_val(t,'pipo_dir',1)
 			resetting = true
 		end
@@ -125,11 +147,10 @@ function Meta:advance_page(t,p) -- track,page
 end -- todo there's something very wrong with triangle mode...
 
 
-function Meta:toggle_subtrig(track,step,subtrig)
-	params:delta('data_subtrig_'..subtrig..'_step_'..step..'_t'..track..'_p'..ap(),1)
-	for i=params:get('data_subtrig_count_'..step..'_t'..track..'_p'..ap()),1,-1 do
-		if params:get('data_subtrig_'..i..'_step_'..step..'_t'..track..'_p'..ap()) == 0 then
-			-- print('decrementing subtrig count')
+function Meta:toggle_subtrig(track,step,aux)
+	data:delta_unique(track,'subtrig',step,aux)
+	for i=data:get_unique(track,'subtrig_count',step),1,-1 do
+		if not data:get_unique(track,'subtrig',step,i) then
 			self:delta_subtrig_count(track,step,-1)
 		else
 			break
@@ -138,17 +159,17 @@ function Meta:toggle_subtrig(track,step,subtrig)
 end
 
 function Meta:delta_subtrig_count(track,step,delta)
-	self:edit_subtrig_count(track,step,params:get('data_subtrig_count_'..step..'_t'..track..'_p'..ap()) + delta)
+	self:edit_subtrig_count(track,step,data:get_unique(track,'subtrig_count',step)+delta)
 end
 
 function Meta:edit_subtrig_count(track,step,new_val)
-	params:set('data_subtrig_count_'..step..'_t'..track..'_p'..ap(),new_val)
+	data:set_unique(track,'subtrig_count',step,new_val)
 	for i=1,5 do
-		if	params:get('data_subtrig_'..i..'_step_'..step..'_t'..track..'_p'..ap()) == 1 and i > new_val then
-			params:set('data_subtrig_'..i..'_step_'..step..'_t'..track..'_p'..ap(),0)
+		if	data:get_unique(track,'subtrig',step,i) and i > new_val then
+			data:set_unique(track,'subtrig',step,i,false)
 		end
 	end
-	post('subtrig count s'..step..'t'..track..' '.. params:get('data_subtrig_count_'..step..'_t'..track..'_p'..ap()))
+	post('subtrig count s'..step..'t'..track..' '.. data:get_unique(track,'subtrig_count',step))
 end
 
 function Meta:edit_divisor(track,page,new_val)
@@ -167,7 +188,11 @@ function Meta:edit_loop(track, first, last)
 	local p = get_page_name()
 	local loopsync = div_sync_modes[params:get('loop_sync')]
 
-	if loopsync == 'none' then
+	if p == 'pattern' and params:get('ms_active') == 1 then
+		params:set('ms_first',f)
+		params:set('ms_last',l)
+		post('meta-sequence loop: ['..f..'-'..l..']')
+	elseif loopsync == 'none' then
 		if p == 'trig' or p == 'note' and params:get('note_sync') == 1 then
 			data:set_page_val(track,'note','loop_first',f)
 			data:set_page_val(track,'note','loop_last',l)
@@ -198,59 +223,76 @@ function Meta:edit_loop(track, first, last)
 	end
 end
 
-function Meta:copy_track()
-	local t = last_touched_track
+function Meta:switch_to_pattern(p)
+	post('cued pattern '..p)
+	params:set('cued_pattern',p)
+end
+
+function Meta:save_pattern_into_slot(slot)
+	for t=1,NUM_TRACKS do 
+		self:paste_onto_track(t,self:get_track_copy(t),slot) 
+		post('saved pattern to slot '..slot)
+	end
+end
+
+function Meta:get_track_copy(T,p)
+	local r = {}
+	local t = T and T or last_touched_track
+	data.pattern = p and p or ap()
 	for k,v in ipairs(combined_page_list) do
 		if v == 'scale' or v == 'patterns' then break end
-		track_clipboard[v] = {}
-		track_clipboard[v]['pos'] = data:get_page_val(t,v,'pos')
-		track_clipboard[v]['loop_first'] = data:get_page_val(t,v,'loop_first')
-		track_clipboard[v]['loop_last'] = data:get_page_val(t,v,'loop_last')
-		track_clipboard[v]['divisor'] = data:get_page_val(t,v,'divisor')
-		track_clipboard[v]['cued_divisor'] = data:get_page_val(t,v,'cued_divisor')
-		track_clipboard[v]['counter'] = data:get_page_val(t,v,'counter')
-		track_clipboard[v].vals = {}
-		track_clipboard[v].probs = {}
+		r[v] = {}
+		r[v]['pos'] = data:get_page_val(t,v,'pos')
+		r[v]['loop_first'] = data:get_page_val(t,v,'loop_first')
+		r[v]['loop_last'] = data:get_page_val(t,v,'loop_last')
+		r[v]['divisor'] = data:get_page_val(t,v,'divisor')
+		r[v]['cued_divisor'] = data:get_page_val(t,v,'cued_divisor')
+		r[v]['counter'] = data:get_page_val(t,v,'counter')
+		r[v].vals = {}
+		r[v].probs = {}
 		if v == 'retrig' then
-			track_clipboard[v].subtrig_counts = {}
-			track_clipboard[v].subtrigs = {}
+			r[v].subtrig_counts = {}
+			r[v].subtrigs = {}
 		end
 		for i=1,16 do
-			table.insert(track_clipboard[v].vals,data:get_step_val(t,v,i))
-			table.insert(track_clipboard[v].probs,data:get_unique(t,v..'_prob',i))
+			table.insert(r[v].vals,data:get_step_val(t,v,i))
+			table.insert(r[v].probs,data:get_unique(t,v..'_prob',i))
 			if v == 'retrig' then
-				table.insert(track_clipboard[v].subtrig_counts,data:get_unique(t,'subtrig_count',i))
-				table.insert(track_clipboard[v].subtrigs,{})
+				table.insert(r[v].subtrig_counts,data:get_unique(t,'subtrig_count',i))
+				table.insert(r[v].subtrigs,{})
 				for j=1,5 do
-					table.insert(track_clipboard[v].subtrigs[i],data:get_unique(t,'subtrig',i,j))
+					table.insert(r[v].subtrigs[i],data:get_unique(t,'subtrig',i,j))
 				end
 			end
 		end
 	end
+	data.pattern = ap()
 	post('copied track '..t)
+	return r
 end
 
-function Meta:paste_track()
-	local t = last_touched_track
+function Meta:paste_onto_track(t,track_table,p)
+	data.pattern = p and p or ap()
 	for k,v in ipairs(combined_page_list) do
 		if v == 'scale' or v == 'patterns' then break end
-		data:set_page_val(t,v,'pos',track_clipboard[v].pos)
-		data:set_page_val(t,v,'loop_first',track_clipboard[v].loop_first)
-		data:set_page_val(t,v,'loop_last',track_clipboard[v].loop_last)
-		data:set_page_val(t,v,'divisor',track_clipboard[v].divisor)
-		data:set_page_val(t,v,'cued_divisor',track_clipboard[v].cued_divisor)
-		data:set_page_val(t,v,'counter',track_clipboard[v].counter)
+		data:set_page_val(t,v,'pos',track_table[v].pos)
+		data:set_page_val(t,v,'loop_first',track_table[v].loop_first)
+		data:set_page_val(t,v,'loop_last',track_table[v].loop_last)
+		data:set_page_val(t,v,'divisor',track_table[v].divisor)
+		data:set_page_val(t,v,'cued_divisor',track_table[v].cued_divisor)
+		data:set_page_val(t,v,'counter',track_table[v].counter)
 		for i=1,16 do
-			data:set_step_val(t,v,i,track_clipboard[v].vals[i])
-			data:set_unique(t,v..'_prob',i,track_clipboard[v].probs[i])
+			data:set_step_val(t,v,i,track_table[v].vals[i])
+			data:set_unique(t,v..'_prob',i,track_table[v].probs[i])
 			if v == 'retrig' then
 				for j=1,5 do
-					data:set_unique(t,'subtrig',i,j,track_clipboard[v].subtrigs[j])
+					data:set_unique(t,'subtrig',i,j,track_table[v].subtrigs[j])
 				end
 			end
 		end
 	end
 	post('pasted on track '..t)
+	data.pattern = ap()
 end
 
 return Meta
