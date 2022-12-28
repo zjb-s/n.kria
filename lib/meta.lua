@@ -1,31 +1,41 @@
 Meta = {}
 
-function Meta:reset()
+function Meta:reset_page(t,p)
+	data:set_page_val(t,v,'pos',data:get_page_val(t,p,'loop_last'))
+	data:set_page_val(t,v,'counter',data:get_page_val(t,p,'divisor'))
+end
+
+function Meta:reset_track(t)
+	for k,v in ipairs(combined_page_list) do
+		if v == 'scale' or v == 'patterns' then break end
+		self:reset_page(t,v)
+	end
+	post('reset track '..t)
+end
+
+function Meta:reset_all()
 	for t=1,NUM_TRACKS do
-		for k,v in ipairs(combined_page_list) do
-			if v == 'scale' or v == 'patterns' then break end
-			data:set_page_val(t,v,'pos',data:get_page_val(t,v,'loop_last'))
-			data:set_page_val(t,v,'counter',data:get_page_val(t,v,'divisor'))
-		end
+		self:reset_track(t)
 	end
 	pulse_indicator = 1
 	params:set('pattern_quant_pos',1)
 	params:set('ms_duration_pos',1)
-	post('reset')
+	swing_this_step = false
+	post('reset all')
 end
 
 function Meta:note_out(t)
 	local s = make_scale()
 	local n = s[current_val(t,'note') + (current_val(t,'transpose')-1)]
 	-- print('note is',n)
-	n = n + 12*current_val(t,'octave')
+	n = n + 12*(current_val(t,'octave') + (data:get_track_val(t,'octave_shift')-1))
 	n = n + params:get('root_note')
 	data:set_track_val(t,'last_note',n)
 
 	local gate_len = current_val(t,'gate') -- this will give you a weird range, feel free to use it however you want
 	-- local gate_multiplier = params:get('data_gate_shift_t'..t) 
 	local gate_multiplier = data:get_track_val(t,'gate_shift')
-	local slide_or_modulate = current_val(t,'slide') -- to match stock kria times
+	local slide_amt =  util.linlin(1,7,1,120,current_val(t,'slide')) -- to match stock kria times
 	local duration = util.clamp(gate_len-1, 0, 4)/16
 	if gate_len == 1 or gate_len == 6 then
 		duration = duration + 0.02 -- this turns the longest notes into ties, and the shortest into blips, at mult of 1
@@ -33,7 +43,7 @@ function Meta:note_out(t)
 		duration = duration - 0.02
 	end
 	duration = duration * gate_multiplier
-	clock.run(note_clock, t, n, duration, slide_or_modulate)
+	clock.run(note_clock, t, n, duration, slide_amt)
 end
 
 function Meta:advance_all()
@@ -65,31 +75,30 @@ function Meta:advance_all()
 				params:set('active_pattern',params:get('ms_pattern_'..params:get('ms_pos')))
 			end
 		end
-
-
-		local will_track_fire = {}
 		
-		for t=1,NUM_TRACKS do
-			for k,v in ipairs(combined_page_list) do
-				if v == 'scale' or v == 'patterns' then break end
-				data:delta_page_val(t,v,'counter',1)
-				if data:get_page_val(t,v,'counter') > data:get_page_val(t,v,'divisor') then
-					data:set_page_val(t,v,'counter',1)
-					self:advance_page(t,v)
-					if v == 'trig' then will_track_fire[t] = true end
-				end
-			end
+		for t=1,NUM_TRACKS do 
+			self:advance_track(t) 
 		end
+	end
+end
 
-		for t=1,4 do
-			if 	will_track_fire[t]
-			and data:get_track_val(t,'mute') == 0
-			and	current_val(t,'trig') == 1
-			and math.random(0,99) < prob_map[data:get_unique(t,'trig_prob',data:get_page_val(t,'trig','pos'))]
-			then 
-				self:note_out(t)
-			end
+function Meta:advance_track(t)
+	local will_track_fire = false
+	for k,v in ipairs(combined_page_list) do
+		if v == 'scale' or v == 'patterns' then break end
+		data:delta_page_val(t,v,'counter',1)
+		if data:get_page_val(t,v,'counter') > data:get_page_val(t,v,'divisor') then
+			data:set_page_val(t,v,'counter',1)
+			self:advance_page(t,v)
+			if v == 'trig' then will_track_fire = true end
 		end
+	end
+	if 	will_track_fire
+		and data:get_track_val(t,'mute') == 0
+		and	current_val(t,'trig') == 1
+		and math.random(0,99) < prob_map[data:get_unique(t,'trig_prob',data:get_page_val(t,'trig','pos'))]
+	then 
+		self:note_out(t)
 	end
 end
 
@@ -175,10 +184,10 @@ end
 function Meta:edit_divisor(track,page,new_val)
 	if params:get('div_cue') == 1 then
 		data:set_page_val(track,page,'cued_divisor',new_val)
-		post('cued: '..get_display_page_name()..' divisor: '..division_names[new_val])
+		post('cued: '..page..' divisor: '..division_names[new_val])
 	else
 		data:set_page_val(track,page,'divisor',new_val)
-		post(get_display_page_name()..' divisor: '..division_names[new_val])
+		post(page..' divisor: '..division_names[new_val])
 	end
 end
 
@@ -193,7 +202,7 @@ function Meta:edit_loop(track, first, last)
 		params:set('ms_last',l)
 		post('meta-sequence loop: ['..f..'-'..l..']')
 	elseif loopsync == 'none' then
-		if p == 'trig' or p == 'note' and params:get('note_sync') == 1 then
+		if (p == 'trig' or p == 'note') and params:get('note_sync') == 1 then
 			data:set_page_val(track,'note','loop_first',f)
 			data:set_page_val(track,'note','loop_last',l)
 			data:set_page_val(track,'trig','loop_first',f)
@@ -202,7 +211,7 @@ function Meta:edit_loop(track, first, last)
 		else
 			data:set_page_val(track,p,'loop_first',f)
 			data:set_page_val(track,p,'loop_last',l)
-			post('t'..track..' '..get_display_page_name()..' loop: ['..f..'-'..l..']')
+			post('t'..track..' '..p..' loop: ['..f..'-'..l..']')
 		end
 	elseif loopsync == 'track' then
 		for k,v in ipairs(combined_page_list) do

@@ -194,7 +194,7 @@ end
 function Graphics:modifiers()
 	local l;
 	for i=1,3 do
-		l = params:get('mod')-1 == i and HIGH or LOW
+		l = params:get('mod')-1 == i and HIGH or MED
 		buf(10+i,8,l)
 	end
 end
@@ -403,9 +403,8 @@ function Graphics:transpose() -- identical to above, might want to fold them tog
 end
 
 function Graphics:octave()
-	-- todo implement octave shift
-	for i=1,5 do
-		buf(i,1,data:get_track_val(at(),'octave_shift')==i and MED or LOW)
+	for i=1,8 do
+		buf(i,1,data:get_track_val(at(),'octave_shift')==i and HIGH or MED)
 	end
 	for x=1,16 do
 		local d = data:get_step_val(at(),'octave',x)

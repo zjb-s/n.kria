@@ -17,6 +17,10 @@ function Prms:add()
 	params:add_number('global_clock_div','CLOCK DIVISION',1,16,1,
 		function(x) return division_names[x.value] end
 	)
+	params:add_trigger('reset_all','RESET')
+	params:set_action('reset_all',function(x) meta:reset_all() end)
+	params:add_trigger('advance_all','ADVANCE ALL')
+	params:set_action('advance_all',function() meta:advance_all() end)
 	
 	params:add_group('OPTIONS',5)
 	params:add_binary('note_div_sync','NOTE DIV SYNC','toggle')
@@ -39,7 +43,7 @@ function Prms:add()
 	params:add_number('pattern_quant_pos','pattern_quant_pos',1,16,1)
 	params:hide('GLOBAL DATA')
 
-	params:add_group('ms_data',133) -- meta-sequence
+	params:add_group('ms_data',134) -- meta-sequence
 	params:add_number('ms_first','ms_loop_first',1,64,1)
 	params:add_number('ms_last','ms_loop_last',1,64,4)
 	params:add_number('ms_pos','ms_pos',1,64,1)
@@ -50,7 +54,7 @@ function Prms:add()
 		params:add_number('ms_pattern_'..i,'ms_'..i..'_pattern',1,64,1)
 		params:add_number('ms_duration_'..i,'ms_'..i..'_duration',1,16,1)
 	end
-	--params:hide('ms_data')
+	params:hide('ms_data')
 
 	params:add_group('scale data', 112)
 	for i=1,16 do
@@ -79,11 +83,15 @@ function Prms:add_tracks()
 		params:add_separator('TRACK ' .. t)
 		nb:add_param("voice_t"..t, "OUTPUT")
 		params:add_option('play_mode_t'..t,'PLAY MODE', play_modes,1)
-		params:add_binary('mute_t'..t, 'MUTE', 'toggle', 0)
+		params:add_binary('mute_t'..t, 'MUTE', 'toggle')
+		params:add_trigger('reset_t'..t,'RESET')
+		params:set_action('reset_t'..t,function(x) meta:reset_track(t) end)
+		params:add_trigger('advance_t'..t,'ADVANCE')
+		params:set_action('advance_t'..t,function() meta:advance_track(t) end)
 		
 		params:add_group('track_data_t'..t,4)
 		params:add_binary('pipo_dir_t'..t,'pipo_dir_t'..t,'toggle',1)
-		params:add_number('octave_shift_t'..t,'octave_shift_t'..t, 1, 5, 3)
+		params:add_number('octave_shift_t'..t,'octave_shift_t'..t, 1, 8, 4)
 		params:add_number('gate_shift_t'..t,'gate_shift_t'..t,1,16,8)
 		params:add_number('last_note_t'..t,'last_note_t'..t,0,127,0)
 		params:hide('track_data_t'..t)

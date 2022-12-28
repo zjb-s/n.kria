@@ -63,7 +63,8 @@ function gkeys:page_select(x,y,z,t)
 			params:delta('ms_active')
 		end
 	end
-	post(get_display_page_name())
+	post(get_page_name())
+	if params:get('ms_active') == 1 and x == 16 then post('meta-sequence') end
 end
 
 function gkeys:resolve_mod_keys(x,y,z,t) -- intentionally prioritizes leftmost held mod key
@@ -130,7 +131,7 @@ function gkeys:time_mod(x,y,z,t)
 
 		local g1 = params:get('note_div_sync')
 		local g2 = params:get('div_sync')
-		local pn = get_page_name(false)
+		local pn = get_page_name()
 
 		if g1 == 0 and g2 == 1 then -- off/none
 			meta:edit_divisor(at(),pn,x)
@@ -202,6 +203,7 @@ function gkeys:scale_overlay(x,y,z,t)
 
 	elseif x > 8 and z == 1 then -- scale editor
 		params:set('scale_'..params:get('scale_num')..'_deg_'..8-y, x-9)
+		make_scale()  
 		if y == 7 then
 			post('root note: '..mu.note_num_to_name(params:get('root_note')))
 		else
@@ -260,6 +262,7 @@ function gkeys:trig_page(x,y,z,t)
 end
 
 function gkeys:retrig_page(x,y,z,t)
+	local p = get_page_name()
 	if y == 1 or y == 7 then
 		meta:delta_subtrig_count(t,x,(y==1 and 1 or -1))
 	else
@@ -291,21 +294,15 @@ function gkeys:octave_page(x,y,z,t)
 	if y > 1 and y < 8 then
 		data:set_step_val(t,'octave',x,8-y)
 		post('octave '..x..': '..8-y)
-	elseif y == 1 and x <= 5 then
+	elseif y == 1 and x < 9 then
 		data:set_track_val(t,'octave_shift',x)
-		post('t'..t..' octave shift: '..x)
+		post('t'..t..' octave shift: '..x-1)
 	end
 end
 
 function gkeys:slide_page(x,y,z,t)
 	data:set_step_val(t,'slide',x,8-y)
-	local player = params:lookup_param("voice_t"..t):get_player()
-	local description = player:describe()
-	if description.supports_slew then
-		post('slide '..x..': '..8-y)
-	else
-		post(description.modulate_description .. ' ' .. x .. ": "..8-y)
-	end
+	post('slide '..x..': '..8-y)
 end
 
 function gkeys:gate_page(x,y,z,t)

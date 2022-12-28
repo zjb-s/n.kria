@@ -1,28 +1,17 @@
 local Onboard = {}
 
 function Onboard:enc(n,d)
-	-- if n == 1 then
-	-- 	if shift then
-	-- 		params:delta('swing',d)
-	-- 		post('swing: ' .. params:get('swing'))
-	-- 	else
-	-- 		params:delta('clock_tempo',d)
-	-- 		post('tempo: ' .. util.round(params:get('clock_tempo')))
-	-- 	end
-	-- end	
 	if n == 1 then
-		-- nothing
-	elseif n == 2 then
-		params:delta('clock_tempo',d)
-		post('tempo: ' .. util.round(params:get('clock_tempo')))
-		if e2_clock then clock.cancel(e2_clock) end
-		e2_clock = clock.run(touched_enc,2)
-	elseif n == 3 then
-		params:delta('swing',d)
-		post('swing: ' .. params:get('swing'))
-		if e3_clock then clock.cancel(e3_clock) end
-		e3_clock = clock.run(touched_enc,3)
-	end
+		if e1_clock then clock.cancel(e1_clock) end
+		e1_clock = clock.run(touched_enc,1)
+		if shift then
+			params:delta('swing',d)
+			post('swing: ' .. params:get('swing'))
+		else
+			params:delta('clock_tempo',d)
+			post('tempo: ' .. util.round(params:get('clock_tempo')))
+		end
+	end	
 end
 
 function Onboard:key(n,d)
@@ -52,7 +41,7 @@ function Onboard:key(n,d)
 					if kbuf[1][8] or kbuf[2][8] or kbuf[3][8] or kbuf[4][8] then
 						track_clipboard = meta:get_track_copy() 
 					else
-						meta:reset()
+						meta:reset_all()
 					end
 				elseif n == 3 then
 					if kbuf[1][8] or kbuf[2][8] or kbuf[3][8] or kbuf[4][8] then
