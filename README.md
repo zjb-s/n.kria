@@ -2,8 +2,6 @@
 extensible native norns port of monome's Kria
 
 # roadmap
-* patterns
-* pattern copying and pasting
 * option for keeping loop,rate,etc between patterns or not
 * crow outputs
 * clock tracks from other tracks
