@@ -61,7 +61,8 @@ function sc.init()
 end
 
 function add_sc_params()
-	params:add_group("DELAY",6)
+	params:add_group("DELAY",7)
+
   	params:add{id="delay", name="level", type="control", 
     	controlspec=controlspec.new(0,1,'lin',0,0.5,""),
     	action=function(x) 

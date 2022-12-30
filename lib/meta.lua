@@ -52,7 +52,7 @@ end
 function Meta:note_out(t)
 	local n = current_val(t,'note')
 	n = n + current_val(t,'transpose')-1
-	n = n + 8*(current_val(t,'octave') + (data:get_track_val(t,'octave_shift')-1))
+	n = n + 7*(current_val(t,'octave') + (data:get_track_val(t,'octave_shift')-1))
 	if params:get('stretchable_t'..t) == 1 then
 		n = util.round(n*((params:get('stretch')/64)+1))
 	end
@@ -214,19 +214,16 @@ function Meta:edit_subtrig_count(track,step,new_val)
 	post('subtrig count s'..step..'t'..track..' '.. data:get_unique(track,'subtrig_count',step))
 end
 
--- function Meta:edit_divisor(track,page,new_val)
--- 	if params:get('div_cue') == 1 then
--- 		data:set_page_val(track,page,'cued_divisor',new_val)
--- 		post('cued: '..get_display_page_name()..' divisor: '..division_names[new_val])
--- 	else
--- 		data:set_page_val(track,page,'divisor',new_val)
--- 		post(get_display_page_name()..' divisor: '..division_names[new_val])
--- 	end
--- end
-
 function Meta:edit_divisor(track,page,new_val)
-
+	if params:get('div_cue') == 1 then
+		data:set_page_val(track,page,'cued_divisor',new_val)
+		post('cued: '..get_display_page_name()..' divisor: '..division_names[new_val])
+	else
+		data:set_page_val(track,page,'divisor',new_val)
+		post(get_display_page_name()..' divisor: '..division_names[new_val])
+	end
 end
+
 
 function Meta:edit_loop(track, first, last)
 	local f = math.min(first,last)

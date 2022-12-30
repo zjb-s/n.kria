@@ -46,7 +46,7 @@ function Graphics:render()
 	local p = get_page_name()
 	if get_overlay() == 'time' then
 		self:config_1()
-	elseif get_overlay == 'options' then
+	elseif get_overlay() == 'options' then
 		self:config_2()
 	elseif params:get('mod') == 3 then
 		self:time()
