@@ -1,5 +1,5 @@
 -- n.Kria
--- v0.1 @zbs
+-- v0.12 @zbs
 --
 -- native norns kria
 -- original design by @tehn
