@@ -53,8 +53,12 @@ function Meta:note_out(t)
 	local n = current_val(t,'note')
 	n = n + current_val(t,'transpose')-1
 	n = n + 8*(current_val(t,'octave') + (data:get_track_val(t,'octave_shift')-1))
-	n = util.round(n*((params:get('stretch')/64)+1))
-	n = n + params:get('push')
+	if params:get('stretchable_t'..t) == 1 then
+		n = util.round(n*((params:get('stretch')/64)+1))
+	end
+	if params:get('pushable_t'..t) == 1 then
+		n = n + params:get('push')
+	end
 
 	local s = self:make_scale()
 	n = s[util.clamp(n,1,#s)]
