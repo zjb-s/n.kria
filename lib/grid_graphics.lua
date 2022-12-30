@@ -1,3 +1,8 @@
+--[[
+WHAT GOES IN THIS FILE:
+- everything related to how grid looks
+]]--
+
 Graphics = {}
 
 function buf(x,y,v) rbuf[x][y] = v end

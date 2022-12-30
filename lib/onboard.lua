@@ -1,17 +1,50 @@
+--[[
+WHAT GOES IN THIS FILE:
+- everything related to onboard keys and encoders
+]]--
+
 local Onboard = {}
 
 function Onboard:enc(n,d)
 	if n == 1 then
-		if e1_clock then clock.cancel(e1_clock) end
-		e1_clock = clock.run(touched_enc,1)
 		if shift then
+			if coros.shift_e1 then clock.cancel(coros.shift_e1) end
+			coros.shift_e1 = clock.run(menu_clock,2)
 			params:delta('swing',d)
 			post('swing: ' .. params:get('swing'))
 		else
+			if coros.e1 then clock.cancel(coros.e1) end
+			coros.e1 = clock.run(menu_clock,1)
 			params:delta('clock_tempo',d)
 			post('tempo: ' .. util.round(params:get('clock_tempo')))
 		end
-	end	
+	elseif n == 2 then
+		if coros.e2 then clock.cancel(coros.e2) end
+		coros.e2 = clock.run(menu_clock,3)
+		if shift then
+			if d > 0 then
+				params:set('stretch',params:get('stretch')<0 and 0 or 64)
+			else
+				params:set('stretch',params:get('stretch')>0 and 0 or -64)
+			end
+		else
+			params:delta('stretch',d)
+		end
+		post('stretch: ' .. params:get('stretch'))
+	elseif n == 3 then
+		if coros.e3 then clock.cancel(coros.e3) end
+		coros.e3 = clock.run(menu_clock,4)
+		if shift then
+			if d > 0 then
+				params:set('push',params:get('push')<0 and 0 or 64)
+			else
+				params:set('push',params:get('push')>0 and 0 or -64)
+			end
+		else
+			params:delta('push',d)
+		end
+		post('push: '.. params:get('push'))
+	end
 end
 
 function Onboard:key(n,d)

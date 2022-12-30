@@ -1,24 +1,34 @@
+-- k2z
+-- v0.1 @zbs
 --
--- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
--- ~~~~~~~~~~ k2z ~~~~~~~~~~~~~~
--- ~~~~~~~~~ by zbs ~~~~~~~~~~~~
--- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
--- ~~~ kria port native to lua ~~~
--- 0.1 ~~~~~~~~~~~~~~~~~~~~~~~~~
--- 
+-- native norns kria
+-- original design by @tehn
+--
+--     \/ controls below \/
+-- [[-----------------------------]]
 -- k1: shift
--- k2: reset
--- k3: play
--- shift+k2: time overlay (ansible k1)
--- shift+k3: config overlay (ansible k2)
---
--- e1: tempo
--- e2: nothing
--- e3: nothing
--- shift+e1: swing
---
--- thanks for everything, @tehn
+-- k2: reset all tracks
+-- k3: play/stop
+-- e1: bpm
+-- e1+shift: swing
+-- e2: stretch
+-- e3: push
+-- [[-----------------------------]]
 
+
+
+--[[
+WHAT GOES IN THIS FILE:
+- global variable declarations
+- all coroutines
+- some basic utilities like ap() or at()
+
+NOTES ABOUT SCRIPT STRUCTURE:
+- each file has a summary of its contents at the top
+- i think everything else is fairly self-explanatory right now
+]]--
+
+hs = include('lib/dualdelay')
 screen_graphics = include('lib/screen_graphics')
 grid_graphics = include('lib/grid_graphics')
 Prms = include('lib/prms')
@@ -29,22 +39,20 @@ data = include('lib/data_functions')
 nb = include("lib/nb/lib/nb")
 mu = require 'musicutil'
 
+-- matrix
 local status, matrix = pcall(require, 'matrix/lib/matrix')
 if not status then matrix = nil end
 
--- grid level macros
+-- macros
 OFF=0
 LOW=2
 MED=5
 HIGH=12
-
--- other globals
 NUM_TRACKS = 4
 NUM_PATTERNS = 16
 NUM_SCALES = 16
 
-post_buffer = 'k2z v0.1'
-
+-- global tables
 division_names = {
 	'1/16'
 ,	'1/8'
@@ -81,7 +89,6 @@ scale_defaults = {
 ,	{0,0,0,0,0,0,0}
 ,	{0,0,0,0,0,0,0}
 }
-
 page_ranges = {
 	{0,1,0} -- trig
 ,	{1,7,1} -- note
@@ -99,17 +106,6 @@ page_map = {
 ,	[15] = 5
 ,	[16] = 6
 }
-page_names = {'trig', 'note', 'octave', 'gate','scale','pattern'}
-alt_page_names = {'retrig', 'transpose', 'slide'}
-combined_page_list = {'trig','note','octave','gate','retrig','transpose','slide','scale','pattern'}
-page_names_short = {'trig','note','oct','gate','scale','ptn'}
-alt_page_names_short = {'retrig','trans','slide'}
-mod_names = {'none','loop','time','prob'}
-play_modes = {'forward', 'reverse', 'triangle', 'drunk', 'random'}
-prob_map = {0, 25, 50, 100}
-div_sync_modes = {'none','track','all'}
-overlay_names = {'none','time','options','copy/paste'}
-
 time_desc = {
 	{	
 		'all divs independent'
@@ -140,6 +136,26 @@ config_desc = {
 	}
 }
 
+-- more global tables
+page_names = {'trig', 'note', 'octave', 'gate','scale','pattern'}
+alt_page_names = {'retrig', 'transpose', 'slide'}
+combined_page_list = {'trig','note','octave','gate','retrig','transpose','slide','scale','pattern'}
+page_names_short = {'trig','note','oct','gate','scale','ptn'}
+alt_page_names_short = {'retrig','trans','slide'}
+mod_names = {'none','loop','time','prob'}
+play_modes = {'forward', 'reverse', 'triangle', 'drunk', 'random'}
+prob_map = {0, 25, 50, 100}
+div_sync_modes = {'none','track','all'}
+overlay_names = {'none','time','options','copy/paste'}
+blink = {
+	e1 = false
+,	e2 = false
+,	e3 = false
+,	menu = {false,false,false,false,false}
+}
+coros = {}
+
+post_buffer = 'k2z v0.1'
 loop_first = -1
 loop_last = -1
 wavery_light = MED
@@ -147,24 +163,19 @@ waver_dir = 1
 shift = false
 last_touched_track = 1
 last_touched_ms_step = 1
-blink = {
-	e1 = false
-,	e2 = false
-,	e3 = false
-}
 track_clipboard = {}
 pattern_clipboard = {}
 ms_step_clipboard = {}
-
-pulse_indicator = 1 -- todo implement
+pulse_indicator = 1
 global_clock_counter = 1
 
+g = grid.connect()
+
+-- buffers
 kbuf = {} -- key state buffer, true/false
 rbuf = {} -- render buffer, states 0-15 on all 128 positions
 
-g = grid.connect()
-m = midi.connect()
-
+-- basic functions
 function init_grid_buffers()
 	for x=1,16 do
 		table.insert(kbuf,{})
@@ -176,12 +187,10 @@ function init_grid_buffers()
 	end
 end
 
-function post(str)
-	post_buffer = str
-	-- print('post:',str)
-end
-
 function intro()
+	post('k2z v0.1')
+	clock.sleep(0.1)
+	params:bang()
 	clock.sleep(2)
 	post('by @zbs')
 	clock.sleep(2)
@@ -190,10 +199,10 @@ function intro()
 	post('see splash for controls')
 end
 
-function touched_enc(n)
-	blink['e'..n] = true
+function menu_clock(n)
+	blink.menu[n] = true
 	clock.sleep(1/4)
-	blink['e'..n] = false
+	blink.menu[n] = false
 end
 
 function key(n,d) Onboard:key(n,d) end
@@ -203,42 +212,25 @@ function g.key(x,y,z) gkeys:key(x,y,z) end
 function clock.transport.start() params:set('playing',1); post('play') end
 function clock.transport.stop() params:set('playing',0); post('stop') end
 
+function post(str) post_buffer = str end
+
 function init()
+	hs.init()
 	Prms:add()
 	track_clipboard = meta:get_track_copy()
 	nb:init()
 	add_modulation_sources()
 	init_grid_buffers()
-	clock.run(visual_ticker)
-	clock.run(step_ticker)
-	clock.run(intro)
+	coros.visual_ticker = clock.run(visual_ticker)
+	coros.step_ticker = clock.run(step_ticker)
+	coros.intro = clock.run(intro)
 end
-
 
 function add_modulation_sources()
 	if matrix == nil then return end
 	for i=1,NUM_TRACKS do
 		matrix:add_binary("pitch_t"..i, "track "..i.." cv")
 	end
-end
-
-function make_scale()
-	local table_from_params = {}
-	for i=1,7 do
-		table.insert(table_from_params,params:get('scale_'..params:get('scale_num')..'_deg_'..i))
-	end
-	local new_scale = {
-		[1] = 0
-	,	[8] = 12
-	}
-	params:set('root_note',table_from_params[1])
-	for i=2,7 do
-		new_scale[i] = new_scale[i-1] + table_from_params[i]
-		new_scale[i+7] = new_scale[i] + 12
-	end
-	-- print('new scale is')
-	-- tab.print(new_scale)
-	return new_scale
 end
 
 function note_clock(track,note,duration,slide_or_modulate)

@@ -1,3 +1,8 @@
+--[[
+WHAT GOES IN THIS FILE:
+- everything related to how the screen looks
+]]--
+
 Graphics = {
 	history = {} -- keys are unique. values are like {track: 1, note: "A", beats: 234}
 }
@@ -59,7 +64,7 @@ function Graphics:scale()
 	s.level(1)
 	for i=1,7 do
 		s.move(2,7*i+1)
-		s.text(mu.note_num_to_name(make_scale()[(8-i)+params:get('root_note')]))
+		s.text(mu.note_num_to_name(meta:make_scale()[(8-i)+params:get('root_note')]))
 	end
 end
 
@@ -98,63 +103,95 @@ function Graphics:time_descriptions()
 end
 
 function Graphics:right_windows()
-	local x = 110
-	local y = 11
-	local w = 36
-	local h = 10
+	local left_border = 92
+	local height = 10
+	local names = {
+		'BPM'
+	,	'SWING'
+	,	'STRETCH'
+	,	'PUSH'
+	}
 
-	-- bpm window
-	s.level(MED)
-	s.rect(x-(w/2),11,w,-h)
-	s.fill()
-	s.level(blink.e1 and HIGH or LOW)
-	s.rect(x-(w/2),21,w,-h)
-	s.fill()
-	s.level(LOW)
-	s.rect(x-(w/2),21,w,-h*2)
-	s.stroke()
+	for k,v in ipairs(names) do
+		s.level(blink.menu[k] and MED or LOW)
+		s.rect(left_border,(height*k)+1,128-left_border,-height)
+		s.fill()
 
-	-- bpm text
-	s.level(OFF)
-	s.move(x-1,9)
-	s.text_center(shift and 'SWING' or 'BPM')
-	s.level(blink.e1 and LOW or MED)
-	s.move(x-1,18)
-	if shift then
-		s.text_center(params:get('swing')..'%')
-	else
-		s.text_center(util.round(params:get('clock_tempo')))
+		s.level(blink.menu[k] and OFF or MED)
+		s.move(125,(height*k)-2)
+		if v == 'BPM' then 
+			str = blink.menu[k] and util.round(params:get('clock_tempo')) or 'BPM'
+		elseif v == 'SWING' then
+			str = blink.menu[k] and params:get('swing')..'%' or 'SWING'
+		elseif v == 'STRETCH' then
+			str = blink.menu[k] and params:get('stretch') or 'STRETCH'
+		elseif v == 'PUSH' then
+			str = blink.menu[k] and params:get('push') or 'PUSH'
+		end
+		s.text_right(str)
 	end
 
-	-- page window
 	s.level(MED)
-	s.rect(x-(w/2),33,w,-h)
-	s.fill()
-	s.level(LOW)
-	s.rect(x-(w/2),43,w,-h)
-	s.fill()
-	s.level(LOW)
-	s.rect(x-(w/2),43,w,-h*2)
+	s.rect(left_border,1,128-left_border,(height*#names))
 	s.stroke()
-	s.level(OFF)
-	s.move(x-1,31)
-
-	-- page text
-	s.text_center(string.upper(get_page_name_short()))
-
-	s.level(MED)
-	s.move(x-1,41)
-	if get_page_name() == 'pattern' then
-		s.text_center(division_names[params:get('pattern_quant')])
-	elseif get_page_name() == 'scale' then
-		s.text_center('-')
-	else
-		s.text_center(division_names[data:get_page_val(at(),get_page_name(),'divisor')])
-	end
-
-
-
 end
+
+-- function Graphics:right_windows()
+-- 	local x = 110
+-- 	local y = 11
+-- 	local w = 36
+-- 	local h = 10
+
+-- 	-- bpm window
+-- 	s.level(MED)
+-- 	s.rect(x-(w/2),11,w,-h)
+-- 	s.fill()
+-- 	s.level(blink.e1 and HIGH or LOW)
+-- 	s.rect(x-(w/2),21,w,-h)
+-- 	s.fill()
+-- 	s.level(LOW)
+-- 	s.rect(x-(w/2),21,w,-h*2)
+-- 	s.stroke()
+
+-- 	-- bpm text
+-- 	s.level(OFF)
+-- 	s.move(x-1,9)
+-- 	s.text_center(shift and 'SWING' or 'BPM')
+-- 	s.level(blink.e1 and LOW or MED)
+-- 	s.move(x-1,18)
+-- 	if shift then
+-- 		s.text_center(params:get('swing')..'%')
+-- 	else
+-- 		s.text_center(util.round(params:get('clock_tempo')))
+-- 	end
+
+-- 	-- page window
+-- 	s.level(MED)
+-- 	s.rect(x-(w/2),33,w,-h)
+-- 	s.fill()
+-- 	s.level(LOW)
+-- 	s.rect(x-(w/2),43,w,-h)
+-- 	s.fill()
+-- 	s.level(LOW)
+-- 	s.rect(x-(w/2),43,w,-h*2)
+-- 	s.stroke()
+-- 	s.level(MED)
+	
+-- 	-- page text
+-- 	s.level(OFF)
+-- 	s.move(x-1,31)
+-- 	s.text_center(string.upper(get_page_name_short()))
+
+-- 	s.level(MED)
+-- 	s.move(x-1,41)
+-- 	if get_page_name() == 'pattern' then
+-- 		s.text_center(division_names[params:get('pattern_quant')])
+-- 	elseif get_page_name() == 'scale' then
+-- 		s.text_center('-')
+-- 	else
+-- 		s.text_center(division_names[data:get_page_val(at(),get_page_name(),'divisor')])
+-- 	end
+-- end
 
 function Graphics:description_window()
 	s.level(HIGH)

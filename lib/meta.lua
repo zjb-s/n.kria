@@ -1,8 +1,14 @@
+--[[
+WHAT GOES IN THIS FILE:
+- utility, sanity and sugar functions
+- for global use
+]]--
+
 Meta = {}
 
 function Meta:reset_page(t,p)
-	data:set_page_val(t,v,'pos',data:get_page_val(t,p,'loop_last'))
-	data:set_page_val(t,v,'counter',data:get_page_val(t,p,'divisor'))
+	data:set_page_val(t,p,'pos',data:get_page_val(t,p,'loop_last'))
+	data:set_page_val(t,p,'counter',data:get_page_val(t,p,'divisor'))
 end
 
 function Meta:reset_track(t)
@@ -24,16 +30,39 @@ function Meta:reset_all()
 	post('reset all')
 end
 
+function Meta:make_scale()
+	local table_from_params = {}
+	for i=1,7 do
+		table.insert(table_from_params,params:get('scale_'..params:get('scale_num')..'_deg_'..i))
+	end
+	local short_scale = {0} -- first ix always 0
+	params:set('root_note',table_from_params[1])
+	for i=2,7 do
+		short_scale[i] = short_scale[i-1] + table_from_params[i]
+	end
+	local long_scale = {}
+	for i=0,12 do
+		for j=1,7 do
+			table.insert(long_scale,short_scale[j]+(i*12))
+		end
+	end
+	return long_scale
+end
+
 function Meta:note_out(t)
-	local s = make_scale()
-	local n = s[current_val(t,'note') + (current_val(t,'transpose')-1)]
-	-- print('note is',n)
-	n = n + 12*(current_val(t,'octave') + (data:get_track_val(t,'octave_shift')-1))
+	local n = current_val(t,'note')
+	n = n + current_val(t,'transpose')-1
+	n = n + 8*(current_val(t,'octave') + (data:get_track_val(t,'octave_shift')-1))
+	n = util.round(n*((params:get('stretch')/64)+1))
+	n = n + params:get('push')
+
+	local s = self:make_scale()
+	n = s[util.clamp(n,1,#s)]
 	n = n + params:get('root_note')
+
 	data:set_track_val(t,'last_note',n)
 
 	local gate_len = current_val(t,'gate') -- this will give you a weird range, feel free to use it however you want
-	-- local gate_multiplier = params:get('data_gate_shift_t'..t) 
 	local gate_multiplier = data:get_track_val(t,'gate_shift')
 	local slide_or_modulate = current_val(t,'slide') -- to match stock kria times
 	local duration = util.clamp(gate_len-1, 0, 4)/16
@@ -181,14 +210,18 @@ function Meta:edit_subtrig_count(track,step,new_val)
 	post('subtrig count s'..step..'t'..track..' '.. data:get_unique(track,'subtrig_count',step))
 end
 
+-- function Meta:edit_divisor(track,page,new_val)
+-- 	if params:get('div_cue') == 1 then
+-- 		data:set_page_val(track,page,'cued_divisor',new_val)
+-- 		post('cued: '..get_display_page_name()..' divisor: '..division_names[new_val])
+-- 	else
+-- 		data:set_page_val(track,page,'divisor',new_val)
+-- 		post(get_display_page_name()..' divisor: '..division_names[new_val])
+-- 	end
+-- end
+
 function Meta:edit_divisor(track,page,new_val)
-	if params:get('div_cue') == 1 then
-		data:set_page_val(track,page,'cued_divisor',new_val)
-		post('cued: '..get_display_page_name()..' divisor: '..division_names[new_val])
-	else
-		data:set_page_val(track,page,'divisor',new_val)
-		post(get_display_page_name()..' divisor: '..division_names[new_val])
-	end
+
 end
 
 function Meta:edit_loop(track, first, last)

@@ -1,10 +1,11 @@
+--[[
+WHAT GOES IN THIS FILE:
+- param declarations
+]]--
+
 local nb = include('k2z/lib/nb/lib/nb')
 
 Prms = {}
-
--- todo add pattern copying and pasting
--- todo add option for keeping loop,rate,etc between pattern or not
--- todo overhaul this whole page to allow recursion: i want to add 16 copies of the whole "tracks" section but i don't think i can with the current architecture.
 
 function Prms:add()
 
@@ -12,6 +13,12 @@ function Prms:add()
 	params:add_binary('playing', 'PLAYING?', 'toggle')
 	params:add_number('root_note','ROOT NOTE',0,11,0,
 		function(x) return mu.note_num_to_name(x.value) end
+	)
+	params:add_number('stretch','STRETCH',-64,64,0,
+		function(x) return x.value > 0 and '+'..x.value or x.value end
+	)
+	params:add_number('push','PUSH',-64,64,0,
+		function(x) return x.value > 0 and '+'..x.value or x.value end
 	)
 	params:add_number('swing','SWING',50,99,55,function(x) return x.value..'%' end)
 	params:add_number('global_clock_div','CLOCK DIVISION',1,16,1,
@@ -82,12 +89,16 @@ function Prms:add_tracks()
 	for t=1,NUM_TRACKS do
 		params:add_separator('TRACK ' .. t)
 		nb:add_param("voice_t"..t, "OUTPUT")
+
+		params:add_group('T'..t..' OPTIONS',6)
 		params:add_option('play_mode_t'..t,'PLAY MODE', play_modes,1)
 		params:add_binary('mute_t'..t, 'MUTE', 'toggle')
 		params:add_trigger('reset_t'..t,'RESET')
 		params:set_action('reset_t'..t,function(x) meta:reset_track(t) end)
 		params:add_trigger('advance_t'..t,'ADVANCE')
 		params:set_action('advance_t'..t,function() meta:advance_track(t) end)
+		params:add_binary('stretchable_t'..t,'STRETCHABLE','toggle',1)
+		params:add_binary('pushable_t'..t,'PUSHABLE','toggle',1)
 		
 		params:add_group('track_data_t'..t,4)
 		params:add_binary('pipo_dir_t'..t,'pipo_dir_t'..t,'toggle',1)

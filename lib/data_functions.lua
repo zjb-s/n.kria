@@ -1,3 +1,10 @@
+--[[
+WHAT GOES IN THIS FILE:
+- this is a table that contains methods
+- these methods get and set information from 'data' params
+- `Data.pattern` controls which pattern data methods will address. usually you don't need to change it.
+]]--
+
 local Data = {}
 
 Data.pattern = 1
@@ -11,7 +18,9 @@ function Data:set_step_val(track,page,step,new_val) params:set('data_'..page..'_
 function Data:delta_track_val(track,name,d) params:delta(name..'_t'..track,d) end
 function Data:delta_page_val(track,page,name,d) params:delta(name..'_'..page..'_t'..track..'_p'..self.pattern,d) end
 function Data:delta_step_val(track,page,step,d) params:delta('data_'..page..'_'..step..'_t'..track..'_p'..self.pattern,d) end
--- no support for probability or subtrigs
+
+-- above has no support for probability or subtrigs
+-- use below for getting or setting those params
 
 function Data:get_unique(track,page,step,aux)
 	if page == 'subtrig' then

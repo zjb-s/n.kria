@@ -1,3 +1,8 @@
+--[[
+WHAT GOES IN THIS FILE:
+- everything related to pressing buttons on grid
+]]--
+
 gkeys = {}
 
 function gkeys:time_overlay(x,y,z,t)
@@ -203,7 +208,7 @@ function gkeys:scale_overlay(x,y,z,t)
 
 	elseif x > 8 and z == 1 then -- scale editor
 		params:set('scale_'..params:get('scale_num')..'_deg_'..8-y, x-9)
-		make_scale()  
+		meta:make_scale()  
 		if y == 7 then
 			post('root note: '..mu.note_num_to_name(params:get('root_note')))
 		else
@@ -223,8 +228,8 @@ end
 function gkeys:pattern_overlay(x,y,z,t)
 	if z == 1 then
 		if y == 1 then
-			if pattern_longpress then clock.cancel(pattern_longpress) end
-			pattern_longpress = clock.run(pattern_longpress_clock,x)
+			if coros.pattern_longpress then clock.cancel(coros.pattern_longpress) end
+			coros.pattern_longpress = clock.run(pattern_longpress_clock,x)
 			if shift then
 				meta:save_pattern_into_slot(x)
 			else
@@ -279,7 +284,7 @@ function gkeys:note_page(x,y,z,t)
 		post('note & trig '..x..': '..8-y)
 	else
 		data:set_step_val(t,'note',x,8-y)
-		local n = mu.note_num_to_name(make_scale()[(8-y)+params:get('root_note')])
+		local n = mu.note_num_to_name(meta:make_scale()[(8-y)+params:get('root_note')])
 		post('note '..x..': '..8-y.. ' ['..n..']')
 	end
 end
