@@ -132,6 +132,9 @@ function Meta:advance_track(t)
 		and math.random(0,99) < prob_map[data:get_unique(t,'trig_prob',data:get_page_val(t,'trig','pos'))]
 	then 
 		self:note_out(t)
+		-- print('prob:',prob_map[data:get_unique(t,'trig_prob',data:get_page_val(t,'trig','pos'))])
+		-- print('pos:',data:get_page_val(t,'trig','pos'))
+
 	end
 end
 

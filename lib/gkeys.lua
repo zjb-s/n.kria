@@ -191,7 +191,8 @@ end
 
 function gkeys:prob_mod(x,y,z,t)
 	if z == 1 and y > 2 and y < 7 then
-		params:set('data_'..get_page_name()..'_prob_'..x..'_t'..at(),7-y)
+		--params:set('data_'..get_page_name()..'_prob_'..x..'_t'..at(),7-y)
+		data:set_unique(at(),get_page_name()..'_prob',x,7-y)
 		post('odds: '.. prob_map[7-y] .. '%')
 	end
 end
@@ -352,13 +353,7 @@ function gkeys:key(x,y,z)
 		elseif y == 8 and x >= 11 and x <= 13 then
 			self:resolve_mod_keys()
 		elseif y <= 7 then -- main field
-			if get_mod_key() == 'loop' then
-				self:resolve_loop_keys(x,y,z,t)
-			elseif get_mod_key() == 'time' then
-				self:time_mod(x,y,z,t)
-			elseif get_mod_key() == 'prob' then
-				self:prob_mod(x,y,z,t)
-			elseif get_page_name() == 'scale' then
+			if get_page_name() == 'scale' then
 				self:scale_overlay(x,y,z,t)
 			elseif get_page_name() == 'pattern' then
 				if params:get('ms_active') == 1 then
@@ -366,7 +361,13 @@ function gkeys:key(x,y,z)
 				else
 					self:pattern_overlay(x,y,z,t)
 				end
-			else -- loop mod not held
+			elseif get_mod_key() == 'loop' then
+				self:resolve_loop_keys(x,y,z,t)
+			elseif get_mod_key() == 'time' then
+				self:time_mod(x,y,z,t)
+			elseif get_mod_key() == 'prob' then
+				self:prob_mod(x,y,z,t)
+			else -- mods not held
 				if z == 1 then
 					if get_page_name() == 'trig' then
 						self:trig_page(x,y,z,t)

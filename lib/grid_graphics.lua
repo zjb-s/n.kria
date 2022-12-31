@@ -44,21 +44,8 @@ function Graphics:render()
 
 	-- \/\/ these are in order of precedence \/\/
 	local p = get_page_name()
-	if get_overlay() == 'time' then
-		self:config_1()
-	elseif get_overlay() == 'options' then
-		self:config_2()
-	elseif params:get('mod') == 3 then
-		self:time()
-	elseif params:get('mod') == 4 then
-		self:prob()
-	elseif p == 'trig' then self:trig()
-	elseif p == 'retrig' then self:retrig()
-	elseif p == 'note' then self:note()
-	elseif p == 'transpose' then self:transpose()
-	elseif p == 'octave' then self:octave()
-	elseif p == 'slide' then self:slide()
-	elseif p == 'gate' then self:gate()
+	if get_overlay() == 'time' then self:config_1()
+	elseif get_overlay() == 'options' then self:config_2()
 	elseif p == 'scale' then self:scale()
 	elseif p == 'pattern' then 
 		if params:get('ms_active') == 1 then
@@ -66,6 +53,15 @@ function Graphics:render()
 		else
 			self:pattern()
 		end
+	elseif params:get('mod') == 3 then self:time()
+	elseif params:get('mod') == 4 then self:prob()
+	elseif p == 'trig' then self:trig()
+	elseif p == 'retrig' then self:retrig()
+	elseif p == 'note' then self:note()
+	elseif p == 'transpose' then self:transpose()
+	elseif p == 'octave' then self:octave()
+	elseif p == 'slide' then self:slide()
+	elseif p == 'gate' then self:gate()
 	end
 
 	if get_overlay() == 'none' then 

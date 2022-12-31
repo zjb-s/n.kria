@@ -38,7 +38,8 @@ function Data:set_unique(track,page,step,aux,aux2)
 	elseif page == 'subtrig_count' then
 		params:set('data_subtrig_count_'..step..'_t'..track..'_p'..self.pattern,aux)
 	elseif string.sub(page,-4,-1) == 'prob' then
-		params:get('data_'..page..'_'..step..'_t'..track..'_p'..self.pattern,aux)
+		print('setting prob to',aux)
+		params:set('data_'..page..'_'..step..'_t'..track..'_p'..self.pattern,aux)
 	end
 end
 
