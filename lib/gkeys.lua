@@ -207,7 +207,11 @@ function gkeys:scale_overlay(x,y,z,t)
 		post('t'..y..' playmode: '..play_modes[x-1])
 
 	elseif x > 8 and z == 1 then -- scale editor
-		params:set('scale_'..params:get('scale_num')..'_deg_'..8-y, x-9)
+		if y == 7 then
+			params:set('root_note',x-9)
+		else
+			params:set('scale_'..params:get('scale_num')..'_deg_'..8-y, x-9)
+		end
 		meta:make_scale()  
 		if y == 7 then
 			post('root note: '..mu.note_num_to_name(params:get('root_note')))

@@ -36,7 +36,7 @@ function Meta:make_scale()
 		table.insert(table_from_params,params:get('scale_'..params:get('scale_num')..'_deg_'..i))
 	end
 	local short_scale = {0} -- first ix always 0
-	params:set('root_note',table_from_params[1])
+	-- params:set('root_note',table_from_params[1])
 	for i=2,7 do
 		short_scale[i] = short_scale[i-1] + table_from_params[i]
 	end

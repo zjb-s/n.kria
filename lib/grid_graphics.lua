@@ -245,12 +245,13 @@ function Graphics:scale()
 		end
 	end
 
-	for i=1,7 do -- scale editor
+	for i=2,7 do -- scale editor
 		buf(9,8-i,LOW)
 		local d = params:get('scale_'..params:get('scale_num')..'_deg_'..i)
 		buf(9+d,8-i,HIGH)
-
 	end
+	buf(9,7,LOW)
+	buf(9+params:get('root_note'),7,HIGH)
 end
 
 function Graphics:meta_sequence()
