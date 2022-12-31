@@ -218,9 +218,10 @@ function post(str) post_buffer = str end
 
 function init()
 	hs.init()
+	nb.voice_count = 4
+	nb:init()
 	Prms:add()
 	track_clipboard = meta:get_track_copy()
-	nb:init()
 	add_modulation_sources()
 	init_grid_buffers()
 	coros.visual_ticker = clock.run(visual_ticker)
