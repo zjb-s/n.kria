@@ -10,6 +10,7 @@ Prms = {}
 function Prms:add()
 
 	params:add_separator('N.KRIA')
+	params:add_binary('debug','DEBUG','toggle',0)
 	params:add_binary('playing', 'PLAYING?', 'toggle')
 	params:add_number('root_note','ROOT NOTE',0,11,0,
 		function(x) return mu.note_num_to_name(x.value) end

@@ -355,14 +355,14 @@ function gkeys:key(x,y,z)
 		elseif y <= 7 then -- main field
 			if get_page_name() == 'scale' then
 				self:scale_overlay(x,y,z,t)
+			elseif get_mod_key() == 'loop' then
+				self:resolve_loop_keys(x,y,z,t)
 			elseif get_page_name() == 'pattern' then
 				if params:get('ms_active') == 1 then
 					self:meta_sequence(x,y,z,t)
 				else
 					self:pattern_overlay(x,y,z,t)
 				end
-			elseif get_mod_key() == 'loop' then
-				self:resolve_loop_keys(x,y,z,t)
 			elseif get_mod_key() == 'time' then
 				self:time_mod(x,y,z,t)
 			elseif get_mod_key() == 'prob' then

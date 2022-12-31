@@ -132,8 +132,6 @@ function Meta:advance_track(t)
 		and math.random(0,99) < prob_map[data:get_unique(t,'trig_prob',data:get_page_val(t,'trig','pos'))]
 	then 
 		self:note_out(t)
-		-- print('prob:',prob_map[data:get_unique(t,'trig_prob',data:get_page_val(t,'trig','pos'))])
-		-- print('pos:',data:get_page_val(t,'trig','pos'))
 
 	end
 end
@@ -233,6 +231,7 @@ function Meta:edit_loop(track, first, last)
 	local l = math.max(first,last)
 	local p = get_page_name()
 	local loopsync = div_sync_modes[params:get('loop_sync')]
+	print('f,l,p:',f,l,p)
 
 	if p == 'pattern' and params:get('ms_active') == 1 then
 		params:set('ms_first',f)

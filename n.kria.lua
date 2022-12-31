@@ -241,7 +241,6 @@ function note_clock(track,note,duration,slide_or_modulate)
 	local divider = data:get_page_val(track,'trig','divisor')
 	local pos = data:get_page_val(track,'retrig','pos')
 	local subdivision = data:get_unique(track,'subtrig_count',pos)
-	--if track == 1 then print(note) end
 	if matrix ~= nil then
 		matrix:set("pitch_t"..track, (note - 36)/(127-36))
 	end
@@ -297,6 +296,8 @@ end
 function redraw()
 	screen_graphics:render()
 end
+
+function log(str) if params:get('debug') == 1 then print(str) end end
 
 function at() -- get active track
 	return params:get('active_track')
