@@ -1,18 +1,18 @@
 -- n.Kria
--- v0.15 @zbs
+-- v0.16 @zbs
 --
 -- native norns kria
 -- original design by @tehn
 --
 --     \/ controls below \/
 -- [[-----------------------------]]
--- k1: shift
+-- k1: shift key
 -- k2: reset all tracks
--- shift+k2: config page 1
+-- k1+k2: config page 1
 -- k3: play/stop
--- shift+k3: config page 2
+-- k1+k3: config page 2
 -- e1: bpm
--- e1+shift: swing
+-- e1+k1: swing
 -- e2: stretch
 -- e3: push
 -- [[-----------------------------]]
@@ -227,6 +227,7 @@ function init()
 	coros.visual_ticker = clock.run(visual_ticker)
 	coros.step_ticker = clock.run(step_ticker)
 	coros.intro = clock.run(intro)
+	print('n.kria launched successfully')
 end
 
 function add_modulation_sources()
@@ -370,18 +371,19 @@ function set_overlay(n)
 end
 
 function highlight(l) -- level number
-	local o = 15
-	if l == LOW then
-		o = 3
-	elseif l == MED then
-		o = 7
-	elseif l == HIGH then
-		o = 15
-	else
-		o = l + 2
-	end
+	-- local o = 15
+	-- if l == LOW then
+	-- 	o = 3
+	-- elseif l == MED then
+	-- 	o = 7
+	-- elseif l == HIGH then
+	-- 	o = 15
+	-- else
+	-- 	o = l + 2
+	-- end
 
-	return util.clamp(o,0,15)
+	-- return util.clamp(o,0,15)
+	return util.clamp(l+3,0,15)
 end
 
 function dim(l) -- level number
