@@ -247,7 +247,7 @@ function Graphics:scale()
 		buf(9+d,8-i,HIGH)
 	end
 	buf(9,7,LOW)
-	buf(9+params:get('root_note'),7,HIGH)
+	buf(9+util.clamp(params:get('root_note'),0,7),7,HIGH)
 end
 
 function Graphics:meta_sequence()
