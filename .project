@@ -3,7 +3,11 @@
     "version": 1,
     "kind": "project_metadata"
   },
+<<<<<<< HEAD
   "installed_on": "2023-01-02T00:30:14.022161254Z",
+=======
+  "installed_on": "2023-01-04T02:01:03.558577543Z",
+>>>>>>> 8415348e710b4a3623b8967bf92133977f05d8e8
   "updated_on": "0001-01-01T00:00:00Z",
   "project_url": "https://github.com/zjb-s/n.kria",
   "catalog_entry": {

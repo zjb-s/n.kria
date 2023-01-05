@@ -6,7 +6,7 @@
 --
 --     \/ controls below \/
 -- [[-----------------------------]]
--- k1: shift
+-- k1: shift key
 -- k2: reset all tracks
 -- k1+k2: time config (legacy)
 -- k3: play/stop
@@ -245,7 +245,7 @@ function init()
 	coros.visual_ticker = clock.run(visual_ticker)
 	coros.step_ticker = clock.run(step_ticker)
 	coros.intro = clock.run(intro)
-	print('finished n.kria init()')
+	print('n.kria launched successfully')
 end
 
 function add_modulation_sources()
@@ -398,8 +398,7 @@ function page_key_held()
 	end
 end
 
-function highlight(l) -- level number
-	return util.clamp(l+2,0,15)
+	return util.clamp(o,0,15)
 end
 
 function dim(l) -- level number
