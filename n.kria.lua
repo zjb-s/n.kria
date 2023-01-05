@@ -279,7 +279,7 @@ function note_clock(track)
 			end
 			meta:resolve_pitches()
 			local note = value_buffer[track].note
-			print('playing note'..note)
+			--print('playing note'..note)
 			player:play_note(note, velocity, duration/subdivision)
 
 			if matrix ~= nil then matrix:set("pitch_t"..track, (note - 36)/(127-36)) end
