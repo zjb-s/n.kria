@@ -398,7 +398,8 @@ function page_key_held()
 	end
 end
 
-	return util.clamp(o,0,15)
+function highlight(l)
+	return util.clamp(l+2,0,15)
 end
 
 function dim(l) -- level number
