@@ -80,7 +80,6 @@ end
 
 params.action_read = function(filename, name, pset_number)
 	for _, player in pairs(nb:get_players()) do
-		-- tab.print(player)
 		player:stop_all()
 	end
 end
@@ -91,7 +90,7 @@ function Prms:add_tracks()
 		params:add_separator('TRACK ' .. t)
 		nb:add_param("voice_t"..t, "OUTPUT")
 
-		params:add_group('T'..t..' OPTIONS',6)
+		params:add_group('T'..t..' OPTIONS',7)
 		params:add_option('play_mode_t'..t,'PLAY MODE', play_modes,1)
 		params:add_binary('mute_t'..t, 'MUTE', 'toggle')
 		params:add_trigger('reset_t'..t,'RESET')
@@ -100,17 +99,16 @@ function Prms:add_tracks()
 		params:set_action('advance_t'..t,function() meta:advance_track(t) end)
 		params:add_binary('stretchable_t'..t,'STRETCHABLE','toggle',1)
 		params:add_binary('pushable_t'..t,'PUSHABLE','toggle',1)
+		params:add_binary('trigger_clock_t'..t,'TRIGGER CLOCK','toggle',0)
 		
-		params:add_group('track_data_t'..t,4)
-		params:add_binary('pipo_dir_t'..t,'pipo_dir_t'..t,'toggle',1)
+		params:add_group('track_data_t'..t,2)
 		params:add_number('octave_shift_t'..t,'octave_shift_t'..t, 1, 8, 4)
 		params:add_number('gate_shift_t'..t,'gate_shift_t'..t,1,16,8)
-		params:add_number('last_note_t'..t,'last_note_t'..t,0,127,0)
 		params:hide('track_data_t'..t)
 		
 		
 		for p=1,NUM_PATTERNS do
-			params:add_group('P'..p..' T'..t..' DATA',362)
+			params:add_group('P'..p..' T'..t..' DATA',369)
 
 			for k,v in ipairs(combined_page_list) do
 				if v == 'scale' or v == 'pattern' then break end
@@ -121,6 +119,7 @@ function Prms:add_tracks()
 				params:add_number('divisor_'..v..'_t'..t..'_p'..p, 't'..t..' '..v..' divisor', 1,16,1)
 				params:add_number('cued_divisor_'..v..'_t'..t..'_p'..p, 't'..t..' '..v..' divisor', 0,16,0)
 				params:add_number('counter_'..v..'_t'..t..'_p'..p,'counter_'..v..'_t'..t,1,99,1)
+				params:add_binary('pipo_dir_'..v..'_t'..t..'_p'..p,'pipo_dir_'..v..'_t'..t..'_p'..p,'toggle',1)
 
 				for i=1,16 do
 					if v == 'trig' then -- just for trig page...

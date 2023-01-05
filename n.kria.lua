@@ -1,5 +1,5 @@
--- n.Kria
--- v0.15 @zbs
+-- n.Kria                        :-)
+-- v0.17 @zbs
 --
 -- native norns kria
 -- original design by @tehn
@@ -8,13 +8,19 @@
 -- [[-----------------------------]]
 -- k1: shift
 -- k2: reset all tracks
--- shift+k2: config page 1
+-- k1+k2: time config (legacy)
 -- k3: play/stop
--- shift+k3: config page 2
+-- k1+k3: options (legacy)
+--
 -- e1: bpm
--- e1+shift: swing
+-- e1+k1: swing
 -- e2: stretch
 -- e3: push
+--
+-- hold a track/page and...
+-- - k2: copy
+-- - k3: paste
+-- - k2+k3: cut
 -- [[-----------------------------]]
 
 
@@ -38,6 +44,7 @@ Onboard = include('lib/onboard')
 gkeys = include('lib/gkeys')
 meta = include('lib/meta')
 data = include('lib/data_functions')
+transport = include('lib/transport')
 nb = include("lib/nb/lib/nb")
 mu = require 'musicutil'
 
@@ -142,8 +149,8 @@ config_desc = {
 page_names = {'trig', 'note', 'octave', 'gate','scale','pattern'}
 alt_page_names = {'retrig', 'transpose', 'slide'}
 combined_page_list = {'trig','note','octave','gate','retrig','transpose','slide','scale','pattern'}
-page_names_short = {'trig','note','oct','gate','scale','ptn'}
-alt_page_names_short = {'retrig','trans','slide'}
+pages_with_steps = {'trig','retrig','note','transpose','octave','slide','gate'}
+trigger_clock_pages = {'note','transpose','octave','slide','gate'}
 mod_names = {'none','loop','time','prob'}
 play_modes = {'forward', 'reverse', 'triangle', 'drunk', 'random'}
 prob_map = {0, 25, 50, 100}
@@ -156,36 +163,45 @@ blink = {
 ,	menu = {false,false,false,false,false}
 }
 coros = {}
+value_buffer = {}
 
 post_buffer = 'n.Kria v0.1'
 loop_first = -1
 loop_last = -1
 wavery_light = MED
 waver_dir = 1
-shift = false
+last_touched_page = 'trig'
 last_touched_track = 1
 last_touched_ms_step = 1
+page_clipboards = {}
 track_clipboard = {}
 pattern_clipboard = {}
 ms_step_clipboard = {}
 pulse_indicator = 1
 global_clock_counter = 1
+just_pressed_clipboard_key = false
 
 g = grid.connect()
 
 -- buffers
 kbuf = {} -- key state buffer, true/false
-rbuf = {} -- render buffer, states 0-15 on all 128 positions
+onboard_key_states = {false,false,false}
 
 -- basic functions
-function init_grid_buffers()
+function init_value_buffer()
+	for t=1,NUM_TRACKS do
+		table.insert(value_buffer,{})
+		for k,v in pairs(pages_with_steps) do
+			--print('adding',v,'to value buffer')
+			value_buffer[t][v] = 0
+		end
+	end
+end
+
+function init_kbuf()
 	for x=1,16 do
 		table.insert(kbuf,{})
-		table.insert(rbuf,{})
-		for y=1,8 do
-			kbuf[x][y] = false -- key buffer
-			rbuf[x][y] = OFF -- rendering
-		end
+		for y=1,8 do kbuf[x][y] = false end
 	end
 end
 
@@ -221,12 +237,15 @@ function init()
 	nb.voice_count = 4
 	nb:init()
 	Prms:add()
-	track_clipboard = meta:get_track_copy()
+	track_clipboard = meta:get_track_copy(0)
+	page_clipboards = meta:get_track_copy(0)
 	add_modulation_sources()
-	init_grid_buffers()
+	init_kbuf()
+	init_value_buffer()
 	coros.visual_ticker = clock.run(visual_ticker)
 	coros.step_ticker = clock.run(step_ticker)
 	coros.intro = clock.run(intro)
+	print('finished n.kria init()')
 end
 
 function add_modulation_sources()
@@ -236,26 +255,42 @@ function add_modulation_sources()
 	end
 end
 
-function note_clock(track,note,duration,slide_or_modulate)
+function note_clock(track)
 	local player = params:lookup_param("voice_t"..track):get_player()
+	local slide_or_modulate = current_val(track,'slide') -- to match stock kria times
 	local velocity = 1.0
 	local divider = data:get_page_val(track,'trig','divisor')
 	local pos = data:get_page_val(track,'retrig','pos')
 	local subdivision = data:get_unique(track,'subtrig_count',pos)
-	if matrix ~= nil then
-		matrix:set("pitch_t"..track, (note - 36)/(127-36))
+	local gate_len = current_val(track,'gate')
+	local gate_multiplier = data:get_track_val(track,'gate_shift')
+	local duration = util.clamp(gate_len-1, 0, 4)/16
+	if gate_len == 1 or gate_len == 6 then
+		duration = duration + 0.02 -- this turns the longest notes into ties, and the shortest into blips, at mult of 1
+	else
+		duration = duration - 0.02
 	end
-	local note_str = mu.note_num_to_name(note, true)
-	local description = player:describe()
+	duration = duration * gate_multiplier
+	-- print('repeating note '..subdivision..' times')
 	for i=1,subdivision do
 		if data:get_unique(track,'subtrig',pos,i) then
+			if data:get_track_val(track,'trigger_clock') == 1 then
+				for _,v in pairs(trigger_clock_pages) do transport:advance_page(track,v) end
+			end
+			meta:resolve_pitches()
+			local note = value_buffer[track].note
+			print('playing note'..note)
+			player:play_note(note, velocity, duration/subdivision)
+
+			if matrix ~= nil then matrix:set("pitch_t"..track, (note - 36)/(127-36)) end
+			local note_str = mu.note_num_to_name(note, true)
+			local description = player:describe()
 			if description.supports_slew then
 				local slide_amt = util.linlin(1,7,1,120,slide_or_modulate) -- to match stock kria times
 				player:set_slew(slide_amt/1000)
 			else
 				player:modulate(util.linlin(1,7,0,1,slide_or_modulate))
 			end
-			player:play_note(note, velocity, duration/subdivision)
 			screen_graphics:add_history(track, note_str, clock.get_beats())
 		end
 		clock.sleep(clock.get_beat_sec()*divider/(4*subdivision))
@@ -274,7 +309,7 @@ function step_ticker()
 			params:set('swing_this_step',1)
 		end
 		if params:get('playing') == 1 then
-			meta:advance_all()
+			transport:advance_all()
 		end
 	end
 end
@@ -298,8 +333,6 @@ function redraw()
 	screen_graphics:render()
 end
 
-function log(str) if params:get('debug') == 1 then print(str) end end
-
 function at() -- get active track
 	return params:get('active_track')
 end
@@ -314,31 +347,10 @@ function out_of_bounds(track,p,value)
 	or 		(value > data:get_page_val(track,p,'loop_last'))
 end
 
-function get_page_name()
-	local p
-	if params:get('alt_page') == 1 then
-		p = alt_page_names[params:get('page')]
-	else
-		p = page_names[params:get('page')]
-	end
-	return p
-end
-
-function get_page_name_short()
-	local p
-	if params:get('alt_page') == 1 then
-		p = alt_page_names_short[params:get('page')]
-	else
-		p = page_names_short[params:get('page')]
-	end
-	if p == "slide" then
-		local description = params:lookup_param("voice_t"..at()):get_player():describe()
-		if not description.supports_slew then
-			p = description.modulate_description
-			p = string.sub(p, 1, 4)
-		end
-	end
-	return p
+function get_page_name(page,alt)
+	local page = page and page or params:get('page')
+	local alt = alt and alt or (params:get('alt_page') == 1)
+	return alt and alt_page_names[page] or page_names[page]
 end
 
 function get_display_page_name()
@@ -353,8 +365,8 @@ function get_display_page_name()
 end
 
 function current_val(track,page)
-	--return val_buffers[track][page]
-	return data:get_step_val(track,page,data:get_page_val(track,page,'pos'))
+	return value_buffer[track][page]
+	--return data:get_step_val(track,page,data:get_page_val(track,page,'pos'))
 end
 
 function get_mod_key()
@@ -367,21 +379,27 @@ end
 
 function set_overlay(n)
 	params:set('overlay',tab.key(overlay_names,n))
+	post('overlay: '..get_overlay())
+end
+
+function track_key_held()
+	if kbuf[1][8] or kbuf[2][8] or kbuf[3][8] or kbuf [4][8] then
+		return last_touched_track
+	else
+		return 0
+	end
+end
+
+function page_key_held()
+	if kbuf[6][8] or kbuf[7][8] or kbuf[8][8] or kbuf[9][8] then
+		return last_touched_page
+	else
+		return 0
+	end
 end
 
 function highlight(l) -- level number
-	local o = 15
-	if l == LOW then
-		o = 3
-	elseif l == MED then
-		o = 7
-	elseif l == HIGH then
-		o = 15
-	else
-		o = l + 2
-	end
-
-	return util.clamp(o,0,15)
+	return util.clamp(l+2,0,15)
 end
 
 function dim(l) -- level number

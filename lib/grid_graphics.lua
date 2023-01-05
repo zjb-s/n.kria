@@ -5,8 +5,6 @@ WHAT GOES IN THIS FILE:
 
 Graphics = {}
 
-function buf(x,y,v) rbuf[x][y] = v end
-
 function Graphics:trig()
 	local l = OFF;
 	for t=1,NUM_TRACKS do
@@ -35,12 +33,14 @@ function Graphics:trig()
 			if get_mod_key() == 'loop' and not oob then
 				l = highlight(l)
 			end
-			buf(x,t,l)
+			g:led(x,t,l)
 		end
 	end
 end
 
 function Graphics:render()
+
+	g:all(0)
 
 	-- \/\/ these are in order of precedence \/\/
 	local p = get_page_name()
@@ -70,20 +70,6 @@ function Graphics:render()
 		self:modifiers()
 	end
 
-	self:buffer_to_hardware()
-end
-
-function Graphics:buffer_to_hardware()
-	g:all(OFF)
-	for x=1,16 do
-		for y=1,8 do
-			local v = rbuf[x][y]
-			if v ~= 0 then
-				g:led(x,y,rbuf[x][y])
-				rbuf[x][y] = OFF
-			end
-		end
-	end
 	g:refresh()
 end
 
@@ -91,49 +77,49 @@ function Graphics:config_1()
 	local l
 	-- note div sync
 	l = params:get('note_div_sync') == 1 and HIGH or MED
-	for i=1,4 do buf(i,5,l) end
-	buf(1,6,l);buf(4,6,l);buf(1,7,l);buf(4,7,l)
-	for i=1,4 do buf(i,8,l) end
+	for i=1,4 do g:led(i,5,l) end
+	g:led(1,6,l);g:led(4,6,l);g:led(1,7,l);g:led(4,7,l)
+	for i=1,4 do g:led(i,8,l) end
 
 	-- div cue
 	l = params:get('div_cue') == 1 and HIGH or MED
-	buf(8,7,l);buf(9,7,l);buf(8,8,l);buf(9,8,l)
+	g:led(8,7,l);g:led(9,7,l);g:led(8,8,l);g:led(9,8,l)
 
 	-- div sync
 	l = params:get('div_sync') == 2 and HIGH or MED
-	buf(13,6,l)
+	g:led(13,6,l)
 	l = params:get('div_sync') == 3 and HIGH or MED
 	for i=1,4 do
-		buf(12+i,8,l)
+		g:led(12+i,8,l)
 	end
 
 	-- timing inc/dec keysets
-	buf(7,5,HIGH)
-	buf(8,5,MED)
-	buf(9,5,MED)
-	buf(10,5,HIGH)
+	g:led(7,5,HIGH)
+	g:led(8,5,MED)
+	g:led(9,5,MED)
+	g:led(10,5,HIGH)
 
 	-- arrows
 	if kbuf[7][5] then 
-		buf(7,4,HIGH)
-		buf(6,5,HIGH)
-		buf(7,6,HIGH)
+		g:led(7,4,HIGH)
+		g:led(6,5,HIGH)
+		g:led(7,6,HIGH)
 	end
 	if kbuf[8][5] then
-		buf(8,4,MED)
-		buf(8,6,MED)
+		g:led(8,4,MED)
+		g:led(8,6,MED)
 	end
 	if kbuf[9][5] then
-		buf(9,4,MED)
-		buf(9,6,MED)
+		g:led(9,4,MED)
+		g:led(9,6,MED)
 	end
 	if kbuf[10][5] then
-		buf(10,4,HIGH)
-		buf(11,5,HIGH)
-		buf(10,6,HIGH)
+		g:led(10,4,HIGH)
+		g:led(11,5,HIGH)
+		g:led(10,6,HIGH)
 	end
 
-	buf(pulse_indicator,1,HIGH)
+	g:led(pulse_indicator,1,HIGH)
 
 	self:time(params:get('global_clock_div'))
 
@@ -142,16 +128,16 @@ end
 function Graphics:config_2()
 	-- note sync
 	l = params:get('note_sync') == 1 and HIGH or MED
-	for i=1,4 do buf(i+2,3,l) end
-	buf(3,4,l);buf(6,4,l);buf(3,5,l);buf(6,5,l)
-	for i=1,4 do buf(i+2,6,l) end
+	for i=1,4 do g:led(i+2,3,l) end
+	g:led(3,4,l);g:led(6,4,l);g:led(3,5,l);g:led(6,5,l)
+	for i=1,4 do g:led(i+2,6,l) end
 
 	-- loop sync
 	l = params:get('loop_sync') == 2 and HIGH or MED
-	buf(11,4,l)
+	g:led(11,4,l)
 	l = params:get('loop_sync') == 3 and HIGH or MED
 	for i=1,4 do
-		buf(10+i,6,l)
+		g:led(10+i,6,l)
 	end
 
 
@@ -165,7 +151,7 @@ function Graphics:tracks()
 		if data:get_track_val(i,'mute') == 1 then
 			l = util.round(l/4)
 		end
-		buf(i,8,l)
+		g:led(i,8,l)
 	end
 end
 
@@ -188,7 +174,7 @@ function Graphics:pages()
 		if i > 4 then 
 			x = i + 10
 		end
-		buf(x,8,l) -- bottom row
+		g:led(x,8,l) -- bottom row
 	end
 end
 
@@ -196,7 +182,7 @@ function Graphics:modifiers()
 	local l;
 	for i=1,3 do
 		l = params:get('mod')-1 == i and HIGH or MED
-		buf(10+i,8,l)
+		g:led(10+i,8,l)
 	end
 end
 
@@ -212,7 +198,7 @@ function Graphics:time(D)
 		else
 			l = amount*x
 		end
-		buf(x,2,l)
+		g:led(x,2,l)
 	end
 end
 
@@ -220,8 +206,8 @@ function Graphics:prob()
 	local d
 	for x=1,16 do
 		d = data:get_unique(at(),get_page_name()..'_prob',x)
-		buf(x,6,LOW)
-		buf(x,7-d,HIGH)
+		g:led(x,6,LOW)
+		g:led(x,7-d,HIGH)
 	end
 end
 
@@ -229,25 +215,30 @@ function Graphics:scale()
 	for i=1,16 do -- scale select
 		local y = (i > 8) and 7 or 6
 		local l = (params:get('scale_num') == i) and HIGH or MED
-		buf(((i-1) % 8)+1, y, l)
+		g:led(((i-1) % 8)+1, y, l)
+	end
+
+	for t=1,4 do -- trigger clock buttons
+		local l = (data:get_track_val(t,'trigger_clock') == 1) and HIGH or MED
+		g:led(1,t,l)
 	end
 
 	for t=1,4 do -- play modes
-		buf(1,t,LOW)
-		buf(7,t,LOW)
+		g:led(2,t,LOW)
+		g:led(8,t,LOW)
 		for x=1,5 do
 			local l = data:get_track_val(t,'play_mode') == x and HIGH or MED
-			buf(x+1,t,l)
+			g:led(x+2,t,l)
 		end
 	end
 
 	for i=2,7 do -- scale editor
-		buf(9,8-i,LOW)
+		g:led(9,8-i,LOW)
 		local d = params:get('scale_'..params:get('scale_num')..'_deg_'..i)
-		buf(9+d,8-i,HIGH)
+		g:led(9+d,8-i,HIGH)
 	end
-	buf(9,7,LOW)
-	buf(9+params:get('root_note'),7,HIGH)
+	g:led(9,7,LOW)
+	g:led(9+util.clamp(params:get('root_note'),0,7),7,HIGH)
 end
 
 function Graphics:meta_sequence()
@@ -258,7 +249,7 @@ function Graphics:meta_sequence()
 		else
 			l = LOW
 		end
-		buf(x,1,l)
+		g:led(x,1,l)
 	end
 
 	for x=1,16 do -- cue clock
@@ -270,7 +261,7 @@ function Graphics:meta_sequence()
 		elseif x < params:get('pattern_quant') then
 			l = LOW
 		end
-		buf(x,2,l)
+		g:led(x,2,l)
 	end
 
 	for x=1,16 do -- duration
@@ -282,7 +273,7 @@ function Graphics:meta_sequence()
 		elseif x < params:get('ms_duration_'..params:get('ms_cursor')) then
 			l = LOW
 		end
-		buf(x,7,l)
+		g:led(x,7,l)
 	end
 
 	for x=1,16 do
@@ -299,7 +290,7 @@ function Graphics:meta_sequence()
 				l = LOW
 				if get_mod_key() == 'loop' then l = highlight(l) end
 			end
-			buf(x,y+2,l)
+			g:led(x,y+2,l)
 		end
 	end
 end
@@ -314,7 +305,7 @@ function Graphics:pattern()
 		else
 			l = LOW
 		end
-		buf(x,1,l)
+		g:led(x,1,l)
 	end
 
 	for x=1,16 do -- cue clock
@@ -326,7 +317,7 @@ function Graphics:pattern()
 		elseif x < params:get('pattern_quant') then
 			l = LOW
 		end
-		buf(x,2,l)
+		g:led(x,2,l)
 	end
 end
 
@@ -352,7 +343,7 @@ function Graphics:retrig()
 					l = highlight(l)
 				end
 			end
-			buf(x,y,l)
+			g:led(x,y,l)
 		end
 	end
 end
@@ -377,7 +368,7 @@ function Graphics:note()
 			if get_mod_key() == 'loop' and not out_of_bounds(at(),'note',x) then
 				ly = highlight(ly)
 			end
-			buf(x,8-y,ly)
+			g:led(x,8-y,ly)
 		end
 	end
 end
@@ -399,14 +390,14 @@ function Graphics:transpose() -- identical to above, might want to fold them tog
 			if get_mod_key() == 'loop' and not out_of_bounds(at(),'transpose',x) then
 				ly = highlight(ly)
 			end
-			buf(x,8-y,ly)
+			g:led(x,8-y,ly)
 		end
 	end
 end
 
 function Graphics:octave()
 	for i=1,8 do
-		buf(i,1,data:get_track_val(at(),'octave_shift')==i and HIGH or MED)
+		g:led(i,1,data:get_track_val(at(),'octave_shift')==i and HIGH or MED)
 	end
 	for x=1,16 do
 		local d = data:get_step_val(at(),'octave',x)
@@ -434,7 +425,7 @@ function Graphics:octave()
 			if x == data:get_page_val(at(),'octave','pos') and params:get('playing') == 1 then
 				l = highlight(l)
 			end
-			buf(x,8-i,l)
+			g:led(x,8-i,l)
 		end
 	end
 end
@@ -469,7 +460,7 @@ function Graphics:slide()
 			if x == data:get_page_val(at(),'slide','pos') and params:get('playing') == 1 then
 				l = highlight(l)
 			end
-			buf(x,8-y,l)
+			g:led(x,8-y,l)
 		end
 	end
 end
@@ -483,7 +474,7 @@ function Graphics:gate()
 		elseif i > s then
 			l = OFF
 		end
-		buf(i,1,l)
+		g:led(i,1,l)
 	end
 
 	for x=1,16 do
@@ -515,7 +506,7 @@ function Graphics:gate()
 			if x == data:get_page_val(at(),'gate','pos') and params:get('playing') == 1 then
 				l = highlight(l)
 			end
-			buf(x,1+y,l)
+			g:led(x,1+y,l)
 		end
 	end
 end

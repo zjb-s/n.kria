@@ -3,11 +3,20 @@
     "version": 1,
     "kind": "project_metadata"
   },
-  "installed_on": "2022-12-31T14:37:50.218269777Z",
+  "installed_on": "2023-01-02T00:30:14.022161254Z",
   "updated_on": "0001-01-01T00:00:00Z",
   "project_url": "https://github.com/zjb-s/n.kria",
   "catalog_entry": {
-    "project_name": "n.kria",
-    "description": ""
+    "project_name": "n.Kria",
+    "project_url": "https://github.com/zjb-s/n.kria",
+    "author": "zbs",
+    "description": "native norns Kria",
+    "discussion_url": "https://llllllll.co/t/n-kria-0-13-native-norns-kria/60403",
+    "documentation_url": "https://llllllll.co/t/n-kria-0-13-native-norns-kria/60403",
+    "tags": [
+      "grid",
+      "sequencer",
+      "midi"
+    ]
   }
 }

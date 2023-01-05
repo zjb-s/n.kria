@@ -1,17 +1,14 @@
 --[[
 WHAT GOES IN THIS FILE:
-- this is a table that contains methods
-- these methods get and set information from 'data' params
-- `Data.pattern` controls which pattern data methods will address. usually you don't need to change it.
+- wrappers for interacting w params sporting long annoying names
 ]]--
 
 local Data = {}
 
-Data.pattern = 1
-
 function Data:get_track_val(track,name) return params:get(name..'_t'..track) end
 function Data:get_page_val(track,page,name) return params:get(name..'_'..page..'_t'..track..'_p'..self.pattern) end
 function Data:get_step_val(track,page,step) return params:get('data_'..page..'_'..step..'_t'..track..'_p'..self.pattern) end
+
 function Data:set_track_val(track,name,new_val) params:set(name..'_t'..track,new_val) end
 function Data:set_page_val(track,page,name,new_val) params:set(name..'_'..page..'_t'..track..'_p'..self.pattern,new_val) end
 function Data:set_step_val(track,page,step,new_val) params:set('data_'..page..'_'..step..'_t'..track..'_p'..self.pattern,new_val) end
@@ -38,7 +35,6 @@ function Data:set_unique(track,page,step,aux,aux2)
 	elseif page == 'subtrig_count' then
 		params:set('data_subtrig_count_'..step..'_t'..track..'_p'..self.pattern,aux)
 	elseif string.sub(page,-4,-1) == 'prob' then
-		print('setting prob to',aux)
 		params:set('data_'..page..'_'..step..'_t'..track..'_p'..self.pattern,aux)
 	end
 end

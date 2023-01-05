@@ -59,6 +59,18 @@ function gkeys:track_select(x,y,z,t)
 end
 
 function gkeys:page_select(x,y,z,t)
+	if z==1 then 
+		last_touched_page = x-5
+		return
+	elseif z==0 then
+		if page_key_held() ~= 0 then
+			return
+		elseif just_pressed_clipboard_key then
+			just_pressed_clipboard_key = false
+			return
+		end
+	end
+
 	if x-5 == params:get('page') and x < 9 then -- if double-pressing...
 		params:delta('alt_page',1)
 	else
@@ -203,9 +215,13 @@ function gkeys:scale_overlay(x,y,z,t)
 		params:set('scale_num',n)
 		post('selected scale '..n)
 
-	elseif x > 1 and x < 7 and y < 5 and z == 1 then -- play modes
-		params:set('play_mode_t'..y, x-1)
-		post('t'..y..' playmode: '..play_modes[x-1])
+	elseif x == 1 and y < 5 and z == 1 then -- trigger clock toggles
+		data:delta_track_val(y,'trigger_clock',1)
+		post('t'..t..' trigger clocking '..(data:get_track_val(y,'trigger_clock') == 1 and 'on' or 'off'))
+
+	elseif x > 2 and x < 8 and y < 5 and z == 1 then -- play modes
+		params:set('play_mode_t'..y, x-2)
+		post('t'..y..' playmode: '..play_modes[x-2])
 
 	elseif x > 8 and z == 1 then -- scale editor
 		if y == 7 then
@@ -223,7 +239,6 @@ function gkeys:scale_overlay(x,y,z,t)
 end
 
 function pattern_longpress_clock(x) -- here for compatibility/tutorialization, don't remove
-	print('starting clock')
 	clock.sleep(0.5)
 	if kbuf[x][1] then
 		post('use shift+pattern to save!')
@@ -331,7 +346,6 @@ function gkeys:gate_page(x,y,z,t)
 end
 
 function gkeys:key(x,y,z)
-	--print(x,y,z,t)
 	kbuf[x][y] = (z == 1)
 	local t
 	if get_page_name() == 'trig' then
@@ -348,7 +362,7 @@ function gkeys:key(x,y,z)
 	elseif get_overlay() == 'none' then -- no overlay
 		if 	z == 1 and y == 8 and x <= NUM_TRACKS then
 			self:track_select(x,y,z,t)
-		elseif z == 1 and y == 8 and ((x >= 6 and x <= 9) or x > 14) then
+		elseif y == 8 and ((x >= 6 and x <= 9) or x > 14) then
 			self:page_select(x,y,z,t)
 		elseif y == 8 and x >= 11 and x <= 13 then
 			self:resolve_mod_keys()

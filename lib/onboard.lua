@@ -48,44 +48,58 @@ function Onboard:enc(n,d)
 end
 
 function Onboard:key(n,d)
-
-	if n == 1 then 
-		shift = d == 1 
-		if shift then 
-			post('shift...')
+	onboard_key_states[n] = (d==1)
+	if d == 1 and n ~= 1 then
+		if get_overlay() ~= 'none' then
+			set_overlay('none')
+		elseif onboard_key_states[2] and onboard_key_states[3] then
+			self:both_pressed()
+		elseif onboard_key_states[1] then
+			set_overlay((n==2) and 'time' or 'options')
+		elseif (not onboard_key_states[1]) and (track_key_held()==0 and page_key_held()==0) then
+			if n==2 then 
+				transport:reset_all()
+			elseif n==3 then 
+				transport:play_pause()
+			end
+		elseif (not onboard_key_states[1]) and (track_key_held()~=0) then
+			just_pressed_clipboard_key = true
+			if n==2 then
+				track_clipboard = meta:get_track_copy(last_touched_track)
+				post('copied track '..last_touched_track)
+			elseif n==3 then
+				meta:paste_onto_track(last_touched_track, track_clipboard)
+				post('pasted onto track '..last_touched_track)
+			end
+		elseif (not onboard_key_states[1]) and (page_key_held()~=0) then
+			just_pressed_clipboard_key = true
+			local p = get_page_name(last_touched_page)
+			if n==2 then
+				page_clipboards[p] = meta:get_page_copy(last_touched_track,p)
+				post('copied page: t'..at()..' '..p)
+			elseif n==3 then
+				meta:paste_onto_page(at(),p,page_clipboards[p])
+				post('pasted onto page: t'..at()..' '..p)
+			end
 		end
 	end
+end
 
-	if d == 1 and n ~= 1 then
-		if shift then
-			if params:get('overlay') == 1 then
-				params:set('overlay',n)
-				post((params:get('overlay') == 2 and 'timing' or 'config') .. ' overlay')
-			else
-				params:set('overlay',1)
-				post('overview')
-			end
-		else
-			if params:get('overlay') ~= 1 then
-				params:set('overlay',1)
-				post('overview')
-			else
-				if n == 2 then
-					if kbuf[1][8] or kbuf[2][8] or kbuf[3][8] or kbuf[4][8] then
-						track_clipboard = meta:get_track_copy() 
-					else
-						meta:reset_all()
-					end
-				elseif n == 3 then
-					if kbuf[1][8] or kbuf[2][8] or kbuf[3][8] or kbuf[4][8] then
-						meta:paste_onto_track(last_touched_track,track_clipboard)
-					else
-						params:delta('playing',1)
-						post((params:get('playing') == 1) and 'play' or 'stop')
-					end
-				end
-			end
+function Onboard:both_pressed()
+	if track_key_held() == 0 and page_key_held() == 0 then
+		post('hold track/page to cut')
+	else
+		if track_key_held() ~= 0 then
+			track_clipboard = meta:get_track_copy(last_touched_track)
+			meta:paste_onto_track(last_touched_track, meta:get_track_copy(0))
+			post('cut track '..last_touched_track)
+		elseif page_key_held() ~= 0 then
+			local p = get_page_name(last_touched_page)
+			page_clipboards[p] = meta:get_page_copy(last_touched_track,p)
+			meta:paste_onto_page(at(),p,meta:get_track_copy(0)[p])
+			post('cut page: t'..at()..' '..p)
 		end
+		just_pressed_clipboard_key = true
 	end
 end
 
