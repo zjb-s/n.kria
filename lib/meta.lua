@@ -163,7 +163,14 @@ function Meta:get_page_copy(t,page,pattern)
 	for i=1,16 do
 		table.insert(r.vals,empty and 0 or data:get_step_val(t,page,i))
 		table.insert(r.probs,empty and 4 or data:get_unique(t,page..'_prob',i))
-		if v == 'retrig' then
+		if (empty) and (page == 'trig') then
+			r.vals[i] = 0
+		elseif (empty) and (page == 'octave') then
+			r.vals[i] = 3
+		elseif (empty) then
+			r.vals[i] = 1
+		end
+		if page == 'retrig' then
 			table.insert(r.subtrig_counts,empty and 1 or data:get_unique(t,'subtrig_count',i))
 			table.insert(r.subtrigs,{})
 			for j=1,5 do

@@ -72,7 +72,7 @@ end
 
 function Transport:advance_track(t)
 	local pages_to_advance = (data:get_track_val(t,'trigger_clock') == 1) and {'trig','retrig'} or pages_with_steps
-
+	local note_will_fire = false
 	for k,v in pairs(pages_to_advance) do
 		data:delta_page_val(t,v,'counter',1)
 		if data:get_page_val(t,v,'counter') > data:get_page_val(t,v,'divisor') then
@@ -82,13 +82,13 @@ function Transport:advance_track(t)
 			and math.random(0,99) < prob_map[data:get_unique(t,'trig_prob',data:get_page_val(t,'trig','pos'))]
 			then
 				value_buffer[t][v] = data:get_step_val(t,v,data:get_page_val(t,v,'pos'))
-									 --data:get_step_val(t,v,data:get_page_val(t,v,'pos'))
 				if v == 'trig' and current_val(t,'trig') == 1 then
-					clock.run(note_clock,t)
+					note_will_fire = true
 				end
 			end
 		end
 	end
+	if note_will_fire then clock.run(note_clock,t) end
 end
 
 function Transport:advance_page(t,p) -- track,page
