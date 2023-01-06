@@ -161,6 +161,7 @@ blink = {
 -- ,	e3 = false
 	menu = {false,false,false,false,false}
 }
+
 coros = {}
 value_buffer = {}
 page_clipboards = {}
@@ -168,6 +169,7 @@ track_clipboard = {}
 pattern_clipboard = {}
 ms_step_clipboard = {}
 last_notes = {0,0,0,0}
+temp_scale = {-1,-1,-1,-1,-1,-1}
 
 post_buffer = 'n.kria'
 loop_first = -1

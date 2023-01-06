@@ -236,6 +236,7 @@ function Graphics:scale()
 		g:led(9,8-i,LOW)
 		local d = params:get('scale_'..params:get('scale_num')..'_deg_'..i)
 		g:led(9+d,8-i,HIGH)
+		if temp_scale[i-1] ~= -1 then g:led(temp_scale[i-1]+9,8-i,MED) end
 	end
 	g:led(9,7,LOW)
 	g:led(9+util.clamp(params:get('root_note'),0,7),7,HIGH)

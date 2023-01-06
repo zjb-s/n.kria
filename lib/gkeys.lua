@@ -226,15 +226,23 @@ function gkeys:scale_overlay(x,y,z,t)
 	elseif x > 8 and z == 1 then -- scale editor
 		if y == 7 then
 			params:set('root_note',x-9)
+			post('root note: '..mu.note_num_to_name(params:get('root_note')))
+			meta:make_scale()
+			return
+		end
+		
+		if  	(kbuf[params:get('scale_'..params:get('scale_num')..'_deg_'..8-y)+9][y]) 
+			and (temp_scale[7-y] ~= x-9)
+			and (params:get('scale_'..params:get('scale_num')..'_deg_'..8-y) ~= x-9) 
+		then
+			temp_scale[7-y] = x-9
+			post('live-adjust '..7-y..': '..temp_scale[7-y])
 		else
 			params:set('scale_'..params:get('scale_num')..'_deg_'..8-y, x-9)
-		end
-		meta:make_scale()  
-		if y == 7 then
-			post('root note: '..mu.note_num_to_name(params:get('root_note')))
-		else
+			temp_scale[7-y] = -1
 			post('scale stride, degree '..8-y..': '..x-9)
 		end
+		meta:make_scale()
 	end
 end
 
