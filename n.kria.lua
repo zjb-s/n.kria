@@ -262,8 +262,7 @@ function note_clock(track)
 	local slide_or_modulate = current_val(track,'slide') -- to match stock kria times
 	local velocity = 1.0
 	local divider = data:get_page_val(track,'trig','divisor')
-	local pos = data:get_page_val(track,'retrig','pos')
-	local subdivision = data:get_step_val(track,'retrig',pos)
+	local subdivision = current_val(track,'retrig')
 	local gate_len = current_val(track,'gate')
 	local gate_multiplier = data:get_track_val(track,'gate_shift')
 	local duration = util.clamp(gate_len-1, 0, 4)/16
@@ -275,7 +274,7 @@ function note_clock(track)
 	duration = duration * gate_multiplier
 	-- print('repeating note '..subdivision..' times')
 	for i=1,subdivision do
-		if data:get_subtrig(track,pos,i)==1 then
+		if data:get_subtrig(track,data:get_page_val(track,'retrig','pos'),i)==1 then
 			if data:get_track_val(track,'trigger_clock') == 1 then
 				for _,v in pairs(trigger_clock_pages) do transport:advance_page(track,v) end
 			end
