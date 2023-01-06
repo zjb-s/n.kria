@@ -203,11 +203,11 @@ function Graphics:time(D)
 end
 
 function Graphics:prob()
-	local d
 	for x=1,16 do
-		d = data:get_unique(at(),get_page_name()..'_prob',x)
+		local d = data:get_step_val(at(),get_page_name()..'_prob',x)
 		g:led(x,6,LOW)
 		g:led(x,7-d,HIGH)
+		g:led(x,1,data:get_page_val(at(),get_page_name(),'pos') == x and MED or LOW)
 	end
 end
 
@@ -332,8 +332,8 @@ function Graphics:retrig()
 					l = highlight(l)
 				end
 			else
-				if data:get_unique(at(),'subtrig_count',x) >= 7-y then
-					if data:get_unique(at(),'subtrig',x,7-y) then
+				if data:get_step_val(at(),'retrig',x) >= 7-y then
+					if data:get_subtrig(at(),x,7-y)==1 then
 						l = oob and MED or HIGH
 					else
 						l = oob and LOW or MED

@@ -1,5 +1,5 @@
 -- n.Kria                        :-)
--- v0.17 @zbs
+-- v0.18 @zbs
 --
 -- native norns kria
 -- original design by @tehn
@@ -22,7 +22,6 @@
 -- - k3: paste
 -- - k2+k3: cut
 -- [[-----------------------------]]
-
 
 
 --[[
@@ -98,16 +97,16 @@ scale_defaults = {
 ,	{0,0,0,0,0,0,0}
 ,	{0,0,0,0,0,0,0}
 }
-page_ranges = {
-	{0,1,0} -- trig
-,	{1,7,1} -- note
-,	{1,7,3} -- octave
-,	{1,7,1} -- gate
-,	{-1,6,1} -- retrig
-,	{1,7,1} -- transpose
-,	{1,7,1} -- slide
+page_defaults = {
+	trig = {min=0,max=1,default=0} 
+,	note = {min=1,max=7,default=1} 
+,	octave = {min=1,max=7,default=3} 
+,	gate = {min=1,max=7,default=1} 
+,	retrig = {min=0,max=5,default=1} 
+,	transpose = {min=1,max=7,default=1} 
+,	slide = {min=1,max=7,default=1} 
 }
-page_map = {
+page_map = { -- x coordinate map for grid key presses
 	[6] = 1
 ,	[7] = 2
 ,	[8] = 3
@@ -157,15 +156,20 @@ prob_map = {0, 25, 50, 100}
 div_sync_modes = {'none','track','all'}
 overlay_names = {'none','time','options','copy/paste'}
 blink = {
-	e1 = false
-,	e2 = false
-,	e3 = false
-,	menu = {false,false,false,false,false}
+-- 	e1 = false
+-- ,	e2 = false
+-- ,	e3 = false
+	menu = {false,false,false,false,false}
 }
 coros = {}
 value_buffer = {}
+page_clipboards = {}
+track_clipboard = {}
+pattern_clipboard = {}
+ms_step_clipboard = {}
+last_notes = {0,0,0,0}
 
-post_buffer = 'n.Kria v0.1'
+post_buffer = 'n.kria'
 loop_first = -1
 loop_last = -1
 wavery_light = MED
@@ -173,10 +177,6 @@ waver_dir = 1
 last_touched_page = 'trig'
 last_touched_track = 1
 last_touched_ms_step = 1
-page_clipboards = {}
-track_clipboard = {}
-pattern_clipboard = {}
-ms_step_clipboard = {}
 pulse_indicator = 1
 global_clock_counter = 1
 just_pressed_clipboard_key = false
@@ -245,6 +245,8 @@ function init()
 	coros.visual_ticker = clock.run(visual_ticker)
 	coros.step_ticker = clock.run(step_ticker)
 	coros.intro = clock.run(intro)
+	last_touched_track = at()
+	last_touched_page = get_page_name()
 	print('n.kria launched successfully')
 end
 
@@ -261,7 +263,7 @@ function note_clock(track)
 	local velocity = 1.0
 	local divider = data:get_page_val(track,'trig','divisor')
 	local pos = data:get_page_val(track,'retrig','pos')
-	local subdivision = data:get_unique(track,'subtrig_count',pos)
+	local subdivision = data:get_step_val(track,'retrig',pos)
 	local gate_len = current_val(track,'gate')
 	local gate_multiplier = data:get_track_val(track,'gate_shift')
 	local duration = util.clamp(gate_len-1, 0, 4)/16
@@ -273,13 +275,12 @@ function note_clock(track)
 	duration = duration * gate_multiplier
 	-- print('repeating note '..subdivision..' times')
 	for i=1,subdivision do
-		if data:get_unique(track,'subtrig',pos,i) then
+		if data:get_subtrig(track,pos,i)==1 then
 			if data:get_track_val(track,'trigger_clock') == 1 then
 				for _,v in pairs(trigger_clock_pages) do transport:advance_page(track,v) end
 			end
-			meta:resolve_pitches()
-			local note = value_buffer[track].note
-			--print('playing note'..note)
+			meta:update_last_notes()
+			local note = last_notes[track]
 			player:play_note(note, velocity, duration/subdivision)
 
 			if matrix ~= nil then matrix:set("pitch_t"..track, (note - 36)/(127-36)) end

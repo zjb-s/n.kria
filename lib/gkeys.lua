@@ -204,7 +204,7 @@ end
 function gkeys:prob_mod(x,y,z,t)
 	if z == 1 and y > 2 and y < 7 then
 		--params:set('data_'..get_page_name()..'_prob_'..x..'_t'..at(),7-y)
-		data:set_unique(at(),get_page_name()..'_prob',x,7-y)
+		data:set_step_val(at(),get_page_name()..'_prob',x,7-y)
 		post('odds: '.. prob_map[7-y] .. '%')
 	end
 end
@@ -290,11 +290,11 @@ function gkeys:retrig_page(x,y,z,t)
 	if y == 1 or y == 7 then
 		meta:delta_subtrig_count(t,x,(y==1 and 1 or -1))
 	else
-		if 7-y > data:get_unique(t,'subtrig_count',x) then
-			data:set_unique(t,'subtrig_count',x,7-y)
+		if 7-y > data:get_step_val(t,'retrig',x) then
+			data:set_step_val(t,'retrig',x,7-y)
 		end 
 		meta:toggle_subtrig(t,x,7-y)
-		post('subtrig '..7-y..' '..(data:get_unique(t,'subtrig',x,7-y) and 'on' or 'off'))
+		post('subtrig '..7-y..' '..(data:get_subtrig(t,x,7-y)==1 and 'on' or 'off'))
 	end
 end
 

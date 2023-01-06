@@ -10,7 +10,6 @@ Prms = {}
 function Prms:add()
 
 	params:add_separator('N.KRIA')
-	params:add_binary('debug','DEBUG','toggle',0)
 	params:add_binary('playing', 'PLAYING?', 'toggle')
 	params:add_number('root_note','ROOT NOTE',0,11,0,
 		function(x) return mu.note_num_to_name(x.value) end
@@ -108,39 +107,41 @@ function Prms:add_tracks()
 		
 		
 		for p=1,NUM_PATTERNS do
-			params:add_group('P'..p..' T'..t..' DATA',369)
+			params:add_group('P'..p..' T'..t..' DATA',353)
 
-			for k,v in ipairs(combined_page_list) do
-				if v == 'scale' or v == 'pattern' then break end
+			for k,v in ipairs(pages_with_steps) do
 
-				params:add_number('pos_'..v..'_t'..t..'_p'..p, 't'..t..' '..v..' pos', 1, 16,1)
-				params:add_number('loop_first_'..v..'_t'..t..'_p'..p, 'loop_first_'..v..'_t'..t, 1, 16,1)
-				params:add_number('loop_last_'..v..'_t'..t..'_p'..p, 'loop_last_'..v..'_t'..t, 1, 16,6)
-				params:add_number('divisor_'..v..'_t'..t..'_p'..p, 't'..t..' '..v..' divisor', 1,16,1)
-				params:add_number('cued_divisor_'..v..'_t'..t..'_p'..p, 't'..t..' '..v..' divisor', 0,16,0)
-				params:add_number('counter_'..v..'_t'..t..'_p'..p,'counter_'..v..'_t'..t,1,99,1)
-				params:add_binary('pipo_dir_'..v..'_t'..t..'_p'..p,'pipo_dir_'..v..'_t'..t..'_p'..p,'toggle',1)
+				params:add_number('pos_'..v..'_t'..t..'_p'..p,'data', 1, 16,1)
+				params:add_number('loop_first_'..v..'_t'..t..'_p'..p,'data', 1, 16,1)
+				params:add_number('loop_last_'..v..'_t'..t..'_p'..p,'data', 1, 16,6)
+				params:add_number('divisor_'..v..'_t'..t..'_p'..p,'data', 1,16,1)
+				params:add_number('cued_divisor_'..v..'_t'..t..'_p'..p,'data', 0,16,0)
+				params:add_number('counter_'..v..'_t'..t..'_p'..p,'data',1,99,1)
+				params:add_number('pipo_dir_'..v..'_t'..t..'_p'..p,'data',0,1,1)
 
 				for i=1,16 do
-					if v == 'trig' then -- just for trig page...
-						params:add_binary('data_trig_'..i..'_t'..t..'_p'..p, 'data_trig_'..i..'_t'..t, 'toggle', 0)
-					else
-						params:add_number('data_'..v..'_'..i..'_t'..t..'_p'..p, 'data_'..v..'_'..i..'_t'..t
-						,	page_ranges[k][1]
-						,	page_ranges[k][2]
-						,	page_ranges[k][3]
-						)
-					end
+					params:add_number('data_'..v..'_prob_'..i..'_t'..t..'_p'..p,'data',1,4,4)
+					params:add{
+						type = 'number'
+					,	id = 'data_'..v..'_'..i..'_t'..t..'_p'..p
+					,	name = 'data'
+					,	min = page_defaults[v].min
+					,	max = page_defaults[v].max
+					,	default = page_defaults[v].default
+					,	wrap = (v=='trig')
+					}
 					if v == 'retrig' then
-						params:add_number('data_subtrig_count_'..i..'_t'..t..'_p'..p,'data_subtrigs_'..i..'_t'..t,0,5,1)
 						for st=1,5 do
-							params:add_binary('data_subtrig_'..st..'_step_'..i..'_t'..t..'_p'..p,'data_subtrig_'..st..'_step_'..i..'_t'..t,'toggle')
-							if st==1 then
-								params:set('data_subtrig_'..st..'_step_'..i..'_t'..t..'_p'..p,1)
-							end
+							params:add{
+								type = 'number'
+							,	id = 'data_subtrig_'..st..'_step_'..i..'_t'..t..'_p'..p
+							,	name = 'subtrig'
+							,	min = 0
+							,	max = 1
+							,	default = st==0 and 1 or 0
+							}
 						end
 					end
-					params:add_number('data_'..v..'_prob_'..i..'_t'..t..'_p'..p,'data_prob_'..v..'_t'..t,1,4,4)
 				end
 			end
 

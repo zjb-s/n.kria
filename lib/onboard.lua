@@ -7,7 +7,7 @@ local Onboard = {}
 
 function Onboard:enc(n,d)
 	if n == 1 then
-		if shift then
+		if onboard_key_states[1] then
 			if coros.shift_e1 then clock.cancel(coros.shift_e1) end
 			coros.shift_e1 = clock.run(menu_clock,2)
 			params:delta('swing',d)
@@ -21,7 +21,7 @@ function Onboard:enc(n,d)
 	elseif n == 2 then
 		if coros.e2 then clock.cancel(coros.e2) end
 		coros.e2 = clock.run(menu_clock,3)
-		if shift then
+		if onboard_key_states[1] then
 			if d > 0 then
 				params:set('stretch',params:get('stretch')<0 and 0 or 64)
 			else
@@ -34,7 +34,7 @@ function Onboard:enc(n,d)
 	elseif n == 3 then
 		if coros.e3 then clock.cancel(coros.e3) end
 		coros.e3 = clock.run(menu_clock,4)
-		if shift then
+		if onboard_key_states[1] then
 			if d > 0 then
 				params:set('push',params:get('push')<0 and 0 or 64)
 			else
@@ -69,7 +69,7 @@ function Onboard:key(n,d)
 				post('copied track '..last_touched_track)
 			elseif n==3 then
 				meta:paste_onto_track(last_touched_track, track_clipboard)
-				post('pasted onto track '..last_touched_track)
+				post('pasted track '..last_touched_track)
 			end
 		elseif (not onboard_key_states[1]) and (page_key_held()~=0) then
 			just_pressed_clipboard_key = true
@@ -79,7 +79,7 @@ function Onboard:key(n,d)
 				post('copied page: t'..at()..' '..p)
 			elseif n==3 then
 				meta:paste_onto_page(at(),p,page_clipboards[p])
-				post('pasted onto page: t'..at()..' '..p)
+				post('pasted page: t'..at()..' '..p)
 			end
 		end
 	end

@@ -106,7 +106,7 @@ function add_sc_params()
 		end
 	}
   	params:add{id="delay_width", name="delay width", type="control", 
-    	controlspec=controlspec.new(-1.0,1.0,'lin',0,0,""),
+    	controlspec=controlspec.new(0.0,1.0,'lin',0,0,""),
     	action=function(x) 
 			softcut.pan(1,-x) 
 			softcut.pan(1,x) 

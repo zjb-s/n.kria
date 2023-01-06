@@ -77,15 +77,7 @@ function Transport:advance_track(t)
 		data:delta_page_val(t,v,'counter',1)
 		if data:get_page_val(t,v,'counter') > data:get_page_val(t,v,'divisor') then
 			data:set_page_val(t,v,'counter',1)
-			self:advance_page(t,v)
-			if data:get_track_val(t,'mute') == 0 
-			and math.random(0,99) < prob_map[data:get_unique(t,'trig_prob',data:get_page_val(t,'trig','pos'))]
-			then
-				value_buffer[t][v] = data:get_step_val(t,v,data:get_page_val(t,v,'pos'))
-				if v == 'trig' and current_val(t,'trig') == 1 then
-					note_will_fire = true
-				end
-			end
+			if self:advance_page(t,v) then note_will_fire = true end
 		end
 	end
 	if note_will_fire then clock.run(note_clock,t) end
@@ -149,6 +141,15 @@ function Transport:advance_page(t,p) -- track,page
 
 
 	data:set_page_val(t,p,'pos',new_pos)
+
+	if data:get_track_val(t,'mute') == 0 
+	and math.random(0,99) < prob_map[data:get_step_val(t,p..'_prob',data:get_page_val(t,p,'pos'))]
+	then
+		value_buffer[t][p] = data:get_step_val(t,p,data:get_page_val(t,p,'pos'))
+		if p == 'trig' and current_val(t,'trig') == 1 then
+			return true
+		end
+	end
 end 
 
 
