@@ -4,6 +4,8 @@ extensible native norns port of monome's Kria
 # changelog
 | num | description |
 |-|-|
+| 1.18 
+|-| test
 | 1.17 | added cut functionality |
 |-|      enabled trigger clocking |
 |-|      fixed triangle mode |
