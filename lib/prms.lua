@@ -14,10 +14,10 @@ function Prms:add()
 	params:add_number('root_note','ROOT NOTE',0,11,0,
 		function(x) return mu.note_num_to_name(x.value) end
 	)
-	params:add_number('stretch','STRETCH',-64,64,0,
+	params:add_number('stretch','STRETCH',-32,32,0,
 		function(x) return x.value > 0 and '+'..x.value or x.value end
 	)
-	params:add_number('push','PUSH',-64,64,0,
+	params:add_number('push','PUSH',-13,14,0,
 		function(x) return x.value > 0 and '+'..x.value or x.value end
 	)
 	params:add_number('swing','SWING',50,99,55,function(x) return x.value..'%' end)

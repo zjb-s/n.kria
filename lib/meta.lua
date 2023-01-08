@@ -44,10 +44,18 @@ function Meta:update_last_notes()
 		local b = value_buffer[t]
 		local n = b.note
 		n = n + b.transpose-1
-		n = n + 7*(b.octave + (data:get_track_val(t,'octave_shift')-1))
+		-- The "stretch" parameter attempts to exttend a melody around its
+		-- center. We assume the center is going to be the root note
+		-- of octive 3, not counting the octave shift of the track.
+
+		-- Subtract three octaves before stretch
+		n = n + 7*(b.octave - 3)
 		if params:get('stretchable_t'..t) == 1 then
-			n = util.round(n*((params:get('stretch')/64)+1))
+			n = util.round((n-1)*((params:get('stretch')/8)+1)) + 1
 		end
+		-- Add them back after.
+		n = n + 7*(3 + data:get_track_val(t,'octave_shift')-1)
+
 		if params:get('pushable_t'..t) == 1 then
 			n = n + params:get('push')
 		end
