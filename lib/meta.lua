@@ -3,6 +3,8 @@ WHAT GOES IN THIS FILE:
 - utility, sanity and sugar functions
 - for global use
 ]]--
+local status, matrix = pcall(require, 'matrix/lib/matrix')
+if not status then matrix = nil end
 
 Meta = {}
 
@@ -43,6 +45,16 @@ function Meta:update_last_notes()
 	for t=1,NUM_TRACKS do
 		local b = value_buffer[t]
 		local n = b.note
+		if matrix ~= nil then
+			matrix:set("note_t"..t, (n-1)/6)
+			if t==2 then
+				print("setting note", n, (n-1)/6)
+			end
+		end
+	end
+	for t=1,NUM_TRACKS do
+		local b = value_buffer[t]
+		local n = b.note
 		n = n + b.transpose-1
 		-- The "stretch" parameter attempts to exttend a melody around its
 		-- center. We assume the center is going to be the root note
@@ -58,6 +70,7 @@ function Meta:update_last_notes()
 
 		if params:get('pushable_t'..t) == 1 then
 			n = n + params:get('push')
+			print("push", params:get('push'), n)
 		end
 
 		local s = self:make_scale()

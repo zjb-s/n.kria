@@ -255,7 +255,10 @@ end
 function add_modulation_sources()
 	if matrix == nil then return end
 	for i=1,NUM_TRACKS do
-		matrix:add_binary("pitch_t"..i, "track "..i.." cv")
+		-- The final pitch
+		matrix:add_bipolar("pitch_t"..i, "track "..i.." cv")
+		-- The raw note, unaffected by transpose or anything
+		matrix:add_unipolar("note_t"..i, "track "..i.." note")
 	end
 end
 

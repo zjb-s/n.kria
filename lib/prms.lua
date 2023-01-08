@@ -17,7 +17,7 @@ function Prms:add()
 	params:add_number('stretch','STRETCH',-32,32,0,
 		function(x) return x.value > 0 and '+'..x.value or x.value end
 	)
-	params:add_number('push','PUSH',-13,14,0,
+	params:add_number('push','PUSH',-15,14,0,
 		function(x) return x.value > 0 and '+'..x.value or x.value end
 	)
 	params:add_number('swing','SWING',50,99,55,function(x) return x.value..'%' end)
