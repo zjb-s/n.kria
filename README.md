@@ -4,6 +4,9 @@ extensible native norns port of monome's Kria
 # changelog
 | num | description |
 |-|-|
+| 1.19
+|-| note, along with overall pitch, as a mod source
+|-| retooled stretch and push to be more musical
 | 1.18 
 |-| lots of internal rewrites
 |-| fixed problems introduced in 1.17
