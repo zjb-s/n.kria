@@ -138,7 +138,7 @@ function Prms:add_tracks()
 							,	name = 'subtrig'
 							,	min = 0
 							,	max = 1
-							,	default = st==0 and 1 or 0
+							,	default = st==1 and 1 or 0
 							}
 						end
 					end
