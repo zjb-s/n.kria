@@ -94,6 +94,7 @@ function set_delay_rate()
 		local delay_value = beat_values[params:get("delay_beats")]
 		local delay_duration = beat_sec * delay_value
 		base_rate = loop_length/delay_duration
+		params:set("delay_rate", base_rate)
 	end
 	softcut.rate(1, base_rate * 2^params:get('delay_skew'))
 	softcut.rate(2, base_rate * 2^(-params:get('delay_skew')))
@@ -157,7 +158,7 @@ function add_sc_params()
 		end
 	}
 	params:add { id = "delay_width", name = "delay width", type = "control",
-		controlspec = controlspec.new(0.0, 1.0, 'lin', 0, 0, ""),
+		controlspec = controlspec.new(0.0, 1.0, 'lin', 0, 1, ""),
 		action = function(x)
 			softcut.pan(1, -x)
 			softcut.pan(2, x)
