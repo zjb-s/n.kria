@@ -231,6 +231,7 @@ function g.key(x,y,z) gkeys:key(x,y,z) end
 
 function clock.transport.start() params:set('playing',1); post('play') end
 function clock.transport.stop() params:set('playing',0); post('stop') end
+function clock.tempo_change_handler() set_delay_rate() end
 
 function post(str) post_buffer = str end
 
