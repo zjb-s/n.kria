@@ -1,25 +1,25 @@
 local sc = {}
 
 local beat_amounts = {
-	"sixteenth", 
-	"eighth triplet", 
-	"dotted sixteenth", 
-	"eighth", 
-	"triplet", 
-	"dotted eighth", 
-	"quarter", 
+	"sixteenth",
+	"eighth triplet",
+	"dotted sixteenth",
+	"eighth",
+	"triplet",
+	"dotted eighth",
+	"quarter",
 	"dotted quarter"
 }
 
 local beat_values = {
-	1/4,
-	1/3,
-	3/8,
-	1/2,
-	2/3,
-	3/4,
+	1 / 4,
+	1 / 3,
+	3 / 8,
+	1 / 2,
+	2 / 3,
+	3 / 4,
 	1,
-	3/2,
+	3 / 2,
 }
 
 local loop_length = 0.5
@@ -93,11 +93,11 @@ function set_delay_rate()
 		local beat_sec = clock.get_beat_sec()
 		local delay_value = beat_values[params:get("delay_beats")]
 		local delay_duration = beat_sec * delay_value
-		base_rate = loop_length/delay_duration
+		base_rate = loop_length / delay_duration
 		params:set("delay_rate", base_rate)
 	end
-	softcut.rate(1, base_rate * 2^params:get('delay_skew'))
-	softcut.rate(2, base_rate * 2^(-params:get('delay_skew')))
+	softcut.rate(1, base_rate * 2 ^ params:get('delay_skew'))
+	softcut.rate(2, base_rate * 2 ^ (-params:get('delay_skew')))
 end
 
 function add_sc_params()
@@ -124,8 +124,8 @@ function add_sc_params()
 			softcut.filter_rq(2, x)
 		end
 	}
-	params:add_option("delay_style", "style", {"free", "sync"}, 1)
-	params:set_action("delay_style", function() 
+	params:add_option("delay_style", "style", { "free", "sync" }, 1)
+	params:set_action("delay_style", function()
 		if params:get("delay_style") == 1 then
 			params:hide("delay_beats")
 			params:show("delay_rate")
@@ -141,8 +141,8 @@ function add_sc_params()
 		action = set_delay_rate
 	}
 	params:add_option(
-		"delay_beats", 
-		"delay beats", 
+		"delay_beats",
+		"delay beats",
 		beat_amounts, 6)
 	params:set_action("delay_beats", set_delay_rate)
 
