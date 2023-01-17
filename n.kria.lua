@@ -35,7 +35,6 @@ NOTES ABOUT SCRIPT STRUCTURE:
 - i think everything else is fairly self-explanatory right now
 ]]--
 
-hs = include('lib/dualdelay')
 screen_graphics = include('lib/screen_graphics')
 grid_graphics = include('lib/grid_graphics')
 Prms = include('lib/prms')
@@ -235,7 +234,6 @@ function clock.transport.stop() params:set('playing',0); post('stop') end
 function post(str) post_buffer = str end
 
 function init()
-	hs.init()
 	nb.voice_count = 4
 	nb:init()
 	Prms:add()
