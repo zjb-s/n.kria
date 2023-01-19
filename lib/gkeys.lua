@@ -71,7 +71,7 @@ function gkeys:page_select(x,y,z,t)
 		end
 	end
 
-	if x-5 == params:get('page') and x < 9 then -- if double-pressing...
+	if x-5 == params:get('page') and x < 10 then -- if double-pressing...
 		params:delta('alt_page',1)
 	else
 		params:set('page',page_map[x])
@@ -353,6 +353,11 @@ function gkeys:gate_page(x,y,z,t)
 	end
 end
 
+function gkeys:velocity_page(x,y,z,t)
+	data:set_step_val(t,'velocity',x,8-y)
+	post('velocity '..x..': '..8-y)
+end
+
 function gkeys:key(x,y,z)
 	kbuf[x][y] = (z == 1)
 	local t
@@ -405,6 +410,8 @@ function gkeys:key(x,y,z)
 						self:slide_page(x,y,z,t)
 					elseif get_page_name() == 'gate' then
 						self:gate_page(x,y,z,t)
+					elseif get_page_name() == 'velocity' then
+						self:velocity_page(x,y,z,t)
 					end
 				end
 			end

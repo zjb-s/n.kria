@@ -24,17 +24,18 @@ function Prms:add()
 	params:add_number('global_clock_div','CLOCK DIVISION',1,16,1,
 		function(x) return division_names[x.value] end
 	)
-	params:add_trigger('reset_all','RESET')
-	params:set_action('reset_all',function(x) meta:reset_all() end)
-	params:add_trigger('advance_all','ADVANCE ALL')
-	params:set_action('advance_all',function() meta:advance_all() end)
 	
-	params:add_group('OPTIONS',5)
+	params:add_group('OPTIONS',8)
+	params:add_number('auto_channel','MIDI AUTO CHANNEL',1,16,5)
 	params:add_binary('note_div_sync','NOTE DIV SYNC','toggle')
 	params:add_binary('div_cue', 'DIV CUE', 'toggle')
 	params:add_option('div_sync','DIV SYNC', div_sync_modes)
 	params:add_binary('note_sync','NOTE SYNC', 'toggle')
 	params:add_option('loop_sync','LOOP SYNC',div_sync_modes)
+	params:add_trigger('reset_all','RESET')
+	params:set_action('reset_all',function(x) meta:reset_all() end)
+	params:add_trigger('advance_all','ADVANCE ALL')
+	params:set_action('advance_all',function() meta:advance_all() end)
 	
 	params:add_group('GLOBAL DATA',11)
 	params:add_binary('swing_this_step','swing_this_step','toggle')
@@ -85,11 +86,15 @@ end
 
 function Prms:add_tracks()
 
-	for t=1,NUM_TRACKS do
-		params:add_separator('TRACK ' .. t)
-		nb:add_param("voice_t"..t, "OUTPUT")
+	params:add_separator('TRACK CONTROLS')
 
-		params:add_group('T'..t..' OPTIONS',7)
+	for t=1,NUM_TRACKS do
+		-- params:add_separator('TRACK ' .. t)
+		
+		local lexi_names = {'ONE','TWO','THREE','FOUR'}
+		params:add_group(lexi_names[t],10)
+		nb:add_param("voice_t"..t, "T"..t.." OUTPUT")
+		params:add_number('channel_t'..t, 'MIDI IN CHANNEL',1,16,t)
 		params:add_option('play_mode_t'..t,'PLAY MODE', play_modes,1)
 		params:add_binary('mute_t'..t, 'MUTE', 'toggle')
 		params:add_trigger('reset_t'..t,'RESET')
@@ -98,7 +103,7 @@ function Prms:add_tracks()
 		params:set_action('advance_t'..t,function() meta:advance_track(t) end)
 		params:add_binary('stretchable_t'..t,'STRETCHABLE','toggle',1)
 		params:add_binary('pushable_t'..t,'PUSHABLE','toggle',1)
-		params:add_binary('trigger_clock_t'..t,'TRIGGER CLOCK','toggle',0)
+		params:add_binary('trigger_clock_t'..t,'TRIGGER CLOCK ON','toggle',0)
 		
 		params:add_group('track_data_t'..t,2)
 		params:add_number('octave_shift_t'..t,'octave_shift_t'..t, 1, 8, 4)
@@ -107,7 +112,7 @@ function Prms:add_tracks()
 		
 		
 		for p=1,NUM_PATTERNS do
-			params:add_group('P'..p..' T'..t..' DATA',353)
+			params:add_group('P'..p..' T'..t..' DATA',369)
 
 			for k,v in ipairs(pages_with_steps) do
 
