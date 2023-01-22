@@ -110,9 +110,13 @@ function Prms:add_tracks()
 		params:add_number('gate_shift_t'..t,'gate_shift_t'..t,1,16,8)
 		params:hide('track_data_t'..t)
 		
-		
+		-- 7 parameters plus prob and data per step
+		local total_params_per_pattern = (7 + 2*16)*tab.count(pages_with_steps)
+		-- retrig gets an extra five params per step
+		total_params_per_pattern = total_params_per_pattern + 5*16
+
 		for p=1,NUM_PATTERNS do
-			params:add_group('P'..p..' T'..t..' DATA',369)
+			params:add_group('P'..p..' T'..t..' DATA', total_params_per_pattern)
 
 			for k,v in ipairs(pages_with_steps) do
 
