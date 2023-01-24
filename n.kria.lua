@@ -1,5 +1,5 @@
 -- n.Kria                        :-)
--- v0.2 @zbs
+-- v0.2 @zbs @sixolet
 --
 -- native norns kria
 -- original design by @tehn
@@ -41,6 +41,7 @@ gkeys = include('lib/gkeys')
 meta = include('lib/meta')
 data = include('lib/data_functions')
 transport = include('lib/transport')
+hs = include('lib/dualdelay')
 nb = include("lib/nb/lib/nb")
 mu = require 'musicutil'
 
@@ -57,6 +58,7 @@ function init()
 	nb.voice_count = 4
 	nb:init()
 	Prms:add()
+	hs.init()
 	track_clipboard = meta:get_track_copy(0)
 	page_clipboards = meta:get_track_copy(0)
 	add_modulation_sources()
