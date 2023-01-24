@@ -76,9 +76,9 @@ function gkeys:page_select(x,y,z,t)
 	else
 		params:set('page',page_map[x])
 		params:set('alt_page',0)
-		if x == 16 and shift then
-			params:delta('ms_active')
-		end
+		-- if x == 16 and then
+		-- 	params:delta('ms_active')
+		-- end
 	end
 	post(get_display_page_name())
 	if params:get('ms_active') == 1 and x == 16 then post('meta-sequence') end
@@ -246,27 +246,24 @@ function gkeys:scale_overlay(x,y,z,t)
 	end
 end
 
-function pattern_longpress_clock(x) -- here for compatibility/tutorialization, don't remove
-	clock.sleep(0.5)
-	if kbuf[x][1] then
-		post('use shift+pattern to save!')
-	end
-end
 
 function gkeys:pattern_overlay(x,y,z,t)
-	if z == 1 then
-		if y == 1 then
-			if coros.pattern_longpress then clock.cancel(coros.pattern_longpress) end
+	if y == 1 then
+		if z == 1 then
+			if coros.pattern_longpress then clock.cancel(coros.pattern_longpress) end 
 			coros.pattern_longpress = clock.run(pattern_longpress_clock,x)
-			if shift then
-				meta:save_pattern_into_slot(x)
-			else
-				meta:switch_to_pattern(x)
-			end
-		elseif y == 2 then
-			params:set('pattern_quant',x)
-			post('cue clock: '..x)
+		elseif z == 0 and (not just_saved_pattern) then 
+			meta:switch_to_pattern(x) 
+			just_saved_pattern = false 
+		elseif z == 0 then
+			just_saved_pattern = false
 		end
+	elseif y == 2 and z == 1 then
+		params:set('pattern_quant',x)
+		post('cue clock: '..x)
+	elseif y == 7 and z == 1 and kbuf[16][8] then
+		params:set('ms_active',1)
+		post('meta-sequence on')
 	end
 end
 
@@ -282,9 +279,12 @@ function gkeys:meta_sequence(x,y,z,t)
 			params:set('ms_cursor',x+((y-3)*16))
 			last_touched_ms_step = x+((y-3)*16)
 			post('meta-sequence cursor: '..params:get('ms_cursor'))
-		elseif y == 7 then
+		elseif y == 7 and not kbuf[16][8] then
 			params:set('ms_duration_'..params:get('ms_cursor'),x)
 			post('meta step '..params:get('ms_cursor')..' duration: '..params:get('ms_duration_'..params:get('ms_cursor')))
+		elseif y == 7 and kbuf[16][8] then
+			params:set('ms_active',0)
+			post('meta-sequence off')
 		end
 	end
 end

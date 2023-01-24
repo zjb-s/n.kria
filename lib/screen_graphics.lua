@@ -113,6 +113,7 @@ function Graphics:right_windows()
 	}
 
 	for k,v in ipairs(names) do
+		if params:get('script_mode') == 1 and k>2 then break end
 		s.level(blink.menu[k] and MED or LOW)
 		s.rect(left_border,(height*k)+1,128-left_border,-height)
 		s.fill()
@@ -132,66 +133,11 @@ function Graphics:right_windows()
 	end
 
 	s.level(MED)
-	s.rect(left_border,1,128-left_border,(height*#names))
+	local h =height*#names
+	if params:get('script_mode') == 1 then h = h / 2 end
+	s.rect(left_border,1,128-left_border,h)
 	s.stroke()
 end
-
--- function Graphics:right_windows()
--- 	local x = 110
--- 	local y = 11
--- 	local w = 36
--- 	local h = 10
-
--- 	-- bpm window
--- 	s.level(MED)
--- 	s.rect(x-(w/2),11,w,-h)
--- 	s.fill()
--- 	s.level(blink.e1 and HIGH or LOW)
--- 	s.rect(x-(w/2),21,w,-h)
--- 	s.fill()
--- 	s.level(LOW)
--- 	s.rect(x-(w/2),21,w,-h*2)
--- 	s.stroke()
-
--- 	-- bpm text
--- 	s.level(OFF)
--- 	s.move(x-1,9)
--- 	s.text_center(shift and 'SWING' or 'BPM')
--- 	s.level(blink.e1 and LOW or MED)
--- 	s.move(x-1,18)
--- 	if shift then
--- 		s.text_center(params:get('swing')..'%')
--- 	else
--- 		s.text_center(util.round(params:get('clock_tempo')))
--- 	end
-
--- 	-- page window
--- 	s.level(MED)
--- 	s.rect(x-(w/2),33,w,-h)
--- 	s.fill()
--- 	s.level(LOW)
--- 	s.rect(x-(w/2),43,w,-h)
--- 	s.fill()
--- 	s.level(LOW)
--- 	s.rect(x-(w/2),43,w,-h*2)
--- 	s.stroke()
--- 	s.level(MED)
-	
--- 	-- page text
--- 	s.level(OFF)
--- 	s.move(x-1,31)
--- 	s.text_center(string.upper(get_page_name_short()))
-
--- 	s.level(MED)
--- 	s.move(x-1,41)
--- 	if get_page_name() == 'pattern' then
--- 		s.text_center(division_names[params:get('pattern_quant')])
--- 	elseif get_page_name() == 'scale' then
--- 		s.text_center('-')
--- 	else
--- 		s.text_center(division_names[data:get_page_val(at(),get_page_name(),'divisor')])
--- 	end
--- end
 
 function Graphics:description_window()
 	s.level(HIGH)

@@ -1,3 +1,7 @@
+-- matrix
+local status, matrix = pcall(require, 'matrix/lib/matrix')
+if not status then matrix = nil end
+
 Transport = {}
 
 function Transport:play_pause()
@@ -142,12 +146,15 @@ function Transport:advance_page(t,p) -- track,page
 
 	data:set_page_val(t,p,'pos',new_pos)
 
-	if data:get_track_val(t,'mute') == 0 
-	and math.random(0,99) < prob_map[data:get_step_val(t,p..'_prob',data:get_page_val(t,p,'pos'))]
-	then
-		value_buffer[t][p] = data:get_step_val(t,p,data:get_page_val(t,p,'pos'))
-		if p == 'trig' and current_val(t,'trig') == 1 then
-			return true
+	if math.random(0,99) < prob_map[data:get_step_val(t,p..'_prob',data:get_page_val(t,p,'pos'))] then
+		if matrix and tab.contains(matrix_sources,p) then 
+			matrix:set(p..'_t'..t, (data:get_step_val(t,p,data:get_page_val(t,p,'pos'))-1)/6) 
+		end
+		if data:get_track_val(t,'mute') == 0 then
+			value_buffer[t][p] = data:get_step_val(t,p,data:get_page_val(t,p,'pos'))
+			if p == 'trig' and current_val(t,'trig') == 1 then
+				return true
+			end
 		end
 	end
 end 

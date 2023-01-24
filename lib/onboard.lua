@@ -19,31 +19,35 @@ function Onboard:enc(n,d)
 			post('tempo: ' .. util.round(params:get('clock_tempo')))
 		end
 	elseif n == 2 then
-		if coros.e2 then clock.cancel(coros.e2) end
-		coros.e2 = clock.run(menu_clock,3)
-		if onboard_key_states[1] then
-			if d > 0 then
-				params:set('stretch',params:get('stretch')<0 and 0 or 64)
+		if params:get('script_mode') == 2 then
+			if coros.e2 then clock.cancel(coros.e2) end
+			coros.e2 = clock.run(menu_clock,3)
+			if onboard_key_states[1] then
+				if d > 0 then
+					params:set('stretch',params:get('stretch')<0 and 0 or 64)
+				else
+					params:set('stretch',params:get('stretch')>0 and 0 or -64)
+				end
 			else
-				params:set('stretch',params:get('stretch')>0 and 0 or -64)
+				params:delta('stretch',d)
 			end
-		else
-			params:delta('stretch',d)
+			post('stretch: ' .. params:get('stretch'))
 		end
-		post('stretch: ' .. params:get('stretch'))
 	elseif n == 3 then
-		if coros.e3 then clock.cancel(coros.e3) end
-		coros.e3 = clock.run(menu_clock,4)
-		if onboard_key_states[1] then
-			if d > 0 then
-				params:set('push',params:get('push')<0 and 0 or 64)
+		if params:get('script_mode') == 2 then
+			if coros.e3 then clock.cancel(coros.e3) end
+			coros.e3 = clock.run(menu_clock,4)
+			if onboard_key_states[1] then
+				if d > 0 then
+					params:set('push',params:get('push')<0 and 0 or 64)
+				else
+					params:set('push',params:get('push')>0 and 0 or -64)
+				end
 			else
-				params:set('push',params:get('push')>0 and 0 or -64)
+				params:delta('push',d)
 			end
-		else
-			params:delta('push',d)
+			post('push: '.. params:get('push'))
 		end
-		post('push: '.. params:get('push'))
 	end
 end
 

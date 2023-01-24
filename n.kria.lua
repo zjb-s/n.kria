@@ -1,5 +1,5 @@
 -- n.Kria                        :-)
--- v0.18 @zbs
+-- v0.2 @zbs
 --
 -- native norns kria
 -- original design by @tehn
@@ -26,15 +26,13 @@
 
 --[[
 WHAT GOES IN THIS FILE:
-- global variable declarations
+- includes
 - all coroutines
-- some basic utilities like ap() or at()
+- basic functions
 
-NOTES ABOUT SCRIPT STRUCTURE:
-- each file has a summary of its contents at the top
-- i think everything else is fairly self-explanatory right now
 ]]--
 
+globals = include('lib/globals')
 screen_graphics = include('lib/screen_graphics')
 grid_graphics = include('lib/grid_graphics')
 Prms = include('lib/prms')
@@ -46,150 +44,32 @@ transport = include('lib/transport')
 nb = include("lib/nb/lib/nb")
 mu = require 'musicutil'
 
+-- hardware
+g = grid.connect()
+m = midi.connect()
+
 -- matrix
 local status, matrix = pcall(require, 'matrix/lib/matrix')
 if not status then matrix = nil end
 
--- macros
-OFF=0
-LOW=2
-MED=5
-HIGH=12
-NUM_TRACKS = 4
-NUM_PATTERNS = 16
-NUM_SCALES = 16
+function init()
+	globals:add()
+	nb.voice_count = 4
+	nb:init()
+	Prms:add()
+	track_clipboard = meta:get_track_copy(0)
+	page_clipboards = meta:get_track_copy(0)
+	add_modulation_sources()
+	init_kbuf()
+	init_value_buffer()
+	coros.visual_ticker = clock.run(visual_ticker)
+	coros.step_ticker = clock.run(step_ticker)
+	coros.intro = clock.run(intro)
+	last_touched_track = at()
+	last_touched_page = get_page_name()
+	print('n.kria launched successfully')
+end
 
--- global tables
-division_names = {
-	'1/16'
-,	'1/8'
-,	'1/8.'
-,	'1/4'
-,	'5/16'
-,	'1/4.'
-,	'7/16'
-,	'1/2'
-,	'9/16'
-,	'5/8'
-,	'11/16'
-,	'1/2.'
-,	'13/16'
-,	'7/8'
-,	'15/16'
-,	'1/1'
-}
-scale_defaults = {
-	{0,2,2,1,2,2,2}
-,	{0,2,1,2,2,2,1}
-,	{0,1,2,2,2,1,2}
-,	{0,2,2,2,1,2,2}
-,	{0,2,2,1,2,2,1}
-,	{0,2,1,2,2,1,2}
-,	{0,1,2,2,1,2,2}
-,	{0,0,1,0,1,1,1}
-,	{0,0,0,0,0,0,0}
-,	{0,0,0,0,0,0,0}
-,	{0,0,0,0,0,0,0}
-,	{0,0,0,0,0,0,0}
-,	{0,0,0,0,0,0,0}
-,	{0,0,0,0,0,0,0}
-,	{0,0,0,0,0,0,0}
-,	{0,0,0,0,0,0,0}
-}
-page_defaults = {
-	trig = {min=0,max=1,default=0} 
-,	note = {min=1,max=7,default=1} 
-,	octave = {min=1,max=7,default=3} 
-,	gate = {min=1,max=7,default=1} 
-,	retrig = {min=0,max=5,default=1} 
-,	transpose = {min=1,max=7,default=1} 
-,	slide = {min=1,max=7,default=1} 
-,	velocity = {min=1,max=7,default=5}
-}
-page_map = { -- x coordinate map for grid key presses
-	[6] = 1
-,	[7] = 2
-,	[8] = 3
-,	[9] = 4
-,	[15] = 5
-,	[16] = 6
-}
-time_desc = {
-	{	
-		'all divs independent'
-	},{
-		'most divs independent'
-	,	'trig & note divs synced'
-	},{
-		'divs synced in track'
-	,	'but tracks independent'
-	},{
-		'trig & note divs synced'
-	,	'other divs synced separate'
-	},{
-		'all divs synced'
-	},{		
-		'most divs globally synced'
-	,	'trig & note synced separate'
-	}
-}
-config_desc = {
-	{
-		'note & trig edits free'
-	,	'trig & note edits synced'
-	},{
-		'all loops independent'
-	,	'loops synced inside tracks'
-	,	'all loops synced'
-	}
-}
-
--- more global tables
-page_names = {'trig', 'note', 'octave', 'gate','scale','pattern'}
-alt_page_names = {'retrig', 'transpose', 'slide', 'velocity'}
-combined_page_list = {'trig','note','octave','gate','retrig','transpose','slide','velocity','scale','pattern'}
-pages_with_steps = {'trig','retrig','note','transpose','octave','slide','gate','velocity'}
-trigger_clock_pages = {'note','transpose','octave','slide','gate','velocity'}
-matrix_sources = {'note','transpose','octave','slide','gate','velocity'}
-mod_names = {'none','loop','time','prob'}
-play_modes = {'forward', 'reverse', 'triangle', 'drunk', 'random'}
-prob_map = {0, 25, 50, 100}
-div_sync_modes = {'none','track','all'}
-overlay_names = {'none','time','options','copy/paste'}
-blink = {
--- 	e1 = false
--- ,	e2 = false
--- ,	e3 = false
-	menu = {false,false,false,false,false}
-}
-
-coros = {}
-value_buffer = {}
-page_clipboards = {}
-track_clipboard = {}
-pattern_clipboard = {}
-ms_step_clipboard = {}
-last_notes = {0,0,0,0}
-temp_scale = {-1,-1,-1,-1,-1,-1}
-
-post_buffer = 'n.kria'
-loop_first = -1
-loop_last = -1
-wavery_light = MED
-waver_dir = 1
-last_touched_page = 'trig'
-last_touched_track = 1
-last_touched_ms_step = 1
-pulse_indicator = 1
-global_clock_counter = 1
-just_pressed_clipboard_key = false
-
-g = grid.connect()
-m = midi.connect()
-
--- buffers
-kbuf = {} -- key state buffer, true/false
-onboard_key_states = {false,false,false}
 
 -- basic functions
 function init_value_buffer()
@@ -221,6 +101,15 @@ function intro()
 	post('see splash for controls')
 end
 
+function pattern_longpress_clock(x)
+	print('starting coro')
+	clock.sleep(0.5)
+	if kbuf[x][1] then
+		meta:save_pattern_into_slot(x)
+		just_saved_pattern = true
+	end
+end
+
 function menu_clock(n)
 	blink.menu[n] = true
 	clock.sleep(1/4)
@@ -233,26 +122,8 @@ function g.key(x,y,z) gkeys:key(x,y,z) end
 
 function clock.transport.start() params:set('playing',1); post('play') end
 function clock.transport.stop() params:set('playing',0); post('stop') end
-function clock.tempo_change_handler() set_delay_rate() end
 
 function post(str) post_buffer = str end
-
-function init()
-	nb.voice_count = 4
-	nb:init()
-	Prms:add()
-	track_clipboard = meta:get_track_copy(0)
-	page_clipboards = meta:get_track_copy(0)
-	add_modulation_sources()
-	init_kbuf()
-	init_value_buffer()
-	coros.visual_ticker = clock.run(visual_ticker)
-	coros.step_ticker = clock.run(step_ticker)
-	coros.intro = clock.run(intro)
-	last_touched_track = at()
-	last_touched_page = get_page_name()
-	print('n.kria launched successfully')
-end
 
 function add_modulation_sources()
 	if matrix == nil then return end
@@ -271,7 +142,7 @@ end
 function note_clock(track)
 	local player = params:lookup_param("voice_t"..track):get_player()
 	local slide_or_modulate = current_val(track,'slide') -- to match stock kria times
-	local velocity = (current_val(track,'velocity')-1)/6
+	local velocity = current_val(track,'velocity')
 	local divider = data:get_page_val(track,'trig','divisor')
 	local subdivision = current_val(track,'retrig')
 	local gate_len = current_val(track,'gate')
@@ -289,18 +160,20 @@ function note_clock(track)
 			if data:get_track_val(track,'trigger_clock') == 1 then
 				for _,v in pairs(trigger_clock_pages) do transport:advance_page(track,v) end
 			end
+			local description = player:describe()
 			meta:update_last_notes()
-			local note = last_notes[track]
-			player:play_note(note, velocity, duration/subdivision)
+			local note = description.style == 'kit' and last_notes_raw[track] or last_notes[track]
+			-- print('playing note '..note)
+			player:play_note(note, (velocity-1)/6, duration/subdivision)
 
 			if matrix ~= nil then matrix:set("pitch_t"..track, (note - 36)/(127-36)) end
 			local note_str = mu.note_num_to_name(note, true)
-			local description = player:describe()
 			if description.supports_slew then
 				local slide_amt = util.linlin(1,7,1,120,slide_or_modulate) -- to match stock kria times
 				player:set_slew(slide_amt/1000)
 			else
-				player:modulate(util.linlin(1,7,0,1,slide_or_modulate))
+				local num = util.linlin(1,7,0,1,slide_or_modulate)
+				player:modulate(num)
 			end
 			screen_graphics:add_history(track, note_str, clock.get_beats())
 		end

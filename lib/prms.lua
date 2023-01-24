@@ -7,9 +7,59 @@ local nb = include('n.kria/lib/nb/lib/nb')
 
 Prms = {}
 
-function Prms:add()
+function Prms:script_mode_switch()
+	local extended_param_names = {
+		globals = {
+			'stretch'
+		,	'push'
+		,	'advance_all'
+		,	'reset_all'
+		}
+	,	per_track = {
+			'stretchable'
+		,	'pushable'
+		,	'trigger_clock'
+		,	'advance'
+		,	'reset'
+		}
+	}
+	params:set_action('script_mode', function(x)
+		for _,v in pairs(extended_param_names.globals) do
+			if x == 2 then
+				params:show(v)
+			else
+				params:hide(v)
+			end
+		end
+		for t=1,NUM_TRACKS do
+			for _,v in pairs(extended_param_names.per_track) do
+				if x == 2 then
+					params:show(v..'_t'..t)
+				else
+					params:hide(v..'_t'..t)
+				end
+			end
+		end
+		_menu.rebuild_params()
+	end)
+end
 
+function Prms:add()
 	params:add_separator('N.KRIA')
+	self:add_globals()
+	self:script_mode_switch()
+	self:add_tracks()
+	params:add_separator("VOICE CONTROLS")
+	nb:add_player_params()
+end
+
+params.action_read = function(filename, name, pset_number)
+	for _, player in pairs(nb:get_players()) do
+		player:stop_all()
+	end
+end
+
+function Prms:add_globals()
 	params:add_binary('playing', 'PLAYING?', 'toggle')
 	params:add_number('root_note','ROOT NOTE',0,11,0,
 		function(x) return mu.note_num_to_name(x.value) end
@@ -24,9 +74,11 @@ function Prms:add()
 	params:add_number('global_clock_div','CLOCK DIVISION',1,16,1,
 		function(x) return division_names[x.value] end
 	)
+
+	params:add_option('script_mode','SCRIPT MODE', {'classic','extended'},1)
 	
-	params:add_group('OPTIONS',8)
-	params:add_number('auto_channel','MIDI AUTO CHANNEL',1,16,5)
+	params:add_group('OPTIONS',7)
+	-- params:add_number('auto_channel','MIDI AUTO CHANNEL',1,16,5)
 	params:add_binary('note_div_sync','NOTE DIV SYNC','toggle')
 	params:add_binary('div_cue', 'DIV CUE', 'toggle')
 	params:add_option('div_sync','DIV SYNC', div_sync_modes)
@@ -72,16 +124,6 @@ function Prms:add()
 		end
 	end
 	params:hide('scale data')
-
-	self:add_tracks()
-	params:add_separator("VOICE CONTROLS")
-	nb:add_player_params()
-end
-
-params.action_read = function(filename, name, pset_number)
-	for _, player in pairs(nb:get_players()) do
-		player:stop_all()
-	end
 end
 
 function Prms:add_tracks()
@@ -92,9 +134,9 @@ function Prms:add_tracks()
 		-- params:add_separator('TRACK ' .. t)
 		
 		local lexi_names = {'ONE','TWO','THREE','FOUR'}
-		params:add_group(lexi_names[t],10)
+		params:add_group(lexi_names[t],9)
 		nb:add_param("voice_t"..t, "T"..t.." OUTPUT")
-		params:add_number('channel_t'..t, 'MIDI IN CHANNEL',1,16,t)
+		-- params:add_number('channel_t'..t, 'MIDI IN CHANNEL',1,16,t)
 		params:add_option('play_mode_t'..t,'PLAY MODE', play_modes,1)
 		params:add_binary('mute_t'..t, 'MUTE', 'toggle')
 		params:add_trigger('reset_t'..t,'RESET')
@@ -110,13 +152,9 @@ function Prms:add_tracks()
 		params:add_number('gate_shift_t'..t,'gate_shift_t'..t,1,16,8)
 		params:hide('track_data_t'..t)
 		
-		-- 7 parameters plus prob and data per step
-		local total_params_per_pattern = (7 + 2*16)*tab.count(pages_with_steps)
-		-- retrig gets an extra five params per step
-		total_params_per_pattern = total_params_per_pattern + 5*16
-
+		
 		for p=1,NUM_PATTERNS do
-			params:add_group('P'..p..' T'..t..' DATA', total_params_per_pattern)
+			params:add_group('P'..p..' T'..t..' DATA',392)
 
 			for k,v in ipairs(pages_with_steps) do
 

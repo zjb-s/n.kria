@@ -3,6 +3,7 @@ WHAT GOES IN THIS FILE:
 - utility, sanity and sugar functions
 - for global use
 ]]--
+
 local status, matrix = pcall(require, 'matrix/lib/matrix')
 if not status then matrix = nil end
 
@@ -53,6 +54,7 @@ function Meta:update_last_notes()
 		local b = value_buffer[t]
 		local n = b.note
 		n = n + b.transpose-1
+		last_notes_raw[t] = n
 		-- The "stretch" parameter attempts to exttend a melody around its
 		-- center. We assume the center is going to be the root note
 		-- of octive 3, not counting the octave shift of the track.
