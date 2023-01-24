@@ -62,6 +62,7 @@ function Graphics:render()
 	elseif p == 'octave' then self:octave()
 	elseif p == 'slide' then self:slide()
 	elseif p == 'gate' then self:gate()
+	elseif p == 'velocity' then self:velocity()
 	end
 
 	if get_overlay() == 'none' then 
@@ -508,6 +509,41 @@ function Graphics:gate()
 				l = highlight(l)
 			end
 			g:led(x,1+y,l)
+		end
+	end
+end
+
+function Graphics:velocity()
+	for x=1,16 do
+		local l = OFF
+		local d = data:get_step_val(at(),'velocity',x)
+		local oob = out_of_bounds(at(),'velocity',x)
+		local l_accum = 0
+		local l_delta = util.round(HIGH/d)
+		for y=1,7 do
+			if y > d then
+				l = OFF
+			elseif y == d then
+				if oob then
+					l = MED
+				else
+					l = HIGH
+				end
+			elseif y < d then
+				if oob then
+					l = LOW
+				else
+					l_accum = l_accum + l_delta
+					l = l_accum
+				end
+			end
+			if get_mod_key() == 'loop' and not oob then
+				l = highlight(l)
+			end
+			if x == data:get_page_val(at(),'velocity','pos') and params:get('playing') == 1 then
+				l = highlight(l)
+			end
+			g:led(x,8-y,l)
 		end
 	end
 end

@@ -1,5 +1,5 @@
 -- n.Kria                        :-)
--- v0.19 @zbs
+-- v0.18 @zbs
 --
 -- native norns kria
 -- original design by @tehn
@@ -104,6 +104,7 @@ page_defaults = {
 ,	retrig = {min=0,max=5,default=1} 
 ,	transpose = {min=1,max=7,default=1} 
 ,	slide = {min=1,max=7,default=1} 
+,	velocity = {min=1,max=7,default=5}
 }
 page_map = { -- x coordinate map for grid key presses
 	[6] = 1
@@ -145,10 +146,11 @@ config_desc = {
 
 -- more global tables
 page_names = {'trig', 'note', 'octave', 'gate','scale','pattern'}
-alt_page_names = {'retrig', 'transpose', 'slide'}
-combined_page_list = {'trig','note','octave','gate','retrig','transpose','slide','scale','pattern'}
-pages_with_steps = {'trig','retrig','note','transpose','octave','slide','gate'}
-trigger_clock_pages = {'note','transpose','octave','slide','gate'}
+alt_page_names = {'retrig', 'transpose', 'slide', 'velocity'}
+combined_page_list = {'trig','note','octave','gate','retrig','transpose','slide','velocity','scale','pattern'}
+pages_with_steps = {'trig','retrig','note','transpose','octave','slide','gate','velocity'}
+trigger_clock_pages = {'note','transpose','octave','slide','gate','velocity'}
+matrix_sources = {'note','transpose','octave','slide','gate','velocity'}
 mod_names = {'none','loop','time','prob'}
 play_modes = {'forward', 'reverse', 'triangle', 'drunk', 'random'}
 prob_map = {0, 25, 50, 100}
@@ -183,6 +185,7 @@ global_clock_counter = 1
 just_pressed_clipboard_key = false
 
 g = grid.connect()
+m = midi.connect()
 
 -- buffers
 kbuf = {} -- key state buffer, true/false
@@ -255,16 +258,20 @@ function add_modulation_sources()
 	if matrix == nil then return end
 	for i=1,NUM_TRACKS do
 		-- The final pitch
-		matrix:add_bipolar("pitch_t"..i, "track "..i.." cv")
+		matrix:add_bipolar("pitch_t"..i, "track "..i.." final cv")
 		-- The raw note, unaffected by transpose or anything
-		matrix:add_unipolar("note_t"..i, "track "..i.." note")
+		-- matrix:add_unipolar("note_t"..i, "track "..i.." note")
+
+		for _,v in ipairs(matrix_sources) do
+			matrix:add_unipolar(v..'_t'..i, 'track '..i..' '..v)
+		end
 	end
 end
 
 function note_clock(track)
 	local player = params:lookup_param("voice_t"..track):get_player()
 	local slide_or_modulate = current_val(track,'slide') -- to match stock kria times
-	local velocity = 1.0
+	local velocity = (current_val(track,'velocity')-1)/6
 	local divider = data:get_page_val(track,'trig','divisor')
 	local subdivision = current_val(track,'retrig')
 	local gate_len = current_val(track,'gate')
@@ -370,7 +377,6 @@ end
 
 function current_val(track,page)
 	return value_buffer[track][page]
-	--return data:get_step_val(track,page,data:get_page_val(track,page,'pos'))
 end
 
 function get_mod_key()
