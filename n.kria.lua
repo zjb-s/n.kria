@@ -169,7 +169,17 @@ function note_clock(track)
 			player:play_note(note, (velocity-1)/6, duration/subdivision)
 
 			if matrix ~= nil then matrix:set("pitch_t"..track, (note - 36)/(127-36)) end
-			local note_str = mu.note_num_to_name(note, true)
+			local note_str
+			if description.style == 'kit' then
+				note_str = ''
+				for x=0,note,3 do
+					note_str = ' ' .. note_str
+				end
+
+				note_str = note_str..note
+			else
+				note_str = mu.note_num_to_name(note, true)
+			end
 			if description.supports_slew then
 				local slide_amt = util.linlin(1,7,1,120,slide_or_modulate) -- to match stock kria times
 				player:set_slew(slide_amt/1000)
