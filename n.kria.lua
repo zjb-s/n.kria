@@ -59,6 +59,7 @@ function init()
 	nb:init()
 	Prms:add()
 	hs.init()
+	data.pattern = ap()
 	track_clipboard = meta:get_track_copy(0)
 	page_clipboards = meta:get_track_copy(0)
 	add_modulation_sources()
@@ -104,7 +105,6 @@ function intro()
 end
 
 function pattern_longpress_clock(x)
-	print('starting coro')
 	clock.sleep(0.5)
 	if kbuf[x][1] then
 		meta:save_pattern_into_slot(x)
@@ -185,7 +185,6 @@ end
 
 function step_ticker()
 	while true do
-		data.pattern = ap()
 		clock.sync(1/4)
 		if params:get('swing_this_step') == 1 then
 			params:set('swing_this_step',0)
@@ -204,7 +203,6 @@ function visual_ticker()
 	while true do
 		clock.sleep(1/30)
 		redraw()
-
 		wavery_light = wavery_light + waver_dir
 		if wavery_light > MED + 2 then
 			waver_dir = -1

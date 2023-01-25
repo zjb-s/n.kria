@@ -147,7 +147,7 @@ function Meta:edit_loop(track, first, last)
 	elseif loopsync == 'all' then
 		for t=1,NUM_TRACKS do
 			for k,v in ipairs(combined_page_list) do
-				if v == 'scale' or v == 'patterns' then break end
+				if v == 'scale' or v == 'pattern' then break end
 				data:set_page_val(track,v,'loop_first',f)
 				data:set_page_val(track,v,'loop_last',l)
 			end
@@ -163,13 +163,16 @@ end
 
 function Meta:save_pattern_into_slot(slot)
 	for t=1,NUM_TRACKS do 
-		self:paste_onto_track(t,self:get_track_copy(t),slot) 
+		data.pattern = ap()
+		local track_table = self:get_track_copy(t)
+		data.pattern = slot
+		self:paste_onto_track(t, track_table) 
 		post('saved pattern to slot '..slot)
 	end
+	data.pattern = ap()
 end
 
-function Meta:get_page_copy(t,page,pattern)
-	data.pattern = p and p or ap()
+function Meta:get_page_copy(t,page)
 	local r = {}
 	local empty = t==0
 	r['loop_first'] = empty and 1 or data:get_page_val(t,page,'loop_first')
@@ -191,22 +194,18 @@ function Meta:get_page_copy(t,page,pattern)
 			end
 		end
 	end
-	data.pattern = ap()
 	return r
 end
 
-function Meta:get_track_copy(t,p)
-	data.pattern = p and p or ap()
+function Meta:get_track_copy(t)
 	local r = {}
 	for _,v in pairs(pages_with_steps) do
 		r[v] = self:get_page_copy(t,v)
 	end
-	data.pattern = ap()
 	return r
 end
 
-function Meta:paste_onto_page(t,page,page_table,pattern)
-	data.pattern = p and p or ap()
+function Meta:paste_onto_page(t,page,page_table)
 	data:set_page_val(t,page,'loop_first',page_table.loop_first)
 	data:set_page_val(t,page,'loop_last',page_table.loop_last)
 	data:set_page_val(t,page,'divisor',page_table.divisor)
@@ -220,16 +219,13 @@ function Meta:paste_onto_page(t,page,page_table,pattern)
 			end
 		end
 	end
-	data.pattern = ap()
 end
 
 function Meta:paste_onto_track(t,track_table,p)
-	data.pattern = p and p or ap()
 	for _,v in pairs(pages_with_steps) do
 		self:paste_onto_page(t,v,track_table[v],p)
 	end
 	post('pasted on track '..t)
-	data.pattern = ap()
 end
 
 return Meta
