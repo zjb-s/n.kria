@@ -93,15 +93,15 @@ function init_kbuf()
 end
 
 function intro()
-	post('n.Kria')
+	post('n.Kria', true)
 	clock.sleep(0.1)
 	params:bang()
 	clock.sleep(2)
-	post('by @zbs')
+	post('by @zbs', true)
 	clock.sleep(2)
-	post('based on kria by @tehn')
+	post('based on kria by @tehn', true)
 	clock.sleep(2)
-	post('see splash for controls')
+	post('see splash for controls', true)
 end
 
 function pattern_longpress_clock(x)
@@ -125,7 +125,12 @@ function g.key(x,y,z) gkeys:key(x,y,z) end
 function clock.transport.start() params:set('playing',1); post('play') end
 function clock.transport.stop() params:set('playing',0); post('stop') end
 
-function post(str) post_buffer = str end
+function post(str,intro) 
+	post_buffer = str 
+	if (not intro) and (coros.intro) then
+		clock.cancel(coros.intro)
+	end
+end
 
 function add_modulation_sources()
 	if matrix == nil then return end
