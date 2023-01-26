@@ -215,13 +215,17 @@ function gkeys:scale_overlay(x,y,z,t)
 		params:set('scale_num',n)
 		post('selected scale '..n)
 
-	elseif x == 1 and y < 5 and z == 1 then -- trigger clock toggles
-		data:delta_track_val(y,'trigger_clock',1)
-		post('t'..t..' trigger clocking '..(data:get_track_val(y,'trigger_clock') == 1 and 'on' or 'off'))
+	elseif x == 1 and y < 5 and z == 1 then
+		data:delta_track_val(y,'param_clock',1)
+		post('t'..y..' param clocking '..(data:get_track_val(y,'param_clock') == 1 and 'on' or 'off')) 
 
-	elseif x > 2 and x < 8 and y < 5 and z == 1 then -- play modes
-		params:set('play_mode_t'..y, x-2)
-		post('t'..y..' playmode: '..play_modes[x-2])
+	elseif x == 2 and y < 5 and z == 1 then -- trigger clock toggles
+		data:delta_track_val(y,'trigger_clock',1)
+		post('t'..y..' trigger clocking '..(data:get_track_val(y,'trigger_clock') == 1 and 'on' or 'off'))
+
+	elseif x > 3 and x < 9 and y < 5 and z == 1 then -- play modes
+		params:set('play_mode_t'..y, x-3)
+		post('t'..y..' playmode: '..play_modes[x-3])
 
 	elseif x > 8 and z == 1 then -- scale editor
 		if y == 7 then

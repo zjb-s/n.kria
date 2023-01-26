@@ -19,6 +19,7 @@ function Prms:script_mode_switch()
 			'stretchable'
 		,	'pushable'
 		,	'trigger_clock'
+		,	'param_clock'
 		,	'advance'
 		,	'reset'
 		}
@@ -133,22 +134,24 @@ function Prms:add_tracks()
 
 	params:add_separator('TRACK CONTROLS')
 
+	local lexi_names = {'ONE','TWO','THREE','FOUR'}
 	for t=1,NUM_TRACKS do
-		-- params:add_separator('TRACK ' .. t)
-		
-		local lexi_names = {'ONE','TWO','THREE','FOUR'}
-		params:add_group(lexi_names[t],9)
+		params:add_group(lexi_names[t],10)
 		nb:add_param("voice_t"..t, "T"..t.." OUTPUT")
-		-- params:add_number('channel_t'..t, 'MIDI IN CHANNEL',1,16,t)
 		params:add_option('play_mode_t'..t,'PLAY MODE', play_modes,1)
 		params:add_binary('mute_t'..t, 'MUTE', 'toggle')
 		params:add_trigger('reset_t'..t,'RESET')
-		params:set_action('reset_t'..t,function(x) meta:reset_track(t) end)
+		params:set_action('reset_t'..t,function(x) transport:reset_track(t) end)
 		params:add_trigger('advance_t'..t,'ADVANCE')
-		params:set_action('advance_t'..t,function() meta:advance_track(t) end)
+		params:set_action('advance_t'..t,function() 
+			if params:get('param_clock_t'..t) == 1 then
+				transport:advance_track(t) 
+			end
+		end)
 		params:add_binary('stretchable_t'..t,'STRETCHABLE','toggle',1)
 		params:add_binary('pushable_t'..t,'PUSHABLE','toggle',1)
 		params:add_binary('trigger_clock_t'..t,'TRIGGER CLOCK ON','toggle',0)
+		params:add_binary('param_clock_t'..t,'PARAM CLOCK ON','toggle',0)
 		
 		params:add_group('track_data_t'..t,2)
 		params:add_number('octave_shift_t'..t,'octave_shift_t'..t, 1, 8, 4)

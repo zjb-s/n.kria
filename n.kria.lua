@@ -1,5 +1,5 @@
 -- n.Kria                        :-)
--- v0.2 @zbs @sixolet
+-- v0.21 @zbs @sixolet
 --
 -- native norns kria
 -- original design by @tehn

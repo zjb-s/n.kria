@@ -43,7 +43,9 @@ function Transport:advance_all()
 		self:advance_pattern_page()
 		
 		for t=1,NUM_TRACKS do 
-			self:advance_track(t) 
+			if data:get_track_val(t,'param_clock') == 0 then 
+				self:advance_track(t) 
+			end
 		end
 	end
 end
@@ -78,6 +80,7 @@ function Transport:advance_track(t)
 	local pages_to_advance = (data:get_track_val(t,'trigger_clock') == 1) and {'trig','retrig'} or pages_with_steps
 	local note_will_fire = false
 	for k,v in pairs(pages_to_advance) do
+		-- print('attempting to advance page',v)
 		data:delta_page_val(t,v,'counter',1)
 		if data:get_page_val(t,v,'counter') > data:get_page_val(t,v,'divisor') then
 			data:set_page_val(t,v,'counter',1)
@@ -142,7 +145,6 @@ function Transport:advance_page(t,p) -- track,page
 		data:set_page_val(t,p,'divisor',data:get_page_val(t,p,'cued_divisor'))
 		data:set_page_val(t,p,'cued_divisor',0)
 	end
-
 
 	data:set_page_val(t,p,'pos',new_pos)
 

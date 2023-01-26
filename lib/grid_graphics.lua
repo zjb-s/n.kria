@@ -219,17 +219,22 @@ function Graphics:scale()
 		g:led(((i-1) % 8)+1, y, l)
 	end
 
-	for t=1,4 do -- trigger clock buttons
-		local l = (data:get_track_val(t,'trigger_clock') == 1) and HIGH or MED
+	for t=1,4 do -- param clock buttons
+		local l = (data:get_track_val(t,'param_clock') == 1) and HIGH or MED
 		g:led(1,t,l)
 	end
 
+	for t=1,4 do -- trigger clock buttons
+		local l = (data:get_track_val(t,'trigger_clock') == 1) and HIGH or MED
+		g:led(2,t,l)
+	end
+
 	for t=1,4 do -- play modes
-		g:led(2,t,LOW)
-		g:led(8,t,LOW)
+		g:led(3,t,LOW)
+		g:led(9,t,LOW)
 		for x=1,5 do
 			local l = data:get_track_val(t,'play_mode') == x and HIGH or MED
-			g:led(x+2,t,l)
+			g:led(x+3,t,l)
 		end
 	end
 
