@@ -103,8 +103,8 @@ function Prms:add_globals()
 		data.pattern = x
 	end)
 	params:add_number('cued_pattern','cued pattern',0,99,1)
-	params:add_number('pattern_quant','pattern_quant',1,16,1)
-	params:add_number('pattern_quant_pos','pattern_quant_pos',1,16,1)
+	params:add_number('pattern_quant','pattern_quant',1,99,1)
+	params:add_number('pattern_quant_pos','pattern_quant_pos',1,99,1)
 	params:hide('GLOBAL DATA')
 
 	params:add_group('ms_data',134) -- meta-sequence

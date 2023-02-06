@@ -131,6 +131,7 @@ return {
 		loop_last = -1
 		wavery_light = MED
 		waver_dir = 1
+		waver_flipflop = true
 		last_touched_page = 'trig'
 		last_touched_track = 1
 		last_touched_ms_step = 1

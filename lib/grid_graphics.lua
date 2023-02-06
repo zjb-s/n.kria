@@ -39,6 +39,15 @@ function Graphics:trig()
 end
 
 function Graphics:render()
+	waver_flipflop = not waver_flipflop
+	if waver_flipflop then
+		wavery_light = wavery_light + waver_dir
+		if wavery_light > MED+1 then
+			waver_dir = -1
+		elseif wavery_light < MED-1 then
+			waver_dir = 1
+		end
+	end
 
 	g:all(0)
 

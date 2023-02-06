@@ -59,22 +59,35 @@ function init()
 	nb:init()
 	Prms:add()
 	hs.init()
+
 	data.pattern = ap()
+
 	track_clipboard = meta:get_track_copy(0)
 	page_clipboards = meta:get_track_copy(0)
+
 	add_modulation_sources()
 	init_kbuf()
 	init_value_buffer()
-	coros.visual_ticker = clock.run(visual_ticker)
+
+	visual_metro = metro.init(update_visuals,1/15,-1)
+	visual_metro:start()
+	grid_metro = metro.init(update_grid,1/60,-1)
+	grid_metro:start()
+
 	coros.step_ticker = clock.run(step_ticker)
 	coros.intro = clock.run(intro)
+
 	last_touched_track = at()
 	last_touched_page = get_page_name()
+
 	print('n.kria launched successfully')
 end
 
 
 -- basic functions
+function update_grid() grid_graphics:render() end
+function update_visuals() redraw() end
+
 function init_value_buffer()
 	for t=1,NUM_TRACKS do
 		table.insert(value_buffer,{})
@@ -214,23 +227,7 @@ function step_ticker()
 	end
 end
 
-function visual_ticker()
-	while true do
-		clock.sleep(1/30)
-		redraw()
-		wavery_light = wavery_light + waver_dir
-		if wavery_light > MED + 2 then
-			waver_dir = -1
-		elseif wavery_light < MED - 2 then
-			waver_dir = 1
-		end
-		grid_graphics:render()
-	end
-end
-
-function redraw()
-	screen_graphics:render()
-end
+function redraw() screen_graphics:render() end 
 
 function at() -- get active track
 	return params:get('active_track')
