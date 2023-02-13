@@ -88,8 +88,12 @@ end
 
 
 -- basic functions
-function update_grid() grid_graphics:render() end
-function update_visuals() redraw() end
+function update_grid()
+	grid_graphics:render()
+end
+function update_visuals() 
+	redraw()
+end
 
 function init_value_buffer()
 	for t=1,NUM_TRACKS do
@@ -142,6 +146,8 @@ function clock.transport.start() data:set_global_val('playing',1); post('play') 
 function clock.transport.stop() data:global_set_val('playing',0); post('stop') end
 
 function post(str,intro) 
+	-- second arg: send true if we shouldn't interrupt the intro sequence.
+	-- basically don't worry about it
 	post_buffer = str 
 	if (not intro) and (coros.intro) then
 		clock.cancel(coros.intro)
