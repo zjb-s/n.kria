@@ -22,7 +22,8 @@ function Prms:script_mode_switch()
 		,	'param_clock'
 		,	'advance'
 		,	'reset'
-		,	'sync_group'
+		,	'div_group'
+		,	'loop_group'
 		}
 	}
 	params:set_action('script_mode', function(x)
@@ -37,15 +38,19 @@ function Prms:script_mode_switch()
 			for _,v in pairs(extended_param_names.per_track) do
 				if x == 2 then
 					params:show(v..'_t'..t)
-					params:show('T'..t..' SYNC GROUPS')
+					params:show('T'..t..' LOOP GROUPS')
+					params:show('T'..t..' DIV GROUPS')
 					for _,v in pairs(pages_with_steps) do
-						params:show('sync_group_'..v..'_t'..t)
+						params:show('loop_group_'..v..'_t'..t)
+						params:show('div_group_'..v..'_t'..t)
 					end
 				else
 					params:hide(v..'_t'..t)
-					params:hide('T'..t..' SYNC GROUPS')
+					params:hide('T'..t..' LOOP GROUPS')
+					params:hide('T'..t..' DIV GROUPS')
 					for _,v in pairs(pages_with_steps) do
-						params:hide('sync_group_'..v..'_t'..t)
+						params:hide('loop_group_'..v..'_t'..t)
+						params:hide('div_group_'..v..'_t'..t)
 					end
 				end
 			end
@@ -142,7 +147,7 @@ function Prms:add_tracks()
 	params:add_separator('TRACK CONTROLS')
 
 	for t=1,NUM_TRACKS do
-		params:add_group(lexi_names[t],20)
+		params:add_group(lexi_names[t],30)
 		nb:add_param("voice_t"..t, "T"..t.." OUTPUT")
 		params:add_option('play_mode_t'..t,'PLAY MODE', play_modes,1)
 		params:add_binary('mute_t'..t, 'MUTE', 'toggle')
@@ -155,16 +160,26 @@ function Prms:add_tracks()
 				-- print('advancing track '..t) 
 			end
 		end)
-		params:add_binary('stretchable_t'..t,'STRETCHABLE','toggle',1)
-		params:add_binary('pushable_t'..t,'PUSHABLE','toggle',1)
-		params:add_binary('trigger_clock_t'..t,'TRIGGER CLOCK ON','toggle',0)
-		params:add_binary('param_clock_t'..t,'PARAM CLOCK ON','toggle',0)
-		params:add_separator('T'..t..' SYNC GROUPS')
-		params:add_number('sync_group_t'..t,'TRACK GROUP',0,NUM_SYNC_GROUPS,0,function(x)
+		params:add_binary('stretchable_t'..t,'STRETCHABLE?','toggle',1)
+		params:add_binary('pushable_t'..t,'PUSHABLE?','toggle',1)
+		params:add_binary('trigger_clock_t'..t,'TRIGGER CLOCK?','toggle',0)
+		params:add_binary('param_clock_t'..t,'PARAM CLOCK?','toggle',0)
+		params:add_separator('T'..t..' DIV GROUPS')
+		params:add_number('div_group_t'..t,'TRACK',0,NUM_SYNC_GROUPS,0,function(x)
 			return x.value==0 and 'global' or x.value
 		end)
 		for _,v in ipairs(pages_with_steps) do
-			params:add_number('sync_group_'..v..'_t'..t,string.upper(v..' GROUP'),0,NUM_SYNC_GROUPS,0,
+			params:add_number('div_group_'..v..'_t'..t,string.upper(v),0,NUM_SYNC_GROUPS,0,
+			function(x)
+				return x.value==0 and 'track' or x.value
+			end)
+		end
+		params:add_separator('T'..t..' LOOP GROUPS')
+		params:add_number('loop_group_t'..t,'TRACK',0,NUM_SYNC_GROUPS,0,function(x)
+			return x.value==0 and 'global' or x.value
+		end)
+		for _,v in ipairs(pages_with_steps) do
+			params:add_number('loop_group_'..v..'_t'..t,string.upper(v),0,NUM_SYNC_GROUPS,0,
 			function(x)
 				return x.value==0 and 'track' or x.value
 			end)

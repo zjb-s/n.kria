@@ -125,11 +125,19 @@ function gkeys:resolve_loop_keys(x,y,z,t)
 			else
 				loop_last = x
 			end
-			meta:edit_loop(t,loop_first, loop_last)
+			if get_script_mode() == 'classic' then
+				meta:edit_loop_classic(t,loop_first, loop_last)
+			elseif get_script_mode() == 'extended' then
+				meta:edit_loop_extended(t,loop_first, loop_last)
+			end
 		end
 	else -- release
 		if loop_last == -1 then
-			meta:edit_loop(t,loop_first, loop_first)
+			if get_script_mode() == 'classic' then
+				meta:edit_loop_classic(t,loop_first, loop_last)
+			elseif get_script_mode() == 'extended' then
+				meta:edit_loop_extended(t,loop_first, loop_last)
+			end
 		else
 			for x=1,16 do
 				for y=1,7 do
@@ -152,28 +160,101 @@ function gkeys:resolve_loop_keys(x,y,z,t)
 	end
 end
 
-function gkeys:time_mod(x,y,z,t)
+function gkeys:time_mod_classic(x,y,z,t)
+	if z == 0 then return end
+	local g1 = params:string('note_div_sync')
+	local g2 = params:string('div_sync')
+	local pn = get_page_name(false)
+
+	if g1 == 'off' and g2 == 'none' then
+		meta:edit_divisor(at(),pn,x)
+	elseif g1 == 'on' and g2 == 'none' then
+		if pn == 'trig' or pn == 'note' then
+			meta:edit_divisor(at(),'trig',x)
+			meta:edit_divisor(at(),'note',x)
+		else
+			meta:edit_divisor(at(),pn,x)
+		end
+	elseif g1 == 'off' and g2 == 'track' then
+		for _,v in ipairs(combined_page_list) do
+			if v ~= 'scale' and v ~= 'pattern' then
+				meta:edit_divisor(at(),v,x)
+			end
+		end
+	elseif g1 == 'on' and g2 == 'track' then
+		if pn == 'trig' or pn == 'note' then
+			meta:edit_divisor(at(),'trig',x)
+			meta:edit_divisor(at(),'note',x)
+		else
+			for _,v in ipairs(combined_page_list) do
+				if v ~= 'trig' and v ~= 'note' and v ~= 'scale' and v ~= 'pattern' then
+					meta:edit_divisor(at(),v,x)
+				end
+			end
+		end
+	elseif g1 == 'off' and g2 == 'all' then
+		for t=1,NUM_TRACKS do
+			for _,v in ipairs(combined_page_list) do
+				if v ~= 'scale' and v ~= 'pattern' then
+					meta:edit_divisor(t,v,x)
+				end
+			end
+		end
+	elseif g1 == 'on' and g2 == 'all' then -- on/all
+		for t=1,NUM_TRACKS do
+			if pn == 'trig' or pn == 'note' then
+				meta:edit_divisor(t,'trig',x)
+				meta:edit_divisor(t,'note',x)
+			else
+				for _,v in ipairs(combined_page_list) do
+					if v ~= 'trig' and v ~= 'note' and v ~= 'scale' and v ~= 'pattern' then
+						meta:edit_divisor(t,v,x)
+					end
+				end
+			end
+		end
+	end
+end
+
+function gkeys:time_mod_extended(x,y,z,t)
 	if z == 0 then return end
 	if y == 2 then
 		meta:edit_divisor(at(),get_page_name(),x)
 	end
-	if get_script_mode() == 'classic' then return end
-	if x > 10 and y > 3 and y < 7 then
-		local n = (x-10)+((y-4)*5)
+
+	if x < 5 and y > 4 and y < 8 then
+		local n = x+((y-5)*4)
 		if just_pressed_track then
-			data:set_track_val(at(),'sync_group',n)
-			post('t'..at()..' sync group: '..n)
+			data:set_track_val(at(),'loop_group',n)
+			post('t'..at()..' loop: g'..n)
 		else
-			data:set_page_val(at(),get_page_name(),'sync_group',n)
-			post(get_page_name()..' sync group: '..n)
+			data:set_page_val(at(),get_page_name(),'loop_group',n)
+			post(get_page_name()..' loop: g'..n)
 		end
-	elseif x > 2 and x < 6 and y > 3 and y < 7 then
+	elseif x > 5 and x < 9 and y > 4 and y < 8 then
 		if just_pressed_track then
-			data:set_track_val(at(),'sync_group',0)
-			post('t'..at()..' sync group: track/0')
+			data:set_track_val(at(),'loop_group',0)
+			post('t'..at()..' loop: g0')
 		else
-			data:set_page_val(at(),get_page_name(),'sync_group',0)
-			post(get_page_name()..' group: track/0')
+			data:set_page_val(at(),get_page_name(),'loop_group',0)
+			post(get_page_name()..' loop: g0')
+		end
+	elseif x > 11 and y > 2 and y < 6 then
+		local n = (x-12)+((y-3)*4)
+		if just_pressed_track then
+			data:set_track_val(at(),'div_group',n)
+			post('t'..at()..' div: g'..n)
+		else
+			data:set_page_val(at(),get_page_name(),'div_group',n)
+			post(get_page_name()..' div: g'..n)
+		end
+	elseif x > 8 and x < 12 and y > 2 and y < 6 then
+		if just_pressed_track then
+			data:set_track_val(at(),'div_group',0)
+			post('t'..at()..' div: g0')
+		else
+			data:set_page_val(at(),get_page_name(),'div_group',0)
+			post(get_page_name()..' div: g0')
 		end
 	end
 end
@@ -452,7 +533,11 @@ function gkeys:key(x,y,z)
 					self:pattern_overlay(x,y,z,t)
 				end
 			elseif get_mod_key() == 'time' then
-				self:time_mod(x,y,z,t)
+				if get_script_mode() == 'classic' then
+					self:time_mod_classic(x,y,z,t)
+				elseif get_script_mode() == 'extended' then
+					self:time_mod_extended(x,y,z,t)
+				end
 			elseif get_mod_key() == 'prob' then
 				self:prob_mod(x,y,z,t)
 			else -- mods not held

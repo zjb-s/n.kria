@@ -12,11 +12,9 @@ function Graphics:render()
 	s.clear()
 	
 	self:post()
-	if get_page_name() ~= 'track options' then
-		self:note_history()
-		self:right_windows()
-		self:scale()
-	end
+	self:note_history()
+	self:right_windows()
+	self:scale()
 
 	if get_overlay() == 'time' then
 		self:description_window()
@@ -24,8 +22,6 @@ function Graphics:render()
 	elseif get_overlay() == 'options' then
 		self:description_window()
 		self:config_descriptions()
-	elseif get_page_name() == 'track options' then
-		self:track_options()
 	end
 
 	s.update()
@@ -100,8 +96,15 @@ function Graphics:scale()
 end
 
 function Graphics:config_descriptions()
-	local line_1 = config_desc[1][data:get_global_val('note_sync') + 1]
-	local line_2 = config_desc[2][data:get_global_val('loop_sync')]
+	
+	local line_1,line_2;
+	if get_script_mode() == 'classic' then
+		line_1 = config_desc[1][data:get_global_val('note_sync') + 1]
+		line_2 = config_desc[2][data:get_global_val('loop_sync')]
+	elseif get_script_mode() == 'extended' then
+		line_1 = 'n.kria is in extended mode'
+		line_2 = 'use time mod page instead'
+	end
 
 	s.move(64,40)
 	s.level(OFF)
@@ -115,22 +118,30 @@ function Graphics:time_descriptions()
 	local rune_1 = data:get_global_val('note_div_sync')
 	local rune_3 = data:get_global_val('div_sync')
 
-	if 		(rune_1 == 0) and (rune_3 == 1) then desc_num = 1
-		elseif	(rune_1 == 1) and (rune_3 == 1) then desc_num = 2
-		elseif 	(rune_1 == 0) and (rune_3 == 2) then desc_num = 3
-		elseif 	(rune_1 == 1) and (rune_3 == 2) then desc_num = 4
-		elseif 	(rune_1 == 0) and (rune_3 == 3) then desc_num = 5
-		elseif 	(rune_1 == 1) and (rune_3 == 3) then desc_num = 6
+	if get_script_mode() == 'classic' then
+		if 		(rune_1 == 0) and (rune_3 == 1) then desc_num = 1
+			elseif	(rune_1 == 1) and (rune_3 == 1) then desc_num = 2
+			elseif 	(rune_1 == 0) and (rune_3 == 2) then desc_num = 3
+			elseif 	(rune_1 == 1) and (rune_3 == 2) then desc_num = 4
+			elseif 	(rune_1 == 0) and (rune_3 == 3) then desc_num = 5
+			elseif 	(rune_1 == 1) and (rune_3 == 3) then desc_num = 6
+		end
+		desc = time_desc[desc_num]
+		s.move(64,40)
+		s.level(OFF)
+		s.text_center(string.upper(desc[1]))
+		if tab.count(desc) > 1 then
+			s.move(64,48)
+			s.text_center(string.upper(desc[2]))
+		end
+	elseif get_script_mode() == 'extended' then
+		s.level(OFF)
+		s.move(64,40)
+		s.text_center('N.KRIA IS IN EXTENDED MODE')
+		s.move(64,48)
+		s.text_center('USE TIME MOD PAGE INSTEAD')
 	end
 
-	desc = time_desc[desc_num]
-	s.move(64,40)
-	s.level(OFF)
-	s.text_center(string.upper(desc[1]))
-	if tab.count(desc) > 1 then
-		s.move(64,48)
-		s.text_center(string.upper(desc[2]))
-	end
 end
 
 function Graphics:right_windows()
@@ -152,7 +163,7 @@ function Graphics:right_windows()
 		s.level(blink.menu[k] and OFF or MED)
 		s.move(125,(height*k)-2)
 		if v == 'BPM' then 
-			str = blink.menu[k] and util.round(data:get_global_val('clock_tempo')) or 'BPM'
+			str = blink.menu[k] and util.round(params:get('clock_tempo')) or 'BPM'
 		elseif v == 'SWING' then
 			str = blink.menu[k] and data:get_global_val('swing')..'%' or 'SWING'
 		elseif v == 'STRETCH' then

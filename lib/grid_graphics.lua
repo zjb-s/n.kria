@@ -246,30 +246,47 @@ function Graphics:time(D)
 		end
 		g:led(x,2,l)
 	end
-	g:led(data:get_page_val(at(),get_page_name(),'counter'),2,MED)
+	g:led(data:get_page_val(at(),get_page_name(),'counter'),1,MED)
 
-	if get_script_mode() == 'classic' then return end
+	if get_script_mode() == 'classic' or D then return end
 	for i=1,NUM_SYNC_GROUPS do
-		local x = ((i-1)%5)+11
-		local y = util.round_up(i/5)+3
-		local l;
+		local x1 = ((i-1)%4)+1
+		local y1 = util.round_up(i/4)+4
+
+		local l1, l2
+
+		local x2 = x1 + 12
+		local y2 = y1 - 2
+
 		if just_pressed_track then
-			l = data:get_track_val(at(),'sync_group')==i and HIGH or LOW
+			l1 = data:get_track_val(at(),'loop_group')==i and HIGH or LOW
+			l2 = data:get_track_val(at(),'div_group')==i and HIGH or LOW
 		else
-			l = data:get_page_val(at(),get_page_name(),'sync_group')==i and HIGH or LOW
+			l1 = data:get_page_val(at(),get_page_name(),'loop_group')==i and HIGH or LOW
+			l2 = data:get_page_val(at(),get_page_name(),'div_group')==i and HIGH or LOW
 		end
-		g:led(x,y,l)
+		g:led(x1,y1,l1)
+		g:led(x2,y2,l2)
 	end
-		
+	
+	local l1, l2
 	if just_pressed_track then
-		l = data:get_track_val(at(),'sync_group')==0 and HIGH or LOW
+		l1 = data:get_track_val(at(),'loop_group')==0 and HIGH or LOW
+		l2 = data:get_track_val(at(),'div_group')==0 and HIGH or LOW
 	else
-		l = data:get_page_val(at(),get_page_name(),'sync_group')==0 and HIGH or LOW
+		l1 = data:get_page_val(at(),get_page_name(),'loop_group')==0 and HIGH or LOW
+		l2 = data:get_page_val(at(),get_page_name(),'div_group')==0 and HIGH or LOW
 	end
-	g:led(4,4,l)
-	g:led(3,5,l)
-	g:led(5,5,l)
-	g:led(4,6,l)
+
+	g:led(7,5,l1)
+	g:led(6,6,l1)
+	g:led(8,6,l1)
+	g:led(7,7,l1)
+
+	g:led(10,3,l2)
+	g:led(9,4,l2)
+	g:led(11,4,l2)
+	g:led(10,5,l2)
 end
 
 function Graphics:prob()

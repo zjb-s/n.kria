@@ -105,22 +105,15 @@ function Meta:edit_subtrig_count(track,step,new_val)
 end
 
 function Meta:edit_divisor(track,p,new_val)
-	-- if data:get_global_val('div_cue') == 1 then
-	-- 	data:set_page_val(track,page,'cued_divisor',new_val)
-	-- 	post('cued: '..get_display_page_name()..' divisor: '..division_names[new_val])
-	-- else
-	-- 	data:set_page_val(track,page,'divisor',new_val)
-	-- 	post(get_display_page_name()..' divisor: '..division_names[new_val])
-	-- end
-	local group_to_edit = data:get_page_val(track,p,'sync_group')
+	local group_to_edit = data:get_page_val(track,p,'div_group')
 	if group_to_edit == 0 then
-		group_to_edit = data:get_track_val(track,'sync_group')
+		group_to_edit = data:get_track_val(track,'div_group')
 	end
 	for t=1,NUM_TRACKS do
 		for k,v in pairs(pages_with_steps) do
-			local this_page_group = data:get_page_val(t,v,'sync_group')
+			local this_page_group = data:get_page_val(t,v,'div_group')
 			if this_page_group == 0 then
-				this_page_group = data:get_track_val(t,'sync_group')
+				this_page_group = data:get_track_val(t,'div_group')
 			end
 			if this_page_group == group_to_edit then
 				if data:get_global_val('div_cue')==1 then
@@ -135,8 +128,50 @@ function Meta:edit_divisor(track,p,new_val)
 	post('group '..group_to_edit..' divisor: '..new_val)
 end
 
+function Meta:edit_loop_classic(track, first, last)
+	local f = math.min(first,last)
+	local l = math.max(first,last)
+	local p = get_page_name()
+	local loopsync = div_sync_modes[data:get_global_val('loop_sync')]
+	-- print(loopsync)
 
-function Meta:edit_loop(track, first, last)
+	if p == 'pattern' and params:get('ms_active') == 1 then
+		params:set('ms_first',f)
+		params:set('ms_last',l)
+		post('meta-sequence loop: ['..f..'-'..l..']')
+	elseif loopsync == 'none' then
+		if (p == 'trig' or p == 'note') and data:get_global_val('note_sync') == 1 then
+			data:set_page_val(track,'note','loop_first',f)
+			data:set_page_val(track,'note','loop_last',l)
+			data:set_page_val(track,'trig','loop_first',f)
+			data:set_page_val(track,'trig','loop_last',l)
+			post('t'..track..' trig & note loops: ['..f..'-'..l..']')
+		else
+			data:set_page_val(track,p,'loop_first',f)
+			data:set_page_val(track,p,'loop_last',l)
+			post('t'..track..' '..get_display_page_name()..' loop: ['..f..'-'..l..']')
+		end
+	elseif loopsync == 'track' then
+		for k,v in ipairs(combined_page_list) do
+			if v == 'scale' or v == 'patterns' then break end
+			data:set_page_val(track,v,'loop_first',f)
+			data:set_page_val(track,v,'loop_last',l)
+		end
+		post('t'..track..' loops: ['..f..'-'..l..']')
+	elseif loopsync == 'all' then
+		for t=1,NUM_TRACKS do
+			for k,v in ipairs(combined_page_list) do
+				if v == 'scale' or v == 'pattern' then break end
+				data:set_page_val(t,v,'loop_first',f)
+				data:set_page_val(t,v,'loop_last',l)
+			end
+		end
+		post('all loops: ['..f..'-'..l..']')
+	end
+end
+
+
+function Meta:edit_loop_extended(track, first, last)
 	local f = math.min(first,last)
 	local l = math.max(first,last)
 	local p = get_page_name()
@@ -148,15 +183,15 @@ function Meta:edit_loop(track, first, last)
 		post('meta-sequence loop: ['..f..'-'..l..']')
 
 	else
-		local group_to_edit = data:get_page_val(track,p,'sync_group')
+		local group_to_edit = data:get_page_val(track,p,'loop_group')
 		if group_to_edit == 0 then
-			group_to_edit = data:get_track_val(track,'sync_group')
+			group_to_edit = data:get_track_val(track,'loop_group')
 		end
 		for t=1,NUM_TRACKS do
 			for k,v in pairs(pages_with_steps) do
-				local this_page_group = data:get_page_val(t,v,'sync_group')
+				local this_page_group = data:get_page_val(t,v,'loop_group')
 				if this_page_group == 0 then
-					this_page_group = data:get_track_val(t,'sync_group')
+					this_page_group = data:get_track_val(t,'loop_group')
 				end
 				if this_page_group == group_to_edit then
 					data:set_page_val(t,v,'loop_first',f)

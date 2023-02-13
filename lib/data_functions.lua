@@ -17,6 +17,7 @@ end
 function Data:get_page_val(track,page,name) 
 	local param_string = name..'_'..page..'_t'..track
 	if tab.contains({'loop_first','loop_last','divisor'},name) then
+	-- if dtab_get_page_val[name] then
 		param_string = param_string..'_p'..self.pattern
 	end
 	return params:get(param_string)

@@ -17,7 +17,7 @@ return {
 		-- NUM_HALF_TRACKS = 3
 		NUM_PATTERNS = 16
 		NUM_SCALES = 16
-		NUM_SYNC_GROUPS = 15
+		NUM_SYNC_GROUPS = 12
 
 		-- global tables
 		division_names = {
@@ -119,6 +119,12 @@ return {
 		div_sync_modes = {'none','track','all'}
 		overlay_names = {'none','time','options','patchers'}
 		patchers = {'advance triggers'}
+		dtab_get_page_val = {
+			loop_first = true
+		,	loop_last = true
+		,	divisor = true
+		}
+
 		blink = {
 			menu = {false,false,false,false,false}
 		}
