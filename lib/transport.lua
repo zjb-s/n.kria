@@ -5,8 +5,8 @@ if not status then matrix = nil end
 Transport = {}
 
 function Transport:play_pause()
-	params:delta('playing', 1)
-	post((params:get('playing') == 1) and 'play' or 'pause')
+	data:delta_global_val('playing', 1)
+	post((data:get_global_val('playing') == 1) and 'play' or 'pause')
 end
 
 function Transport:reset_all()
@@ -14,8 +14,8 @@ function Transport:reset_all()
 		self:reset_track(t)
 	end
 	pulse_indicator = 1
-	params:set('pattern_quant_pos',1)
-	params:set('ms_duration_pos',1)
+	data:set_global_val('pattern_quant_pos',1)
+	data:set_global_val('ms_duration_pos',1)
 	swing_this_step = false
 	post('reset all')
 end
@@ -35,7 +35,7 @@ end
 
 function Transport:advance_all()
 	global_clock_counter = global_clock_counter + 1
-	if global_clock_counter > params:get('global_clock_div') then
+	if global_clock_counter > data:get_global_val('clock_div') then
 		global_clock_counter = 1
 		pulse_indicator = pulse_indicator + 1
 		if pulse_indicator > 16 then pulse_indicator = 1 end
@@ -51,29 +51,29 @@ function Transport:advance_all()
 end
 
 function Transport:advance_pattern_page()
-	params:delta('pattern_quant_pos',1)
+	data:delta_global_val('pattern_quant_pos',1)
 
-	if params:get('pattern_quant_pos') <= params:get('pattern_quant') then return end
+	if data:get_global_val('pattern_quant_pos') <= data:get_global_val('pattern_quant') then return end
 	
-	params:set('pattern_quant_pos',1)
-	if params:get('cued_pattern') ~= 0 then
-		params:set('active_pattern',params:get('cued_pattern'))
-		params:set('cued_pattern',0)
+	data:set_global_val('pattern_quant_pos',1)
+	if data:get_global_val('cued_pattern') ~= 0 then
+		data:set_global_val('active_pattern',data:get_global_val('cued_pattern'))
+		data:set_global_val('cued_pattern',0)
 		post('pattern '..ap()..' active')
 	end
 
-	if params:get('ms_active') == 0 then return end
+	if data:get_global_val('ms_active') == 0 then return end
 
-	params:delta('ms_duration_pos',1)
-	if params:get('ms_duration_pos') > params:get('ms_duration_'..params:get('ms_pos')) then
-		params:set('ms_duration_pos',1)
-		params:delta('ms_pos',1)
-		if params:get('ms_pos') > params:get('ms_last') or params:get('ms_pos') < params:get('ms_first') then
-			params:set('ms_pos',1)
+	data:delta_global_val('ms_duration_pos',1)
+	if data:get_global_val('ms_duration_pos') > data:get_global_val('ms_duration_'..data:get_global_val('ms_pos')) then
+		data:set_global_val('ms_duration_pos',1)
+		data:delta_global_val('ms_pos',1)
+		if data:get_global_val('ms_pos') > data:get_global_val('ms_last') or data:get_global_val('ms_pos') < data:get_global_val('ms_first') then
+			data:set_global_val('ms_pos',1)
 		end
 	end
 
-	params:set('active_pattern',params:get('ms_pattern_'..params:get('ms_pos')))
+	data:set_global_val('active_pattern',data:get_global_val('ms_pattern_'..data:get_global_val('ms_pos')))
 end
 
 function Transport:advance_track(t)

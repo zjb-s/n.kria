@@ -3,6 +3,9 @@ WHAT GOES IN THIS FILE:
 - everything related to how grid looks
 ]]--
 
+local matrix_status, matrix = pcall(require, 'matrix/lib/matrix')
+if not matrix_status then matrix = nil end
+
 Graphics = {}
 
 function Graphics:trig()
@@ -26,7 +29,7 @@ function Graphics:trig()
 				end
 			end
 
-			if x == data:get_page_val(t,'trig','pos') and params:get('playing') == 1 then
+			if x == data:get_page_val(t,'trig','pos') and data:get_global_val('playing') == 1 then
 				
 				l = highlight(l)
 			end
@@ -55,15 +58,23 @@ function Graphics:render()
 	local p = get_page_name()
 	if get_overlay() == 'time' then self:config_1()
 	elseif get_overlay() == 'options' then self:config_2()
-	elseif p == 'scale' then self:scale()
+	elseif get_overlay() == 'patchers' then self:patchers()
+	elseif p == 'scale' then 
+		if get_script_mode() == 'classic' then
+			self:classic_scale()
+		elseif get_script_mode() == 'extended' then
+			self:extended_scale()
+		end
+	elseif p == 'track options' then
+		self:track_options()
 	elseif p == 'pattern' then 
-		if params:get('ms_active') == 1 then
+		if data:get_global_val('ms_active') == 1 then
 			self:meta_sequence()
 		else
 			self:pattern()
 		end
-	elseif params:get('mod') == 3 then self:time()
-	elseif params:get('mod') == 4 then self:prob()
+	elseif data:get_global_val('mod') == 3 then self:time()
+	elseif data:get_global_val('mod') == 4 then self:prob()
 	elseif p == 'trig' then self:trig()
 	elseif p == 'retrig' then self:retrig()
 	elseif p == 'note' then self:note()
@@ -83,22 +94,47 @@ function Graphics:render()
 	g:refresh()
 end
 
+-- function Graphics:patchers()
+-- 	local l;
+-- 	l = (kbuf[2][6] or kbuf[1][7] or kbuf[2][7] or kbuf[2][8]) and HIGH or LOW
+-- 	g:led(2,6,l); g:led(1,7,l); g:led(2,8,l)
+
+-- 	l = (kbuf[15][6] or kbuf[16][7] or kbuf[15][7] or kbuf[15][8]) and HIGH or LOW
+-- 	g:led(15,6,l); g:led(16,7,l); g:led(15,8,l)
+
+-- 	for x=7,10 do g:led(x,7, LOW) end
+
+-- 	if params:string('patcher') == 'advance triggers' then
+-- 		self:advance_triggers_patcher()
+-- 	end
+-- end
+
+-- function Graphics:advance_triggers_patcher()
+-- 	for t=1,NUM_FULL_TRACKS do
+-- 		g:led(1,t+1,matrix:get('trig_t'..t)==1 and HIGH or MED)
+-- 	end
+
+-- 	for k,v in ipairs(trig_sources) do
+-- 		g:led(k+1,1,matrix:get(v)==1 and HIGH or MED)
+-- 	end
+-- end
+
 function Graphics:config_1()
 	local l
 	-- note div sync
-	l = params:get('note_div_sync') == 1 and HIGH or MED
+	l = data:get_global_val('note_div_sync') == 1 and HIGH or MED
 	for i=1,4 do g:led(i,5,l) end
 	g:led(1,6,l);g:led(4,6,l);g:led(1,7,l);g:led(4,7,l)
 	for i=1,4 do g:led(i,8,l) end
 
 	-- div cue
-	l = params:get('div_cue') == 1 and HIGH or MED
+	l = data:get_global_val('div_cue') == 1 and HIGH or MED
 	g:led(8,7,l);g:led(9,7,l);g:led(8,8,l);g:led(9,8,l)
 
 	-- div sync
-	l = params:get('div_sync') == 2 and HIGH or MED
+	l = data:get_global_val('div_sync') == 2 and HIGH or MED
 	g:led(13,6,l)
-	l = params:get('div_sync') == 3 and HIGH or MED
+	l = data:get_global_val('div_sync') == 3 and HIGH or MED
 	for i=1,4 do
 		g:led(12+i,8,l)
 	end
@@ -131,21 +167,21 @@ function Graphics:config_1()
 
 	g:led(pulse_indicator,1,HIGH)
 
-	self:time(params:get('global_clock_div'))
+	self:time(data:get_global_val('clock_div'))
 
 end
 
 function Graphics:config_2()
 	-- note sync
-	l = params:get('note_sync') == 1 and HIGH or MED
+	l = data:get_global_val('note_sync') == 1 and HIGH or MED
 	for i=1,4 do g:led(i+2,3,l) end
 	g:led(3,4,l);g:led(6,4,l);g:led(3,5,l);g:led(6,5,l)
 	for i=1,4 do g:led(i+2,6,l) end
 
 	-- loop sync
-	l = params:get('loop_sync') == 2 and HIGH or MED
+	l = data:get_global_val('loop_sync') == 2 and HIGH or MED
 	g:led(11,4,l)
-	l = params:get('loop_sync') == 3 and HIGH or MED
+	l = data:get_global_val('loop_sync') == 3 and HIGH or MED
 	for i=1,4 do
 		g:led(10+i,6,l)
 	end
@@ -156,7 +192,7 @@ end
 
 function Graphics:tracks()
 	local l
-	for i=1,NUM_TRACKS do
+	for i=1,4 do
 		l = i == at() and HIGH or MED
 		if data:get_track_val(i,'mute') == 1 then
 			l = util.round(l/4)
@@ -168,13 +204,13 @@ end
 
 
 function Graphics:pages()
-	local p = params:get('page')
+	local p = data:get_global_val('page')
 	local l
 	for i=1,6 do
 		l = (p == i) and HIGH or MED
 		if p == i then
 			l = HIGH
-			if params:get('alt_page') == 1 then
+			if data:get_global_val('alt_page') == 1 then
 				l = wavery_light
 			end
 		else
@@ -191,7 +227,7 @@ end
 function Graphics:modifiers()
 	local l;
 	for i=1,3 do
-		l = params:get('mod')-1 == i and HIGH or MED
+		l = data:get_global_val('mod')-1 == i and HIGH or MED
 		g:led(10+i,8,l)
 	end
 end
@@ -210,6 +246,30 @@ function Graphics:time(D)
 		end
 		g:led(x,2,l)
 	end
+	g:led(data:get_page_val(at(),get_page_name(),'counter'),2,MED)
+
+	if get_script_mode() == 'classic' then return end
+	for i=1,NUM_SYNC_GROUPS do
+		local x = ((i-1)%5)+11
+		local y = util.round_up(i/5)+3
+		local l;
+		if just_pressed_track then
+			l = data:get_track_val(at(),'sync_group')==i and HIGH or LOW
+		else
+			l = data:get_page_val(at(),get_page_name(),'sync_group')==i and HIGH or LOW
+		end
+		g:led(x,y,l)
+	end
+		
+	if just_pressed_track then
+		l = data:get_track_val(at(),'sync_group')==0 and HIGH or LOW
+	else
+		l = data:get_page_val(at(),get_page_name(),'sync_group')==0 and HIGH or LOW
+	end
+	g:led(4,4,l)
+	g:led(3,5,l)
+	g:led(5,5,l)
+	g:led(4,6,l)
 end
 
 function Graphics:prob()
@@ -221,10 +281,10 @@ function Graphics:prob()
 	end
 end
 
-function Graphics:scale()
+function Graphics:classic_scale()
 	for i=1,16 do -- scale select
 		local y = (i > 8) and 7 or 6
-		local l = (params:get('scale_num') == i) and HIGH or MED
+		local l = (data:get_global_val('scale_num') == i) and HIGH or MED
 		g:led(((i-1) % 8)+1, y, l)
 	end
 
@@ -249,19 +309,50 @@ function Graphics:scale()
 
 	for i=2,7 do -- scale editor
 		g:led(9,8-i,LOW)
-		local d = params:get('scale_'..params:get('scale_num')..'_deg_'..i)
+		local d = data:get_global_val('scale_'..data:get_global_val('scale_num')..'_deg_'..i)
 		g:led(9+d,8-i,HIGH)
 		if temp_scale[i-1] ~= -1 then g:led(temp_scale[i-1]+9,8-i,MED) end
 	end
 	g:led(9,7,LOW)
-	g:led(9+util.clamp(params:get('root_note'),0,7),7,HIGH)
+	g:led(9+util.clamp(data:get_global_val('root_note'),0,7),7,HIGH)
+end
+
+function Graphics:extended_scale()
+	for i=1,16 do -- scale select
+		local x = (i > 8) and 2 or 1
+		local l = (data:get_global_val('scale_num') == i) and HIGH or MED
+		g:led(x, ((i-1) % 8)+1, l)
+	end
+
+	for i=2,7 do -- scale editor
+		g:led(4,8-i,LOW)
+		local d = data:get_global_val('scale_'..data:get_global_val('scale_num')..'_deg_'..i)
+		g:led(4+d,8-i,HIGH)
+		if temp_scale[i-1] ~= -1 then g:led(temp_scale[i-1]+4,8-i,MED) end
+	end
+	g:led(4,7,LOW)
+	g:led(4+util.clamp(data:get_global_val('root_note'),0,7),7,HIGH)
+end
+
+function Graphics:track_options()
+
+	for t=1,NUM_TRACKS do
+		for k,v in ipairs(track_options) do
+			local x = (t*3) + track_options_xes[k]
+			local y = k
+			local l = data:get_track_val(t,v) == 1 and HIGH or MED
+			g:led(x,y,l)
+		end
+	end
 end
 
 function Graphics:meta_sequence()
 	for x=1,16 do -- pattern bank
 		local l = OFF
-		if x == params:get('ms_pattern_'..params:get('ms_cursor')) then
+		if x == data:get_global_val('ms_pattern_'..data:get_global_val('ms_cursor')) then
 			l = HIGH
+		elseif x == last_touched_pattern and just_saved_pattern then
+			l = wavery_light
 		else
 			l = LOW
 		end
@@ -270,11 +361,11 @@ function Graphics:meta_sequence()
 
 	for x=1,16 do -- cue clock
 		local l = OFF
-		if x == params:get('pattern_quant_pos') then
+		if x == data:get_global_val('pattern_quant_pos') then
 			l = HIGH
-		elseif x == params:get('pattern_quant') then
+		elseif x == data:get_global_val('pattern_quant') then
 			l = MED
-		elseif x < params:get('pattern_quant') then
+		elseif x < data:get_global_val('pattern_quant') then
 			l = LOW
 		end
 		g:led(x,2,l)
@@ -282,11 +373,11 @@ function Graphics:meta_sequence()
 
 	for x=1,16 do -- duration
 		local l = OFF
-		if x == params:get('ms_duration_pos') then
+		if x == data:get_global_val('ms_duration_pos') then
 			l = HIGH
-		elseif x == params:get('ms_duration_'..params:get('ms_cursor')) then
+		elseif x == data:get_global_val('ms_duration_'..data:get_global_val('ms_cursor')) then
 			l = MED
-		elseif x < params:get('ms_duration_'..params:get('ms_cursor')) then
+		elseif x < data:get_global_val('ms_duration_'..data:get_global_val('ms_cursor')) then
 			l = LOW
 		end
 		g:led(x,7,l)
@@ -296,11 +387,11 @@ function Graphics:meta_sequence()
 		for y=1,4 do
 			local n = x+((y-1)*16)
 			local l = OFF
-			local oob = not ((n>=params:get('ms_first')) and (n<=params:get('ms_last')))
-			if n == params:get('ms_cursor') then
+			local oob = not ((n>=data:get_global_val('ms_first')) and (n<=data:get_global_val('ms_last')))
+			if n == data:get_global_val('ms_cursor') then
 				l = HIGH
-			elseif n == params:get('ms_pos') then
-				-- l = params:get('playing') == 1 and wavery_light or MED 
+			elseif n == data:get_global_val('ms_pos') then
+				-- l = data:get_global_val('playing') == 1 and wavery_light or MED 
 				l = MED
 			elseif not oob then
 				l = LOW
@@ -314,9 +405,11 @@ end
 function Graphics:pattern()
 	for x=1,16 do -- pattern bank
 		local l = OFF
-		if x == params:get('active_pattern') then
+		if x == data:get_global_val('active_pattern') then
 			l = HIGH
-		elseif x == params:get('cued_pattern') then
+		elseif x == data:get_global_val('cued_pattern') then
+			l = wavery_light
+		elseif x == last_touched_pattern and just_saved_pattern then
 			l = wavery_light
 		else
 			l = LOW
@@ -326,11 +419,11 @@ function Graphics:pattern()
 
 	for x=1,16 do -- cue clock
 		local l = OFF
-		if x == params:get('pattern_quant_pos') then
+		if x == data:get_global_val('pattern_quant_pos') then
 			l = HIGH
-		elseif x == params:get('pattern_quant') then
+		elseif x == data:get_global_val('pattern_quant') then
 			l = MED
-		elseif x < params:get('pattern_quant') then
+		elseif x < data:get_global_val('pattern_quant') then
 			l = LOW
 		end
 		g:led(x,2,l)
@@ -344,7 +437,7 @@ function Graphics:retrig()
 			local oob = out_of_bounds(at(),'retrig',x)
 			if y == 1 or y == 7 then
 				l = kbuf[x][y] and HIGH or LOW 
-				if data:get_page_val(at(),'retrig','pos') == x and params:get('playing') == 1 then
+				if data:get_page_val(at(),'retrig','pos') == x and data:get_global_val('playing') == 1 then
 					l = highlight(l)
 				end
 			else
@@ -355,7 +448,7 @@ function Graphics:retrig()
 						l = oob and LOW or MED
 					end
 				end
-				if params:get('mod') == 2 and not out_of_bounds(at(),'retrig',x) then
+				if data:get_global_val('mod') == 2 and not out_of_bounds(at(),'retrig',x) then
 					l = highlight(l)
 				end
 			end
@@ -368,7 +461,7 @@ function Graphics:note()
 	local l
 	for x=1,16 do
 		local d = data:get_step_val(at(),'note',x)
-		if x == data:get_page_val(at(),'note','pos') and params:get('playing') == 1 then 
+		if x == data:get_page_val(at(),'note','pos') and data:get_global_val('playing') == 1 then 
 			l = LOW
 		else
 			l = OFF
@@ -377,7 +470,7 @@ function Graphics:note()
 			local ly = l
 			if y == d then
 				ly = out_of_bounds(at(),'note',x) and LOW or HIGH
-				if params:get('note_sync') == 1 and data:get_step_val(at(),'trig',x) == 0 then
+				if data:get_global_val('note_sync') == 1 and data:get_step_val(at(),'trig',x) == 0 then
 					ly = out_of_bounds(at(),'note',x) and dim(LOW) or LOW
 				end
 			end
@@ -393,7 +486,7 @@ function Graphics:transpose() -- identical to above, might want to fold them tog
 	local l
 	for x=1,16 do
 		local d = data:get_step_val(at(),'transpose',x)
-		if x == data:get_page_val(at(),'transpose','pos') and params:get('playing') == 1 then 
+		if x == data:get_page_val(at(),'transpose','pos') and data:get_global_val('playing') == 1 then 
 			l = LOW
 		else
 			l = OFF
@@ -438,7 +531,7 @@ function Graphics:octave()
 			if get_mod_key() == 'loop' and (not oob) then
 				l = highlight(l)
 			end
-			if x == data:get_page_val(at(),'octave','pos') and params:get('playing') == 1 then
+			if x == data:get_page_val(at(),'octave','pos') and data:get_global_val('playing') == 1 then
 				l = highlight(l)
 			end
 			g:led(x,8-i,l)
@@ -473,7 +566,7 @@ function Graphics:slide()
 			if get_mod_key() == 'loop' and not oob then
 				l = highlight(l)
 			end
-			if x == data:get_page_val(at(),'slide','pos') and params:get('playing') == 1 then
+			if x == data:get_page_val(at(),'slide','pos') and data:get_global_val('playing') == 1 then
 				l = highlight(l)
 			end
 			g:led(x,8-y,l)
@@ -519,7 +612,7 @@ function Graphics:gate()
 			if get_mod_key() == 'loop' and not oob then
 				l = highlight(l)
 			end
-			if x == data:get_page_val(at(),'gate','pos') and params:get('playing') == 1 then
+			if x == data:get_page_val(at(),'gate','pos') and data:get_global_val('playing') == 1 then
 				l = highlight(l)
 			end
 			g:led(x,1+y,l)
@@ -554,7 +647,7 @@ function Graphics:velocity()
 			if get_mod_key() == 'loop' and not oob then
 				l = highlight(l)
 			end
-			if x == data:get_page_val(at(),'velocity','pos') and params:get('playing') == 1 then
+			if x == data:get_page_val(at(),'velocity','pos') and data:get_global_val('playing') == 1 then
 				l = highlight(l)
 			end
 			g:led(x,8-y,l)

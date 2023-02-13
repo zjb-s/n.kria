@@ -12,8 +12,12 @@ return {
 		MED=5
 		HIGH=12
 		NUM_TRACKS = 4
+		-- NUM_TRACKS = 7
+		-- NUM_FULL_TRACKS = 4
+		-- NUM_HALF_TRACKS = 3
 		NUM_PATTERNS = 16
 		NUM_SCALES = 16
+		NUM_SYNC_GROUPS = 15
 
 		-- global tables
 		division_names = {
@@ -101,20 +105,34 @@ return {
 		}
 
 		-- more global tables
-		page_names = {'trig', 'note', 'octave', 'gate','scale','pattern'}
+		lexi_names = {'ONE','TWO','THREE','FOUR','FIVE','SIX','SEVEN'}
+		page_names = {'trig', 'note', 'octave', 'gate', 'scale', 'pattern'}
 		alt_page_names = {'retrig', 'transpose', 'slide', 'velocity'}
 		combined_page_list = {'trig','note','octave','gate','retrig','transpose','slide','velocity','scale','pattern'}
 		pages_with_steps = {'trig','retrig','note','transpose','octave','slide','gate','velocity'}
 		trigger_clock_pages = {'note','transpose','octave','slide','gate','velocity'}
 		matrix_sources = {'note','transpose','octave','slide','gate','velocity'}
+		trig_sources = {}
 		mod_names = {'none','loop','time','prob'}
 		play_modes = {'forward', 'reverse', 'triangle', 'drunk', 'random'}
 		prob_map = {0, 25, 50, 100}
 		div_sync_modes = {'none','track','all'}
-		overlay_names = {'none','time','options','copy/paste'}
+		overlay_names = {'none','time','options','patchers'}
+		patchers = {'advance triggers'}
 		blink = {
 			menu = {false,false,false,false,false}
 		}
+
+		track_options = {
+			'stretchable'
+		,	'pushable'
+		,	'trigger_clock'
+		,	'param_clock'
+		,	'note_sync'
+		,	'div_sync'
+		,	'loop_sync'
+		}
+		track_options_xes = {0,0,1,1,0,1,0}
 
 		coros = {}
 		value_buffer = {}
@@ -126,7 +144,7 @@ return {
 		last_notes_raw = {0,0,0,0}
 		temp_scale = {-1,-1,-1,-1,-1,-1}
 
-		post_buffer = 'n.kria'
+		post_buffer = '-'
 		loop_first = -1
 		loop_last = -1
 		wavery_light = MED
@@ -135,10 +153,12 @@ return {
 		last_touched_page = 'trig'
 		last_touched_track = 1
 		last_touched_ms_step = 1
+		last_touched_pattern = 1
 		pulse_indicator = 1
 		global_clock_counter = 1
 		just_pressed_clipboard_key = false
 		just_saved_pattern = false
+		just_pressed_track = false
 
 		-- buffers
 		kbuf = {} -- key state buffer, true/false

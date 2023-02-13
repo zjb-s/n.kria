@@ -11,21 +11,52 @@ function Graphics:render()
 	s = screen
 	s.clear()
 	
-	self:note_history()
 	self:post()
-	self:right_windows()
-	self:scale()
-	-- self:notes()
+	if get_page_name() ~= 'track options' then
+		self:note_history()
+		self:right_windows()
+		self:scale()
+	end
 
-	if params:get('overlay') == 2 then
+	if get_overlay() == 'time' then
 		self:description_window()
 		self:time_descriptions()
-	elseif params:get('overlay') == 3 then
+	elseif get_overlay() == 'options' then
 		self:description_window()
 		self:config_descriptions()
+	elseif get_page_name() == 'track options' then
+		self:track_options()
 	end
 
 	s.update()
+end
+
+function Graphics:track_options()
+
+	for k,v in ipairs(track_options) do
+		local l = data:get_track_val(at(),v) == 1 and HIGH or LOW
+		local x = (track_options_xes[k]==1) and 86 or 78
+		local y = ((k-1)*7)+2 
+		
+		s.level(l)
+		s.move(s.text_extents(string.upper(v))+5,y+3)
+		s.line_width(2)
+		s.line(x,y+3)
+		s.stroke()
+		
+		s.line_width(1)
+		s.rect(x,y,6,6)
+		s.fill()
+
+		s.level(MED)
+		s.move(2,y+5)
+		s.text(string.upper(v))
+
+	end
+	s.level(LOW)
+	s.text_rotate(120,2,'OVERRIDES',90)
+	s.text_rotate(112,2,'GLOBAL',90)
+	s.text_rotate(104,2,'SETTINGS',90)
 end
 
 function Graphics:add_history(track, note, beats)
@@ -64,13 +95,13 @@ function Graphics:scale()
 	s.level(1)
 	for i=1,7 do
 		s.move(2,7*i+1)
-		s.text(mu.note_num_to_name(meta:make_scale()[(8-i)+params:get('root_note')]))
+		s.text(mu.note_num_to_name(meta:make_scale()[(8-i)+data:get_global_val('root_note')]))
 	end
 end
 
 function Graphics:config_descriptions()
-	local line_1 = config_desc[1][params:get('note_sync') + 1]
-	local line_2 = config_desc[2][params:get('loop_sync')]
+	local line_1 = config_desc[1][data:get_global_val('note_sync') + 1]
+	local line_2 = config_desc[2][data:get_global_val('loop_sync')]
 
 	s.move(64,40)
 	s.level(OFF)
@@ -81,8 +112,8 @@ function Graphics:config_descriptions()
 end
 
 function Graphics:time_descriptions()
-	local rune_1 = params:get('note_div_sync')
-	local rune_3 = params:get('div_sync')
+	local rune_1 = data:get_global_val('note_div_sync')
+	local rune_3 = data:get_global_val('div_sync')
 
 	if 		(rune_1 == 0) and (rune_3 == 1) then desc_num = 1
 		elseif	(rune_1 == 1) and (rune_3 == 1) then desc_num = 2
@@ -113,7 +144,7 @@ function Graphics:right_windows()
 	}
 
 	for k,v in ipairs(names) do
-		if params:get('script_mode') == 1 and k>2 then break end
+		if get_script_mode() == 'classic' and k>2 then break end
 		s.level(blink.menu[k] and MED or LOW)
 		s.rect(left_border,(height*k)+1,128-left_border,-height)
 		s.fill()
@@ -121,20 +152,20 @@ function Graphics:right_windows()
 		s.level(blink.menu[k] and OFF or MED)
 		s.move(125,(height*k)-2)
 		if v == 'BPM' then 
-			str = blink.menu[k] and util.round(params:get('clock_tempo')) or 'BPM'
+			str = blink.menu[k] and util.round(data:get_global_val('clock_tempo')) or 'BPM'
 		elseif v == 'SWING' then
-			str = blink.menu[k] and params:get('swing')..'%' or 'SWING'
+			str = blink.menu[k] and data:get_global_val('swing')..'%' or 'SWING'
 		elseif v == 'STRETCH' then
-			str = blink.menu[k] and params:get('stretch') or 'STRETCH'
+			str = blink.menu[k] and data:get_global_val('stretch') or 'STRETCH'
 		elseif v == 'PUSH' then
-			str = blink.menu[k] and params:get('push') or 'PUSH'
+			str = blink.menu[k] and data:get_global_val('push') or 'PUSH'
 		end
 		s.text_right(str)
 	end
 
 	s.level(MED)
 	local h =height*#names
-	if params:get('script_mode') == 1 then h = h / 2 end
+	if get_script_mode() == 'classic' then h = h / 2 end
 	s.rect(left_border,1,128-left_border,h)
 	s.stroke()
 end

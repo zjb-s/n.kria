@@ -22,7 +22,7 @@ end
 function Meta:make_scale()
 	local table_from_params = {}
 	for i=1,7 do
-		table.insert(table_from_params,params:get('scale_'..params:get('scale_num')..'_deg_'..i))
+		table.insert(table_from_params,data:get_global_val('scale_'..data:get_global_val('scale_num')..'_deg_'..i))
 	end
 	local short_scale = {0} -- first ix always 0
 	for i=2,7 do
@@ -55,25 +55,25 @@ function Meta:update_last_notes()
 		local n = b.note
 		n = n + b.transpose-1
 		last_notes_raw[t] = n
-		-- The "stretch" parameter attempts to exttend a melody around its
+		-- The "stretch" parameter attempts to extend a melody around its
 		-- center. We assume the center is going to be the root note
-		-- of octive 3, not counting the octave shift of the track.
+		-- of octave 3, not counting the octave shift of the track.
 
 		-- Subtract three octaves before stretch
 		n = n + 7*(b.octave - 3)
-		if params:get('stretchable_t'..t) == 1 then
-			n = util.round((n-1)*((params:get('stretch')/8)+1)) + 1
+		if data:get_track_val(t,'stretchable') == 1 then
+			n = util.round((n-1)*((data:get_global_val('stretch')/8)+1)) + 1
 		end
 		-- Add them back after.
 		n = n + 7*(3 + data:get_track_val(t,'octave_shift')-1)
 
-		if params:get('pushable_t'..t) == 1 then
-			n = n + params:get('push')
+		if data:get_track_val(t,'pushable') == 1 then
+			n = n + data:get_global_val('push')
 		end
 
 		local s = self:make_scale()
 		n = s[util.clamp(n,1,#s)]
-		n = n + params:get('root_note')
+		n = n + data:get_global_val('root_note')
 
 		last_notes[t] = n
 	end
@@ -104,14 +104,35 @@ function Meta:edit_subtrig_count(track,step,new_val)
 	post('subtrig count s'..step..'t'..track..' '.. data:get_step_val(track,'retrig',step))
 end
 
-function Meta:edit_divisor(track,page,new_val)
-	if params:get('div_cue') == 1 then
-		data:set_page_val(track,page,'cued_divisor',new_val)
-		post('cued: '..get_display_page_name()..' divisor: '..division_names[new_val])
-	else
-		data:set_page_val(track,page,'divisor',new_val)
-		post(get_display_page_name()..' divisor: '..division_names[new_val])
+function Meta:edit_divisor(track,p,new_val)
+	-- if data:get_global_val('div_cue') == 1 then
+	-- 	data:set_page_val(track,page,'cued_divisor',new_val)
+	-- 	post('cued: '..get_display_page_name()..' divisor: '..division_names[new_val])
+	-- else
+	-- 	data:set_page_val(track,page,'divisor',new_val)
+	-- 	post(get_display_page_name()..' divisor: '..division_names[new_val])
+	-- end
+	local group_to_edit = data:get_page_val(track,p,'sync_group')
+	if group_to_edit == 0 then
+		group_to_edit = data:get_track_val(track,'sync_group')
 	end
+	for t=1,NUM_TRACKS do
+		for k,v in pairs(pages_with_steps) do
+			local this_page_group = data:get_page_val(t,v,'sync_group')
+			if this_page_group == 0 then
+				this_page_group = data:get_track_val(t,'sync_group')
+			end
+			if this_page_group == group_to_edit then
+				if data:get_global_val('div_cue')==1 then
+					data:set_page_val(t,p,'cued_divisor',new_val)
+				else
+					data:set_page_val(t,v,'divisor',new_val)
+				end
+			end
+		end
+	end
+
+	post('group '..group_to_edit..' divisor: '..new_val)
 end
 
 
@@ -119,46 +140,37 @@ function Meta:edit_loop(track, first, last)
 	local f = math.min(first,last)
 	local l = math.max(first,last)
 	local p = get_page_name()
-	local loopsync = div_sync_modes[params:get('loop_sync')]
+	print('t is',track)
 
-	if p == 'pattern' and params:get('ms_active') == 1 then
-		params:set('ms_first',f)
-		params:set('ms_last',l)
+	if p == 'pattern' and data:get_global_val('ms_active') == 1 then
+		data:set_global_val('ms_first',f)
+		data:set_global_val('ms_last',l)
 		post('meta-sequence loop: ['..f..'-'..l..']')
-	elseif loopsync == 'none' then
-		if (p == 'trig' or p == 'note') and params:get('note_sync') == 1 then
-			data:set_page_val(track,'note','loop_first',f)
-			data:set_page_val(track,'note','loop_last',l)
-			data:set_page_val(track,'trig','loop_first',f)
-			data:set_page_val(track,'trig','loop_last',l)
-			post('t'..track..' trig & note loops: ['..f..'-'..l..']')
-		else
-			data:set_page_val(track,p,'loop_first',f)
-			data:set_page_val(track,p,'loop_last',l)
-			post('t'..track..' '..get_display_page_name()..' loop: ['..f..'-'..l..']')
+
+	else
+		local group_to_edit = data:get_page_val(track,p,'sync_group')
+		if group_to_edit == 0 then
+			group_to_edit = data:get_track_val(track,'sync_group')
 		end
-	elseif loopsync == 'track' then
-		for k,v in ipairs(combined_page_list) do
-			if v == 'scale' or v == 'patterns' then break end
-			data:set_page_val(track,v,'loop_first',f)
-			data:set_page_val(track,v,'loop_last',l)
-		end
-		post('t'..track..' loops: ['..f..'-'..l..']')
-	elseif loopsync == 'all' then
 		for t=1,NUM_TRACKS do
-			for k,v in ipairs(combined_page_list) do
-				if v == 'scale' or v == 'pattern' then break end
-				data:set_page_val(track,v,'loop_first',f)
-				data:set_page_val(track,v,'loop_last',l)
+			for k,v in pairs(pages_with_steps) do
+				local this_page_group = data:get_page_val(t,v,'sync_group')
+				if this_page_group == 0 then
+					this_page_group = data:get_track_val(t,'sync_group')
+				end
+				if this_page_group == group_to_edit then
+					data:set_page_val(t,v,'loop_first',f)
+					data:set_page_val(t,v,'loop_last',l)
+				end
 			end
 		end
-		post('all loops: ['..f..'-'..l..']')
+		post('group '..group_to_edit..' loops: ['..f..'-'..l..']')
 	end
 end
 
 function Meta:switch_to_pattern(p)
 	post('cued pattern '..p)
-	params:set('cued_pattern',p)
+	data:set_global_val('cued_pattern',p)
 end
 
 function Meta:save_pattern_into_slot(slot)
