@@ -231,7 +231,7 @@ function Meta:get_page_copy(t,page)
 	r.subtrigs = {}
 	for i=1,16 do
 		table.insert(r.vals,empty and 0 or data:get_step_val(t,page,i))
-		table.insert(r.probs,empty and 4 or data:get_step_val(t,page..'_prob',i))
+		table.insert(r.probs,empty and 4 or data:get_step_val(t,page,i, 'prob'))
 		if empty then r.vals[i] = page_defaults[page].default end
 		if page=='retrig' then
 			table.insert(r.subtrigs,{})
@@ -259,7 +259,7 @@ function Meta:paste_onto_page(t,page,page_table)
 	data:set_page_val(t,page,'cued_divisor',page_table.cued_divisor)
 	for i=1,16 do
 		data:set_step_val(t,page,i,page_table.vals[i])
-		data:set_step_val(t,page..'_prob',i,page_table.probs[i])
+		data:set_step_val(t,page,i,page_table.probs[i],'prob')
 		if page == 'retrig' then
 			for j=1,5 do
 				data:set_subtrig(t,i,j,page_table.subtrigs[i][j])

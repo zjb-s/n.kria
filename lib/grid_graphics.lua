@@ -291,7 +291,7 @@ end
 
 function Graphics:prob()
 	for x=1,16 do
-		local d = data:get_step_val(at(),get_page_name()..'_prob',x)
+		local d = data:get_step_val(at(),get_page_name(),x,'prob')
 		g:led(x,6,LOW)
 		g:led(x,7-d,HIGH)
 		g:led(x,1,data:get_page_val(at(),get_page_name(),'pos') == x and MED or LOW)

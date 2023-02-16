@@ -148,7 +148,7 @@ function Transport:advance_page(t,p) -- track,page
 
 	data:set_page_val(t,p,'pos',new_pos)
 
-	if math.random(0,99) < prob_map[data:get_step_val(t,p..'_prob',data:get_page_val(t,p,'pos'))] then
+	if math.random(0,99) < prob_map[data:get_step_val(t,p,data:get_page_val(t,p,'pos'), 'prob')] then
 		if matrix and tab.contains(matrix_sources,p) then 
 			matrix:set(p..'_t'..t, (data:get_step_val(t,p,data:get_page_val(t,p,'pos'))-1)/6) 
 		end
