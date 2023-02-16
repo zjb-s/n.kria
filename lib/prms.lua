@@ -5,6 +5,8 @@ WHAT GOES IN THIS FILE:
 
 local nb = include('n.kria/lib/nb/lib/nb')
 
+local data = include('n.kria/lib/data_functions')
+
 Prms = {}
 
 function Prms:script_mode_switch()
@@ -60,6 +62,7 @@ function Prms:script_mode_switch()
 end
 
 function Prms:add()
+	data:init()
 	params:add_separator('N.KRIA')
 	self:add_globals()
 	self:script_mode_switch()
@@ -75,57 +78,57 @@ params.action_read = function(filename, name, pset_number)
 end
 
 function Prms:add_globals()
-	params:add_binary('global_playing', 'PLAYING?', 'toggle')
-	params:add_number('global_root_note','ROOT NOTE',0,11,0,
+	data:add_binary('playing', 'PLAYING?', 'toggle')
+	data:add_number('root_note','ROOT NOTE',0,11,0,
 		function(x) return mu.note_num_to_name(x.value) end
 	)
-	params:add_number('global_stretch','STRETCH',-32,32,0,
+	data:add_number('stretch','STRETCH',-32,32,0,
 		function(x) return x.value > 0 and '+'..x.value or x.value end
 	)
-	params:add_number('global_push','PUSH',-15,14,0,
+	data:add_number('push','PUSH',-15,14,0,
 		function(x) return x.value > 0 and '+'..x.value or x.value end
 	)
-	params:add_number('global_swing','SWING',50,99,55,function(x) return x.value..'%' end)
-	params:add_number('global_clock_div','CLOCK DIVISION',1,16,1,
+	data:add_number('swing','SWING',50,99,55,function(x) return x.value..'%' end)
+	data:add_number('clock_div','CLOCK DIVISION',1,16,1,
 		function(x) return division_names[x.value] end
 	)
 
 	params:add_option('script_mode','SCRIPT MODE', {'classic','extended'},1)
 	
 	params:add_group('OPTIONS',7)
-	params:add_binary('global_note_div_sync','NOTE DIV SYNC','toggle')
-	params:add_binary('global_div_cue', 'DIV CUE', 'toggle')
-	params:add_option('global_div_sync','DIV SYNC', div_sync_modes)
-	params:add_binary('global_note_sync','NOTE SYNC', 'toggle')
-	params:add_option('global_loop_sync','LOOP SYNC',div_sync_modes)
-	params:add_trigger('global_reset_all','RESET')
-	params:set_action('global_reset_all',function(x) meta:reset_all() end)
-	params:add_trigger('global_advance_all','ADVANCE ALL')
-	params:set_action('global_advance_all',function() meta:advance_all() end)
+	data:add_binary('note_div_sync','NOTE DIV SYNC','toggle')
+	data:add_binary('div_cue', 'DIV CUE', 'toggle')
+	data:add_option('div_sync','DIV SYNC', div_sync_modes)
+	data:add_binary('note_sync','NOTE SYNC', 'toggle')
+	data:add_option('loop_sync','LOOP SYNC',div_sync_modes)
+	data:add_trigger('reset_all','RESET')
+	data:set_action('reset_all',function(x) meta:reset_all() end)
+	data:add_trigger('advance_all','ADVANCE ALL')
+	data:set_action('advance_all',function() meta:advance_all() end)
 	
 	params:add_group('GLOBAL DATA',12)
-	params:add_binary('global_swing_this_step','swing_this_step','toggle')
-	params:add_number('global_active_track', 'active track', 1,NUM_TRACKS,1)
-	params:add_option('global_mod','mod key held', mod_names, 1)
-	params:add_number('global_scale_num','selected scale',1,NUM_SCALES,1)
-	params:add_option('global_overlay','overlay',overlay_names,1)
-	params:add_option('global_patcher','patcher',patchers,1)
-	params:add_number('global_page', 'page', 1,6,1)
-	params:add_binary('global_alt_page','alt page?', 'toggle')
-	params:add_number('global_active_pattern','pattern',1,NUM_PATTERNS,1)
-	params:set_action('global_active_pattern',function(x) data.pattern = x end)
-	params:add_number('global_cued_pattern','cued pattern',0,99,1)
-	params:add_number('global_pattern_quant','pattern_quant',1,99,1)
-	params:add_number('global_pattern_quant_pos','pattern_quant_pos',1,99,1)
+	data:add_binary('swing_this_step','swing_this_step','toggle')
+	data:add_number('active_track', 'active track', 1,NUM_TRACKS,1)
+	data:add_option('mod','mod key held', mod_names, 1)
+	data:add_number('scale_num','selected scale',1,NUM_SCALES,1)
+	data:add_option('overlay','overlay',overlay_names,1)
+	data:add_option('patcher','patcher',patchers,1)
+	data:add_number('page', 'page', 1,6,1)
+	data:add_binary('alt_page','alt page?', 'toggle')
+	data:add_number('active_pattern','pattern',1,NUM_PATTERNS,1)
+	data:set_action('active_pattern',function(x) data.pattern = x end)
+	data:add_number('cued_pattern','cued pattern',0,99,1)
+	data:add_number('pattern_quant','pattern_quant',1,99,1)
+	data:add_number('pattern_quant_pos','pattern_quant_pos',1,99,1)
 	params:hide('GLOBAL DATA')
 
 	params:add_group('ms_data',134) -- meta-sequence
-	params:add_number('global_ms_first','ms_loop_first',1,64,1)
-	params:add_number('global_ms_last','ms_loop_last',1,64,4)
-	params:add_number('global_ms_pos','ms_pos',1,64,1)
-	params:add_number('global_ms_cursor','ms_cursor',1,64,1)
-	params:add_number('global_ms_duration_pos','ms_duration_pos',1,99,1)
-	params:add_binary('global_ms_active','ms_active','toggle')
+	data:add_number('ms_first','ms_loop_first',1,64,1)
+	data:add_number('ms_last','ms_loop_last',1,64,4)
+	data:add_number('ms_pos','ms_pos',1,64,1)
+	data:add_number('ms_cursor','ms_cursor',1,64,1)
+	data:add_number('ms_duration_pos','ms_duration_pos',1,99,1)
+	data:add_binary('ms_active','ms_active','toggle')
 	for i=1,64 do
 		params:add_number('global_ms_pattern_'..i,'ms_'..i..'_pattern',1,64,1)
 		params:add_number('global_ms_duration_'..i,'ms_'..i..'_duration',1,16,1)
@@ -147,25 +150,26 @@ function Prms:add_tracks()
 	params:add_separator('TRACK CONTROLS')
 
 	for t=1,NUM_TRACKS do
+		local track = data.tracks[t]
 		params:add_group(lexi_names[t],30)
 		nb:add_param("voice_t"..t, "T"..t.." OUTPUT")
-		params:add_option('play_mode_t'..t,'PLAY MODE', play_modes,1)
-		params:add_binary('mute_t'..t, 'MUTE', 'toggle')
-		params:add_trigger('reset_t'..t,'RESET')
-		params:set_action('reset_t'..t,function(x) transport:reset_track(t) end)
-		params:add_trigger('advance_t'..t,'ADVANCE')
-		params:set_action('advance_t'..t,function() 
+		track:add_option('play_mode','PLAY MODE', play_modes,1)
+		track:add_binary('mute', 'MUTE', 'toggle')
+		track:add_trigger('reset','RESET')
+		track:set_action('reset',function(x) transport:reset_track(t) end)
+		track:add_trigger('advance','ADVANCE')
+		track:set_action('advance',function() 
 			if params:get('param_clock_t'..t) == 1 then
 				transport:advance_track(t)
 				-- print('advancing track '..t) 
 			end
 		end)
-		params:add_binary('stretchable_t'..t,'STRETCHABLE?','toggle',1)
-		params:add_binary('pushable_t'..t,'PUSHABLE?','toggle',1)
-		params:add_binary('trigger_clock_t'..t,'TRIGGER CLOCK?','toggle',0)
-		params:add_binary('param_clock_t'..t,'PARAM CLOCK?','toggle',0)
+		track:add_binary('stretchable','STRETCHABLE?','toggle',1)
+		track:add_binary('pushable','PUSHABLE?','toggle',1)
+		track:add_binary('trigger_clock','TRIGGER CLOCK?','toggle',0)
+		track:add_binary('param_clock','PARAM CLOCK?','toggle',0)
 		params:add_separator('T'..t..' DIV GROUPS')
-		params:add_number('div_group_t'..t,'TRACK',0,NUM_SYNC_GROUPS,0,function(x)
+		track:add_number('div_group','TRACK',0,NUM_SYNC_GROUPS,0,function(x)
 			return x.value==0 and 'global' or x.value
 		end)
 		for _,v in ipairs(pages_with_steps) do
@@ -175,7 +179,7 @@ function Prms:add_tracks()
 			end)
 		end
 		params:add_separator('T'..t..' LOOP GROUPS')
-		params:add_number('loop_group_t'..t,'TRACK',0,NUM_SYNC_GROUPS,0,function(x)
+		track:add_number('loop_group','TRACK',0,NUM_SYNC_GROUPS,0,function(x)
 			return x.value==0 and 'global' or x.value
 		end)
 		for _,v in ipairs(pages_with_steps) do
@@ -189,29 +193,28 @@ function Prms:add_tracks()
 		-- params:add_binary('loop_sync_t'..t,'INTERNAL LOOP SYNC','toggle',0)
 		-- params:add_binary('note_sync_t'..t,'INTERNAL NOTE SYNC','toggle',0)
 		
-		params:add_group('track_data_t'..t,34)
-		params:add_number('octave_shift_t'..t,'octave_shift_t'..t, 1, 8, 4)
-		params:add_number('gate_shift_t'..t,'gate_shift_t'..t,1,16,8)
+		track:add_group('track_data',34)
+		track:add_number('octave_shift','octave_shift_t'..t, 1, 8, 4)
+		track:add_number('gate_shift','gate_shift_t'..t,1,16,8)
 		for k,v in pairs(pages_with_steps) do
-			params:add_number('pos_'..v..'_t'..t,'data', 1, 16,1)
-			params:add_number('cued_divisor_'..v..'_t'..t,'data', 0,16,0)
-			params:add_number('counter_'..v..'_t'..t,'data',1,99,1)
-			params:add_number('pipo_dir_'..v..'_t'..t,'data',0,1,1)
+			local page = track[v]
+			page:add_number('pos','data', 1, 16,1)
+			page:add_number('cued_divisor','data', 0,16,0)
+			page:add_number('counter','data',1,99,1)
+			page:add_number('pipo_dir','data',0,1,1)
 		end
-		params:hide('track_data_t'..t)
-		
-		
-		
-		
+		track:hide('track_data')
+
 		for p=1,NUM_PATTERNS do
+			local ptrack = data.patterns[p][t]
 			params:add_group('P'..p..' T'..t..' DATA',360)
 
 			for k,v in ipairs(pages_with_steps) do
-
-				params:add_number('loop_first_'..v..'_t'..t..'_p'..p,'data', 1, 16,1)
-				params:add_number('loop_last_'..v..'_t'..t..'_p'..p,'data', 1, 16,6)
-				params:add_number('divisor_'..v..'_t'..t..'_p'..p,'data', 1,16,1)
-
+				local ppage = ptrack[v]
+				ppage:add_number('loop_first','data', 1, 16,1)
+				ppage:add_number('loop_last','data', 1, 16,6)
+				ppage:add_number('divisor','data', 1,16,1)
+				-- print(asdf['it'])
 				for i=1,16 do
 					params:add_number('data_'..v..'_prob_'..i..'_t'..t..'_p'..p,'data',1,4,4)
 					params:add{

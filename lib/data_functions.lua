@@ -5,7 +5,112 @@ WHAT GOES IN THIS FILE:
 
 local Data = {}
 
+local global_meta = {
+	__index = function(t, key)
+		return function(self, id, ...)
+			-- do the params part
+			--print("dispatch", key, id, {...})
+			local new_id = 'global_' .. id
+			local f = params[key]
+			f(params, new_id, ...)
+			local p = params:lookup_param(new_id)
+			self[id] = p
+		end
+	end
+}
+
+local track_meta = {
+	__index = function(t, key)
+		return function(self, id, ...)
+			-- do the params part
+			local new_id = id .. '_t' .. self.idx
+			local f = params[key]
+			f(params, new_id, ...)
+			local p = params:lookup_param(new_id)
+			self[id] = p
+		end
+	end
+}
+
+local pattern_track_meta = {
+	__index = function(t, key)
+		return function(self, id, ...)
+			-- do the params part
+			local new_id = id .. '_t' .. self.idx .. '_p' .. self.pattern
+			local f = params[key]
+			f(params, new_id, ...)
+			local p = params:lookup_param(new_id)
+			self[id] = p
+		end
+	end
+}
+
+local page_meta = {
+	__index = function(t, key)
+		return function(self, id, ...)
+			-- do the params part
+			local new_id = id .. '_' .. self.id .. '_t' .. self.track
+			local f = params[key]
+			f(params, new_id, ...)
+			local p = params:lookup_param(new_id)
+			self[id] = p
+		end
+	end
+}
+
+local pattern_page_meta = {
+	__index = function(t, key)
+		return function(self, id, ...)
+			-- do the params part
+			-- like loop_first_trig_t1_p1
+			local new_id = id .. '_' .. self.id .. '_t' .. self.track .. '_p' .. self.pattern
+			print(new_id)
+			local foo = nil
+			-- print(foo['it'])
+			local f = params[key]
+			f(params, new_id, ...)
+			local p = params:lookup_param(new_id)
+			self[id] = p
+		end
+	end
+}
+
+setmetatable(Data, global_meta)
+
 Data.pattern = nil
+
+function Data:init()
+	-- Two layers — one for data that's stored per-pattern, and one
+	-- that's just tracks, for non-pattern data.
+	self.patterns = {}
+	for p=1,NUM_PATTERNS do
+		local pat = {idx=p}
+		for t=1,NUM_TRACKS do
+			local trk = {idx=t, pattern=p}
+			setmetatable(trk, pattern_track_meta)
+			for _, v in ipairs(pages_with_steps) do
+				local page = {pattern=p, track=t, id=v}
+				setmetatable(page, pattern_page_meta)
+				trk[v] = page
+			end
+			pat[t] = trk
+		end
+		self.patterns[p] = pat
+	end
+	self.tracks = {}
+	for t=1,NUM_TRACKS do
+		local trk = {idx=t}
+		setmetatable(trk, track_meta)
+		for _, v in ipairs(pages_with_steps) do
+			local page = {track=t, id=v}
+			setmetatable(page, page_meta)
+			trk[v] = page
+		end
+		self.tracks[t] = trk
+	end
+end
+
+
 
 -- GET
 function Data:get_global_val(name)
