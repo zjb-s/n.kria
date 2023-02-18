@@ -84,36 +84,42 @@ function Transport:advance_track(t)
 		data:delta_page_val(t,v,'counter',1)
 		if data:get_page_val(t,v,'counter') > data:get_page_val(t,v,'divisor') then
 			data:set_page_val(t,v,'counter',1)
-			if self:advance_page(t,v) then note_will_fire = true end
+			if type(data.tracks[t][v].temp_loop_first) == 'number' then
+				if self:advance_page(t,v, false, true) then note_will_fire = true end
+				self:advance_page(t, v, true, false)
+				-- print(t, v, "fake", data:get_pos(t, v), "real", data:get_page_val(t,v,'pos'))
+			else
+				if self:advance_page(t,v, true, true) then note_will_fire = true end
+			end
 		end
 	end
 	if note_will_fire then clock.run(note_clock,t) end
 end
 
-function Transport:advance_page(t,p) -- track,page
-	local old_pos = data:get_page_val(t,p,'pos')
-	local first = data:get_page_val(t,p,'loop_first')
-	local last = data:get_page_val(t,p,'loop_last')
+function Transport:advance_page(t,p,real,playing) -- track,page
+	local old_pos = real and data:get_page_val(t,p,'pos') or data:get_pos(t, p)
+	local first = real and data:get_page_val(t,p,'loop_first') or data:get_loop_first(t, p)
+	local last = real and data:get_page_val(t,p,'loop_last') or data:get_loop_last(t, p)
 	local mode = play_modes[data:get_track_val(t,'play_mode')]
 	local new_pos;
 	local resetting = false
 
 	if mode == 'forward' then
 		new_pos = old_pos + 1
-		if out_of_bounds(t,p,new_pos) then
+		if out_of_bounds(t,p,new_pos, real) then
 			new_pos = first
 			resetting = true
 		end
 	elseif mode == 'reverse' then
 		new_pos = old_pos - 1
-		if out_of_bounds(t,p,new_pos) then
+		if out_of_bounds(t,p,new_pos, real) then
 			new_pos = last
 			resetting = true
 		end
 	elseif mode == 'triangle' then
 		local delta = data:get_page_val(t,p,'pipo_dir') == 1 and 1 or -1
 		new_pos = old_pos + delta
-		if out_of_bounds(t,p,new_pos) then 
+		if out_of_bounds(t,p,new_pos, real) then 
 			if new_pos > last then
 				new_pos = util.clamp(last-1,first,last)
 				data:set_page_val(t,p,'pipo_dir',0)
@@ -141,19 +147,23 @@ function Transport:advance_page(t,p) -- track,page
 		new_pos = util.round(math.random(first,last))
 	end
 
-	if resetting and data:get_page_val(t,p,'cued_divisor') ~= 0 then
+	if resetting and playing and data:get_page_val(t,p,'cued_divisor') ~= 0 then
 		data:set_page_val(t,p,'divisor',data:get_page_val(t,p,'cued_divisor'))
 		data:set_page_val(t,p,'cued_divisor',0)
 	end
 
-	data:set_page_val(t,p,'pos',new_pos)
+	if real then
+		data:set_page_val(t,p,'pos',new_pos)
+	else
+		data.tracks[t][p].temp_pos = new_pos
+	end
 
-	if math.random(0,99) < prob_map[data:get_step_val(t,p,data:get_page_val(t,p,'pos'), 'prob')] then
+	if playing and math.random(0,99) < prob_map[data:get_step_val(t,p,data:get_pos(t,p), 'prob')] then
 		if matrix and tab.contains(matrix_sources,p) then 
-			matrix:set(p..'_t'..t, (data:get_step_val(t,p,data:get_page_val(t,p,'pos'))-1)/6) 
+			matrix:set(p..'_t'..t, (data:get_step_val(t,p,data:get_pos(t,p))-1)/6) 
 		end
 		if data:get_track_val(t,'mute') == 0 then
-			value_buffer[t][p] = data:get_step_val(t,p,data:get_page_val(t,p,'pos'))
+			value_buffer[t][p] = data:get_step_val(t,p,data:get_pos(t,p))
 			if p == 'trig' and current_val(t,'trig') == 1 then
 				return true
 			end

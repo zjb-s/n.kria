@@ -174,7 +174,7 @@ function add_modulation_sources()
 end
 
 function note_clock(track)
-	local player = params:lookup_param("voice_t"..track):get_player()
+	local player = data:get_player(track)
 	local slide_or_modulate = current_val(track,'slide') -- to match stock kria times
 	local velocity = current_val(track,'velocity')
 	local divider = data:get_page_val(track,'trig','divisor')
@@ -190,7 +190,7 @@ function note_clock(track)
 	duration = duration * gate_multiplier
 	-- print('repeating note '..subdivision..' times')
 	for i=1,subdivision do
-		if data:get_subtrig(track,data:get_page_val(track,'retrig','pos'),i)==1 then
+		if data:get_subtrig(track,data:get_pos(track,'retrig'),i)==1 then
 			if data:get_track_val(track,'trigger_clock') == 1 then
 				for _,v in pairs(trigger_clock_pages) do transport:advance_page(track,v) end
 			end
@@ -265,10 +265,19 @@ end
 -- 	return t <= max
 -- end
 
-function out_of_bounds(track,p,value)
-	-- returns true if value is out of bounds on page p, track
+local function real_out_of_bounds(track,p,value)
+	-- returns true if value is out of bounds on page p, track —— for real not just temporary.
 	return 	(value < data:get_page_val(track,p,'loop_first'))
 	or 		(value > data:get_page_val(track,p,'loop_last'))
+end
+
+function out_of_bounds(track,p,value, real)
+	-- returns true if value is out of bounds on page p, track
+	if real then
+		return real_out_of_bounds(track, p, value)
+	end
+	return 	(value < data:get_loop_first(track,p))
+	or 		(value > data:get_loop_last(track,p))
 end
 
 function get_page_name(page,alt)
@@ -282,7 +291,7 @@ end
 function get_display_page_name()
 	local p = get_page_name()
 	if p == "slide" then
-		local description = params:lookup_param("voice_t"..at()):get_player():describe()
+		local description = data:get_player(at()):describe()
 		if not description.supports_slew then
 			p = description.modulate_description
 		end

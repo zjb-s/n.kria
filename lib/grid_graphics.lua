@@ -29,7 +29,7 @@ function Graphics:trig()
 				end
 			end
 
-			if x == data:get_page_val(t,'trig','pos') and data:get_global_val('playing') == 1 then
+			if x == data:get_pos(t,'trig') and data:get_global_val('playing') == 1 then
 				
 				l = highlight(l)
 			end
@@ -294,7 +294,7 @@ function Graphics:prob()
 		local d = data:get_step_val(at(),get_page_name(),x,'prob')
 		g:led(x,6,LOW)
 		g:led(x,7-d,HIGH)
-		g:led(x,1,data:get_page_val(at(),get_page_name(),'pos') == x and MED or LOW)
+		g:led(x,1,data:get_pos(at(),get_page_name()) == x and MED or LOW)
 	end
 end
 
@@ -454,7 +454,7 @@ function Graphics:retrig()
 			local oob = out_of_bounds(at(),'retrig',x)
 			if y == 1 or y == 7 then
 				l = kbuf[x][y] and HIGH or LOW 
-				if data:get_page_val(at(),'retrig','pos') == x and data:get_global_val('playing') == 1 then
+				if data:get_pos(at(),'retrig') == x and data:get_global_val('playing') == 1 then
 					l = highlight(l)
 				end
 			else
@@ -478,7 +478,7 @@ function Graphics:note()
 	local l
 	for x=1,16 do
 		local d = data:get_step_val(at(),'note',x)
-		if x == data:get_page_val(at(),'note','pos') and data:get_global_val('playing') == 1 then 
+		if x == data:get_pos(at(),'note') and data:get_global_val('playing') == 1 then 
 			l = LOW
 		else
 			l = OFF
@@ -503,7 +503,7 @@ function Graphics:transpose() -- identical to above, might want to fold them tog
 	local l
 	for x=1,16 do
 		local d = data:get_step_val(at(),'transpose',x)
-		if x == data:get_page_val(at(),'transpose','pos') and data:get_global_val('playing') == 1 then 
+		if x == data:get_pos(at(),'transpose') and data:get_global_val('playing') == 1 then 
 			l = LOW
 		else
 			l = OFF
@@ -548,7 +548,7 @@ function Graphics:octave()
 			if get_mod_key() == 'loop' and (not oob) then
 				l = highlight(l)
 			end
-			if x == data:get_page_val(at(),'octave','pos') and data:get_global_val('playing') == 1 then
+			if x == data:get_pos(at(),'octave') and data:get_global_val('playing') == 1 then
 				l = highlight(l)
 			end
 			g:led(x,8-i,l)
@@ -583,7 +583,7 @@ function Graphics:slide()
 			if get_mod_key() == 'loop' and not oob then
 				l = highlight(l)
 			end
-			if x == data:get_page_val(at(),'slide','pos') and data:get_global_val('playing') == 1 then
+			if x == data:get_pos(at(),'slide') and data:get_global_val('playing') == 1 then
 				l = highlight(l)
 			end
 			g:led(x,8-y,l)
@@ -629,7 +629,7 @@ function Graphics:gate()
 			if get_mod_key() == 'loop' and not oob then
 				l = highlight(l)
 			end
-			if x == data:get_page_val(at(),'gate','pos') and data:get_global_val('playing') == 1 then
+			if x == data:get_pos(at(),'gate') and data:get_global_val('playing') == 1 then
 				l = highlight(l)
 			end
 			g:led(x,1+y,l)
@@ -664,7 +664,7 @@ function Graphics:velocity()
 			if get_mod_key() == 'loop' and not oob then
 				l = highlight(l)
 			end
-			if x == data:get_page_val(at(),'velocity','pos') and data:get_global_val('playing') == 1 then
+			if x == data:get_pos(at(),'velocity') and data:get_global_val('playing') == 1 then
 				l = highlight(l)
 			end
 			g:led(x,8-y,l)

@@ -171,11 +171,11 @@ function Meta:edit_loop_classic(track, first, last)
 end
 
 
-function Meta:edit_loop_extended(track, first, last)
+function Meta:edit_loop_extended(track, first, last, temporary)
 	local f = math.min(first,last)
 	local l = math.max(first,last)
 	local p = get_page_name()
-	print('t is',track)
+	-- print('t is',track)
 
 	if p == 'pattern' and data:get_global_val('ms_active') == 1 then
 		data:set_global_val('ms_first',f)
@@ -194,8 +194,19 @@ function Meta:edit_loop_extended(track, first, last)
 					this_page_group = data:get_track_val(t,'loop_group')
 				end
 				if this_page_group == group_to_edit then
-					data:set_page_val(t,v,'loop_first',f)
-					data:set_page_val(t,v,'loop_last',l)
+					if temporary then
+						if temporary == 'clear' then
+							data.tracks[t][v].temp_loop_first = nil
+							data.tracks[t][v].temp_loop_last = nil
+							data.tracks[t][v].temp_pos = nil
+						else
+							data.tracks[t][v].temp_loop_first = f
+							data.tracks[t][v].temp_loop_last = l
+						end
+					else
+						data:set_page_val(t,v,'loop_first',f)
+						data:set_page_val(t,v,'loop_last',l)
+					end
 				end
 			end
 		end

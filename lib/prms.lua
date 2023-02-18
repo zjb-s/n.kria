@@ -153,6 +153,7 @@ function Prms:add_tracks()
 		local track = data.tracks[t]
 		params:add_group(lexi_names[t], 30)
 		nb:add_param("voice_t" .. t, "T" .. t .. " OUTPUT")
+		track.player = params:lookup_param('voice_t'..t)
 		track:add_option('play_mode', 'PLAY MODE', play_modes, 1)
 		track:add_binary('mute', 'MUTE', 'toggle')
 		track:add_trigger('reset', 'RESET')

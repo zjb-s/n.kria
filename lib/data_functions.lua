@@ -150,6 +150,9 @@ if Data == nil then
 			return self.patterns[self.pattern][track][page][name]:get()
 		else
 			local pp = self.tracks[track][page]
+			if type(pp) ~= 'table' then
+				print("track is", track, "page is", page)
+			end			
 			local param = pp[name]
 			if type(param) ~= 'table' then
 				print("page is", page, param)
@@ -157,6 +160,28 @@ if Data == nil then
 			end
 			return param:get()
 		end
+	end
+
+	function Data:get_loop_first(track, page)
+		local temp = self.tracks[track][page].temp_loop_first
+		if type(temp) == 'number' then return temp end
+		return self.patterns[self.pattern][track][page].loop_first:get()
+	end
+
+	function Data:get_loop_last(track, page)
+		local temp = self.tracks[track][page].temp_loop_last
+		if type(temp) == 'number' then return temp end
+		return self.patterns[self.pattern][track][page].loop_last:get()
+	end
+
+	function Data:get_pos(track, page)
+		local temp = self.tracks[track][page].temp_pos
+		if type(temp) == 'number' then return temp end
+		return self.tracks[track][page].pos:get()
+	end
+
+	function Data:get_player(track)
+		return self.tracks[track].player:get_player()
 	end
 
 	function Data:get_step_val(track, page, step, thing)

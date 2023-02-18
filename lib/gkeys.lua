@@ -93,7 +93,7 @@ function gkeys:page_select(x,y,z,t)
 	end
 end
 
-function gkeys:resolve_mod_keys(x,y,z,t) -- intentionally prioritizes leftmost held mod key
+function gkeys:resolve_mod_keys() -- intentionally prioritizes leftmost held mod key
 	local mod_key_held = 0
 	for i=1,3 do
 		if kbuf[10+i][8] then
@@ -105,6 +105,9 @@ function gkeys:resolve_mod_keys(x,y,z,t) -- intentionally prioritizes leftmost h
 	if mod_key_held == 0 then
 		loop_first = -1
 		loop_last = -1
+	end
+	if not kbuf[12][8] then
+		meta:edit_loop_extended(at(), 0, 0, 'clear')
 	end
 	if data:get_global_val('mod') ~= 1 then
 		post(mod_names[data:get_global_val('mod')] .. ' mod')
@@ -128,7 +131,7 @@ function gkeys:resolve_loop_keys(x,y,z,t)
 			if get_script_mode() == 'classic' then
 				meta:edit_loop_classic(t,loop_first, loop_last)
 			elseif get_script_mode() == 'extended' then
-				meta:edit_loop_extended(t,loop_first, loop_last)
+				meta:edit_loop_extended(t,loop_first, loop_last, kbuf[12][8])
 			end
 		end
 	else -- release
@@ -136,7 +139,7 @@ function gkeys:resolve_loop_keys(x,y,z,t)
 			if get_script_mode() == 'classic' then
 				meta:edit_loop_classic(t,loop_first, loop_last)
 			elseif get_script_mode() == 'extended' then
-				meta:edit_loop_extended(t,loop_first, loop_last)
+				meta:edit_loop_extended(t,loop_first, loop_last, kbuf[12][8])
 			end
 		else
 			for x=1,16 do
