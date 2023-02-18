@@ -485,7 +485,7 @@ function gkeys:advance_triggers_patcher(x,y,z,t)
 end
 
 function gkeys:key(x,y,z)
-	print('grid:',x,y,z)
+	-- print('grid:',x,y,z)
 	kbuf[x][y] = (z == 1)
 	local t
 	if get_page_name() == 'trig' and y <= NUM_TRACKS then

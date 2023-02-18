@@ -149,7 +149,13 @@ if Data == nil then
 		if pattern_page_attrs[name] then
 			return self.patterns[self.pattern][track][page][name]:get()
 		else
-			return self.tracks[track][page][name]:get()
+			local pp = self.tracks[track][page]
+			local param = pp[name]
+			if type(param) ~= 'table' then
+				print("page is", page, param)
+				tab.print(pp)
+			end
+			return param:get()
 		end
 	end
 

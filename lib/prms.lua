@@ -173,7 +173,8 @@ function Prms:add_tracks()
 			return x.value == 0 and 'global' or x.value
 		end)
 		for _, v in ipairs(pages_with_steps) do
-			params:add_number('div_group_' .. v .. '_t' .. t, string.upper(v), 0, NUM_SYNC_GROUPS, 0,
+			local page = track[v]
+			page:add_number('div_group', string.upper(v), 0, NUM_SYNC_GROUPS, 0,
 				function(x)
 					return x.value == 0 and 'track' or x.value
 				end)
