@@ -66,6 +66,23 @@ return {
 		,	slide = {min=1,max=7,default=1} 
 		,	velocity = {min=1,max=7,default=5}
 		}
+		pattern_page_info = {
+			loop_first = {
+				min = 1,
+				max = 16,
+				default = 1,
+			},
+			loop_last = {
+				min = 1,
+				max = 16,
+				default = 6,
+			},
+			divisor = {
+				min = 1,
+				max = 16,
+				default = 1,
+			}
+		}
 		page_map = { -- x coordinate map for grid key presses
 			[6] = 1
 		,	[7] = 2

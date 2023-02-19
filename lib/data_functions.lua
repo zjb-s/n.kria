@@ -14,32 +14,39 @@ if Data == nil then
 
 	local global_meta = {
 		__index = function(t, key)
-			return function(self, id, ...)
-				-- do the params part
-				local new_id = 'global_' .. id
-				local f = params[key]
-				f(params, new_id, ...)
-				local p = params:lookup_param(new_id)
-				self[id] = p
+			if params[key] then
+				return function(self, id, ...)
+					-- do the params part
+					local new_id = 'global_' .. id
+					local f = params[key]
+					f(params, new_id, ...)
+					local p = params:lookup_param(new_id)
+					self[id] = p
+				end
 			end
+			return nil
 		end
 	}
 
 	local track_meta = {
 		__index = function(t, key)
-			return function(self, id, ...)
-				-- do the params part
-				local new_id = id .. '_t' .. self.idx
-				local f = params[key]
-				f(params, new_id, ...)
-				local p = params:lookup_param(new_id)
-				self[id] = p
+			if params[key] then
+				return function(self, id, ...)
+					-- do the params part
+					local new_id = id .. '_t' .. self.idx
+					local f = params[key]
+					f(params, new_id, ...)
+					local p = params:lookup_param(new_id)
+					self[id] = p
+				end
 			end
+			return nil
 		end
 	}
 
 	local pattern_track_meta = {
 		__index = function(t, key)
+			if params[key] == nil then return nil end
 			return function(self, id, ...)
 				-- do the params part
 				local new_id = id .. '_t' .. self.idx .. '_p' .. self.pattern
@@ -53,6 +60,7 @@ if Data == nil then
 
 	local page_meta = {
 		__index = function(t, key)
+			if params[key] == nil then return nil end
 			return function(self, id, ...)
 				-- do the params part
 				local new_id = id .. '_' .. self.id .. '_t' .. self.track
@@ -66,6 +74,7 @@ if Data == nil then
 
 	local pattern_page_meta = {
 		__index = function(t, key)
+			if params[key] == nil then return nil end
 			return function(self, id, ...)
 				local new_id = id .. '_' .. self.id .. '_t' .. self.track .. '_p' .. self.pattern
 				local f = params[key]
@@ -78,6 +87,7 @@ if Data == nil then
 
 	local step_meta = {
 		__index = function(t, key)
+			if params[key] == nil then return nil end
 			return function(self, id, ...)
 				local new_id
 				if id == 'step' then
@@ -104,25 +114,25 @@ if Data == nil then
 		-- Two layers — one for data that's stored per-pattern, and one
 		-- that's just tracks, for non-pattern data.
 		self.patterns = {}
-		for p = 1, NUM_PATTERNS do
-			local pat = { idx = p }
-			for t = 1, NUM_TRACKS do
-				local trk = { idx = t, pattern = p }
-				setmetatable(trk, pattern_track_meta)
-				for _, v in ipairs(pages_with_steps) do
-					local page = { pattern = p, track = t, id = v }
-					setmetatable(page, pattern_page_meta)
-					trk[v] = page
-					for i = 1, 16 do
-						local step = { pattern = p, track = t, page = v, i = i }
-						setmetatable(step, step_meta)
-						page[i] = step
-					end
-				end
-				pat[t] = trk
-			end
-			self.patterns[p] = pat
-		end
+		-- for p = 1, NUM_PATTERNS do
+		-- 	local pat = { idx = p }
+		-- 	for t = 1, NUM_TRACKS do
+		-- 		local trk = { idx = t, pattern = p }
+		-- 		setmetatable(trk, pattern_track_meta)
+		-- 		for _, v in ipairs(pages_with_steps) do
+		-- 			local page = { pattern = p, track = t, id = v }
+		-- 			setmetatable(page, pattern_page_meta)
+		-- 			trk[v] = page
+		-- 			for i = 1, 16 do
+		-- 				local step = { pattern = p, track = t, page = v, i = i }
+		-- 				setmetatable(step, step_meta)
+		-- 				page[i] = step
+		-- 			end
+		-- 		end
+		-- 		pat[t] = trk
+		-- 	end
+		-- 	self.patterns[p] = pat
+		-- end
 		self.tracks = {}
 		for t = 1, NUM_TRACKS do
 			local trk = { idx = t }
@@ -147,7 +157,16 @@ if Data == nil then
 
 	function Data:get_page_val(track, page, name)
 		if pattern_page_attrs[name] then
-			return self.patterns[self.pattern][track][page][name]:get()
+			local default = pattern_page_info[name].default
+			local pt = self.patterns[self.pattern]
+			if pt == nil then return default end
+			local tr = pt[track]
+			if tr == nil then return default end
+			local pg = tr[page]
+			if pg == nil then return default end
+			local result = pg[name]
+			if result == nil then return default end
+			return result
 		else
 			local pp = self.tracks[track][page]
 			if type(pp) ~= 'table' then
@@ -165,19 +184,19 @@ if Data == nil then
 	function Data:get_loop_first(track, page)
 		local temp = self.tracks[track][page].temp_loop_first
 		if type(temp) == 'number' then return temp end
-		return self.patterns[self.pattern][track][page].loop_first:get()
+		return self:get_page_val(track, page, 'loop_first')
 	end
 
 	function Data:get_loop_last(track, page)
 		local temp = self.tracks[track][page].temp_loop_last
 		if type(temp) == 'number' then return temp end
-		return self.patterns[self.pattern][track][page].loop_last:get()
+		return self:get_page_val(track, page, 'loop_last')
 	end
 
 	function Data:get_pos(track, page)
 		local temp = self.tracks[track][page].temp_pos
 		if type(temp) == 'number' then return temp end
-		return self.tracks[track][page].pos:get()
+		return self:get_page_val(track, page, 'pos')
 	end
 
 	function Data:get_player(track)
@@ -185,20 +204,34 @@ if Data == nil then
 	end
 
 	function Data:get_step_val(track, page, step, thing)
-		if thing == nil then thing = 'step' end
+		local default
+		if thing == nil then
+			thing = 'step'
+			default = page_defaults[page].default
+		elseif thing == 'prob' then
+			default = 4
+		elseif thing == 'subtrig' then
+			default = 1
+		end
+
 		local pat = self.patterns[self.pattern]
+		if pat == nil then return default end
 		local tr = pat[track]
+		if tr == nil then return default end
 		local pg = tr[page]
-		if type(pg) ~= 'table' then
-			print("page is", page, pg)
-		end
+		if pg == nil then return default end
+		-- if type(pg) ~= 'table' then
+		-- 	print("page is", page, pg)
+		-- end
 		local st = pg[step]
-		local param = st[thing]
-		if type(param) ~= 'table' then
-			print("thing is", thing, "page is", page, param)
-			tab.print(st)
+		if st == nil then return default end
+		local val = st[thing]
+		if type(val) == 'table' then
+			print("oh no", track, page, step, thing, "it was")
+			tab.print(val)
 		end
-		return param:get()
+		if val == nil then return default end
+		return val
 	end
 
 	-- SET
@@ -212,15 +245,26 @@ if Data == nil then
 
 	function Data:set_page_val(track, page, name, new_val)
 		if pattern_page_attrs[name] then
-			self.patterns[self.pattern][track][page][name]:set(new_val)
+			local info = pattern_page_info[name]
+			local vv = util.clamp(new_val, info.min, info.max)
+			self.patterns[self.pattern][track][page][name] = vv
 		else
 			self.tracks[track][page][name]:set(new_val)
 		end
 	end
 
 	function Data:set_step_val(track, page, step, new_val, thing)
-		if thing == nil then thing = 'step' end
-		self.patterns[self.pattern][track][page][step][thing]:set(new_val)
+		local vv = new_val
+		if thing == nil then
+			local defaults = page_defaults[page]
+			thing = 'step'
+			vv = util.clamp(new_val, defaults.min, defaults.max)
+		elseif thing == 'prob' then
+			vv = util.clamp(new_val, 1, 4)
+		elseif thing == 'subtrig' then
+			vv = util.clamp(new_val, 1, 31)
+		end
+		self.patterns[self.pattern][track][page][step][thing] = vv
 	end
 
 	-- DELTA
@@ -234,7 +278,9 @@ if Data == nil then
 
 	function Data:delta_page_val(track, page, name, d)
 		if pattern_page_attrs[name] then
-			return self.patterns[self.pattern][track][page][name]:delta(d)
+			local default = pattern_page_info[name].default
+			local val = self.patterns[self.pattern][track][page][name] or default
+			self.patterns[self.pattern][track][page][name] = val + d
 		else
 			return self.tracks[track][page][name]:delta(d)
 		end
@@ -242,7 +288,9 @@ if Data == nil then
 
 	function Data:delta_step_val(track, page, step, d, thing)
 		if thing == nil then thing = 'step' end
-		self.patterns[self.pattern][track][page][step][thing]:delta(d)
+		local info = page_defaults[page]
+		local val = self:get_step_val(track, page, step, thing)
+		self:set_step_val(track, page, step, val + d, thing)
 	end
 
 	function Data:get_subtrig(track, step, subtrig)
