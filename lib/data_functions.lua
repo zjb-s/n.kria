@@ -169,7 +169,7 @@ if Data == nil then
 
 	function Data:get_step_val(track, page, step, thing)
 		local default
-		if thing == nil then
+		if thing == nil or thing == 'step' then
 			thing = 'step'
 			default = page_defaults[page].default
 		elseif thing == 'prob' then
@@ -177,7 +177,12 @@ if Data == nil then
 		elseif thing == 'subtrig' then
 			default = 1
 		end
-
+		-- if default == nil then
+		-- 	tab.print(page_defaults)
+		-- 	tab.print(page_defaults[page])
+		-- 	print(page_defaults[page].default)
+		-- end
+		assert(default ~= nil, string.format("bad default %s %s %s", thing, page, default))
 		local pat = self.patterns[self.pattern]
 		if pat == nil then return default end
 		local tr = pat[track]
@@ -190,10 +195,6 @@ if Data == nil then
 		local st = pg[step]
 		if st == nil then return default end
 		local val = st[thing]
-		if type(val) == 'table' then
-			print("oh no", track, page, step, thing, "it was")
-			tab.print(val)
-		end
 		if val == nil then return default end
 		return val
 	end
@@ -211,9 +212,29 @@ if Data == nil then
 		if pattern_page_attrs[name] then
 			local info = pattern_page_info[name]
 			local vv = util.clamp(new_val, info.min, info.max)
+			self:ensure(track, page, 1)
 			self.patterns[self.pattern][track][page][name] = vv
 		else
 			self.tracks[track][page][name]:set(new_val)
+		end
+	end
+
+	function Data:_step_set_helper(track, page, step, thing, value)
+		self.patterns[self.pattern][track][page][step][thing] = value
+	end
+
+	function Data:ensure(track, page, step)
+		if self.patterns[self.pattern] == nil then 
+			self.patterns[self.pattern] = {} 
+		end
+		if self.patterns[self.pattern][track] == nil then 
+			self.patterns[self.pattern][track] = {} 
+		end
+		if self.patterns[self.pattern][track][page] == nil then
+			self.patterns[self.pattern][track][page] = {}
+		end
+		if self.patterns[self.pattern][track][page][step] == nil then
+			self.patterns[self.pattern][track][page][step] = {}
 		end
 	end
 
@@ -232,7 +253,11 @@ if Data == nil then
 		elseif thing == 'subtrig' then
 			vv = util.clamp(new_val, 1, 31)
 		end
-		self.patterns[self.pattern][track][page][step][thing] = vv
+		local win = pcall(self._step_set_helper, self, track, page, step, thing, vv)
+		if not win then
+			self:ensure(track, page, step)
+			self.patterns[self.pattern][track][page][step][thing] = vv
+		end
 	end
 
 	-- DELTA
