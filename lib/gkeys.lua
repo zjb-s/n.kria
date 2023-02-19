@@ -294,15 +294,15 @@ function gkeys:classic_scale(x,y,z,t)
 			meta:make_scale()
 			return
 		end
-		
-		if  	(kbuf[data:get_global_val('scale_'..data:get_global_val('scale_num')..'_deg_'..8-y)+9][y]) 
+		local scale_degree = data:get_scale_degree(data:get_global_val('scale_num'), 8-y)
+		if  	(kbuf[scale_degree+9][y]) 
 			and (temp_scale[7-y] ~= x-9)
-			and (data:get_global_val('scale_'..data:get_global_val('scale_num')..'_deg_'..8-y) ~= x-9) 
+			and (scale_degree ~= x-9) 
 		then
 			temp_scale[7-y] = x-9
 			post('live-adjust '..7-y..': '..temp_scale[7-y])
 		else
-			data:set_global_val('scale_'..data:get_global_val('scale_num')..'_deg_'..8-y, x-9)
+			data:set_scale_degree(data:get_global_val('scale_num'), 8-y, x-9)
 			temp_scale[7-y] = -1
 			post('scale stride, degree '..8-y..': '..x-9)
 		end
@@ -323,15 +323,15 @@ function gkeys:extended_scale(x,y,z,t)
 			meta:make_scale()
 			return
 		end
-		
-		if  	(kbuf[data:get_global_val('scale_'..data:get_global_val('scale_num')..'_deg_'..8-y)+4][y]) 
+		local scale_degree = data:get_scale_degree(data:get_global_val('scale_num'), 8-y)
+		if  	(kbuf[scale_degree+4][y]) 
 			and (temp_scale[7-y] ~= x-4)
-			and (data:get_global_val('scale_'..data:get_global_val('scale_num')..'_deg_'..8-y) ~= x-4) 
+			and (scale_degree ~= x-4) 
 		then
 			temp_scale[7-y] = x-4
 			post('live-adjust '..7-y..': '..temp_scale[7-y])
 		else
-			data:set_global_val('scale_'..data:get_global_val('scale_num')..'_deg_'..8-y, x-4)
+			data:set_scale_degree(data:get_global_val('scale_num'), 8-y, x-4)
 			temp_scale[7-y] = -1
 			post('scale stride, degree '..8-y..': '..x-4)
 		end
@@ -518,12 +518,12 @@ function gkeys:key(x,y,z)
 			self:resolve_mod_keys()
 		elseif y <= 7 then -- main field
 			if get_page_name() == 'scale' then
-				self:classic_scale(x,y,z,t)
-				-- if get_script_mode() == 'classic' then
-				-- 	self:classic_scale(x,y,z,t)
-				-- else
-				-- 	self:extended_scale(x,y,z,t)
-				-- end
+				--self:classic_scale(x,y,z,t)
+				if get_script_mode() == 'classic' then
+					self:classic_scale(x,y,z,t)
+				else
+					self:extended_scale(x,y,z,t)
+				end
 			-- elseif get_page_name() == 'track options' then
 				-- self:track_options(x,y,z,t)
 			elseif get_mod_key() == 'loop' then

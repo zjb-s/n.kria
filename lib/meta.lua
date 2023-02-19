@@ -22,7 +22,8 @@ end
 function Meta:make_scale()
 	local table_from_params = {}
 	for i=1,7 do
-		table.insert(table_from_params,data:get_global_val('scale_'..data:get_global_val('scale_num')..'_deg_'..i))
+		local scale_num = data:get_global_val('scale_num')
+		table.insert(table_from_params,data:get_scale_degree(scale_num, i))
 	end
 	local short_scale = {0} -- first ix always 0
 	for i=2,7 do

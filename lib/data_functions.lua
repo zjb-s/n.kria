@@ -1,9 +1,9 @@
 --[[
 WHAT GOES IN THIS FILE:
 - wrappers for interacting w params sporting long annoying names
-]] --
+]]
+--
 if Data == nil then
-
 	local pattern_page_attrs = {
 		loop_first = true,
 		loop_last = true,
@@ -28,6 +28,22 @@ if Data == nil then
 		end
 	}
 
+	local scale_meta = {
+		__index = function(t, key)
+			if params[key] then
+				return function(self, degree, ...)
+					-- do the params part
+					local new_id = 'global_scale_' .. self.slot .. '_deg_' .. degree
+					local f = params[key]
+					f(params, new_id, ...)
+					local p = params:lookup_param(new_id)
+					self[degree] = p
+				end
+			end
+			return nil
+		end
+	}
+
 	local track_meta = {
 		__index = function(t, key)
 			if params[key] then
@@ -41,20 +57,6 @@ if Data == nil then
 				end
 			end
 			return nil
-		end
-	}
-
-	local pattern_track_meta = {
-		__index = function(t, key)
-			if params[key] == nil then return nil end
-			return function(self, id, ...)
-				-- do the params part
-				local new_id = id .. '_t' .. self.idx .. '_p' .. self.pattern
-				local f = params[key]
-				f(params, new_id, ...)
-				local p = params:lookup_param(new_id)
-				self[id] = p
-			end
 		end
 	}
 
@@ -72,40 +74,6 @@ if Data == nil then
 		end
 	}
 
-	local pattern_page_meta = {
-		__index = function(t, key)
-			if params[key] == nil then return nil end
-			return function(self, id, ...)
-				local new_id = id .. '_' .. self.id .. '_t' .. self.track .. '_p' .. self.pattern
-				local f = params[key]
-				f(params, new_id, ...)
-				local p = params:lookup_param(new_id)
-				self[id] = p
-			end
-		end
-	}
-
-	local step_meta = {
-		__index = function(t, key)
-			if params[key] == nil then return nil end
-			return function(self, id, ...)
-				local new_id
-				if id == 'step' then
-					new_id = "data_" .. self.page .. '_' .. self.i .. '_t' .. self.track .. '_p' .. self.pattern
-				else
-					new_id = (
-						"data_" .. self.page .. '_' .. id .. '_'
-							.. self.i .. '_t' .. self.track .. '_p' .. self.pattern
-						)
-				end
-				local f = params[key]
-				f(params, new_id, ...)
-				local p = params:lookup_param(new_id)
-				self[id] = p
-			end
-		end
-	}
-
 	setmetatable(Data, global_meta)
 
 	Data.pattern = nil
@@ -114,25 +82,6 @@ if Data == nil then
 		-- Two layers — one for data that's stored per-pattern, and one
 		-- that's just tracks, for non-pattern data.
 		self.patterns = {}
-		-- for p = 1, NUM_PATTERNS do
-		-- 	local pat = { idx = p }
-		-- 	for t = 1, NUM_TRACKS do
-		-- 		local trk = { idx = t, pattern = p }
-		-- 		setmetatable(trk, pattern_track_meta)
-		-- 		for _, v in ipairs(pages_with_steps) do
-		-- 			local page = { pattern = p, track = t, id = v }
-		-- 			setmetatable(page, pattern_page_meta)
-		-- 			trk[v] = page
-		-- 			for i = 1, 16 do
-		-- 				local step = { pattern = p, track = t, page = v, i = i }
-		-- 				setmetatable(step, step_meta)
-		-- 				page[i] = step
-		-- 			end
-		-- 		end
-		-- 		pat[t] = trk
-		-- 	end
-		-- 	self.patterns[p] = pat
-		-- end
 		self.tracks = {}
 		for t = 1, NUM_TRACKS do
 			local trk = { idx = t }
@@ -143,6 +92,12 @@ if Data == nil then
 				trk[v] = page
 			end
 			self.tracks[t] = trk
+		end
+		self.scales = {}
+		for slot = 1, 16 do
+			local scale = { slot = slot }
+			setmetatable(scale, scale_meta)
+			self.scales[slot] = scale
 		end
 	end
 
@@ -171,7 +126,7 @@ if Data == nil then
 			local pp = self.tracks[track][page]
 			if type(pp) ~= 'table' then
 				print("track is", track, "page is", page)
-			end			
+			end
 			local param = pp[name]
 			if type(param) ~= 'table' then
 				print("page is", page, param)
@@ -191,6 +146,15 @@ if Data == nil then
 		local temp = self.tracks[track][page].temp_loop_last
 		if type(temp) == 'number' then return temp end
 		return self:get_page_val(track, page, 'loop_last')
+	end
+
+	function Data:get_scale_degree(slot, degree)
+		-- print("id", self.scales[slot][degree].id)
+		return self.scales[slot][degree]:get()
+	end
+
+	function Data:set_scale_degree(slot, degree, value)
+		self.scales[slot][degree]:set(value)
 	end
 
 	function Data:get_pos(track, page)
@@ -297,7 +261,7 @@ if Data == nil then
 		local info = page_defaults[page]
 		local val = self:get_step_val(track, page, step, thing)
 		val = val + d
-		if page == 'trig' and thing == 'step' then 
+		if page == 'trig' and thing == 'step' then
 			val = util.wrap(val, info.min, info.max)
 		else
 			val = util.clamp(val, info.min, info.max)

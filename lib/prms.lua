@@ -1,7 +1,8 @@
 --[[
 WHAT GOES IN THIS FILE:
 - param declarations
-]] --
+]]
+--
 
 local nb = include('n.kria/lib/nb/lib/nb')
 
@@ -15,18 +16,19 @@ function Prms:script_mode_switch()
 		globals = {
 			'stretch'
 			, 'push'
-			, 'advance_all'
-			, 'reset_all'
+		, 'advance_all'
+		, 'reset_all'
 		}
-		, per_track = {
+		,
+		per_track = {
 			'stretchable'
 			, 'pushable'
-			, 'trigger_clock'
-			, 'param_clock'
-			, 'advance'
-			, 'reset'
-			, 'div_group'
-			, 'loop_group'
+		, 'trigger_clock'
+		, 'param_clock'
+		, 'advance'
+		, 'reset'
+		, 'div_group'
+		, 'loop_group'
 		}
 	}
 	params:set_action('script_mode', function(x)
@@ -153,23 +155,23 @@ function Prms:add_globals()
 
 	params:add_group('scale data', 112)
 	for i = 1, 16 do
+		local scale = data.scales[i]
 		for j = 1, 7 do
 			local default_value = scale_defaults[i][j]
-			data:add_number('scale_' .. i .. '_deg_' .. j, 'scale_' .. i .. '_deg_' .. j, 0, 7, default_value)
+			scale:add_number(j, 'scale_' .. i .. '_deg_' .. j, 0, 7, default_value)
 		end
 	end
 	params:hide('scale data')
 end
 
 function Prms:add_tracks()
-
 	params:add_separator('TRACK CONTROLS')
 
 	for t = 1, NUM_TRACKS do
 		local track = data.tracks[t]
 		params:add_group(lexi_names[t], 30)
 		nb:add_param("voice_t" .. t, "T" .. t .. " OUTPUT")
-		track.player = params:lookup_param('voice_t'..t)
+		track.player = params:lookup_param('voice_t' .. t)
 		track:add_option('play_mode', 'PLAY MODE', play_modes, 1)
 		track:add_binary('mute', 'MUTE', 'toggle')
 		track:add_trigger('reset', 'RESET')
@@ -223,7 +225,6 @@ function Prms:add_tracks()
 			page:add_number('pipo_dir', 'data', 0, 1, 1)
 		end
 		track:hide('track_data')
-
 	end
 end
 

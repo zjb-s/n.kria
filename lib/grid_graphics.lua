@@ -326,7 +326,7 @@ function Graphics:classic_scale()
 
 	for i=2,7 do -- scale editor
 		g:led(9,8-i,LOW)
-		local d = data:get_global_val('scale_'..data:get_global_val('scale_num')..'_deg_'..i)
+		local d = data:get_scale_degree(data:get_global_val('scale_num'), i)
 		g:led(9+d,8-i,HIGH)
 		if temp_scale[i-1] ~= -1 then g:led(temp_scale[i-1]+9,8-i,MED) end
 	end
@@ -343,7 +343,7 @@ function Graphics:extended_scale()
 
 	for i=2,7 do -- scale editor
 		g:led(4,8-i,LOW)
-		local d = data:get_global_val('scale_'..data:get_global_val('scale_num')..'_deg_'..i)
+		local d = data:get_scale_degree(data:get_global_val('scale_num'), i)
 		g:led(4+d,8-i,HIGH)
 		if temp_scale[i-1] ~= -1 then g:led(temp_scale[i-1]+4,8-i,MED) end
 	end
