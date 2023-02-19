@@ -258,7 +258,11 @@ if Data == nil then
 		if thing == nil then
 			local defaults = page_defaults[page]
 			thing = 'step'
-			vv = util.clamp(new_val, defaults.min, defaults.max)
+			if page == 'trig' then
+				vv = util.wrap(new_val, defaults.min, defaults.max)
+			else
+				vv = util.clamp(new_val, defaults.min, defaults.max)
+			end
 		elseif thing == 'prob' then
 			vv = util.clamp(new_val, 1, 4)
 		elseif thing == 'subtrig' then
@@ -278,9 +282,11 @@ if Data == nil then
 
 	function Data:delta_page_val(track, page, name, d)
 		if pattern_page_attrs[name] then
-			local default = pattern_page_info[name].default
+			local info = pattern_page_info[name]
+			local default = info.default
 			local val = self.patterns[self.pattern][track][page][name] or default
-			self.patterns[self.pattern][track][page][name] = val + d
+			val = util.clamp(val + d, info.min, info.max)
+			self.patterns[self.pattern][track][page][name] = val
 		else
 			return self.tracks[track][page][name]:delta(d)
 		end
@@ -290,7 +296,13 @@ if Data == nil then
 		if thing == nil then thing = 'step' end
 		local info = page_defaults[page]
 		local val = self:get_step_val(track, page, step, thing)
-		self:set_step_val(track, page, step, val + d, thing)
+		val = val + d
+		if page == 'trig' and thing == 'step' then 
+			val = util.wrap(val, info.min, info.max)
+		else
+			val = util.clamp(val, info.min, info.max)
+		end
+		self:set_step_val(track, page, step, val, thing)
 	end
 
 	function Data:get_subtrig(track, step, subtrig)

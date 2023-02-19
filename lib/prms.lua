@@ -6,6 +6,7 @@ WHAT GOES IN THIS FILE:
 local nb = include('n.kria/lib/nb/lib/nb')
 
 local data = include('n.kria/lib/data_functions')
+local rw = include('n.kria/lib/pset_rewriter')
 
 Prms = {}
 
@@ -75,10 +76,21 @@ params.action_read = function(filename, name, pset_number)
 	local patternfile = filename .. ".kriapattern"
 	if util.file_exists(patternfile) then
 		data.patterns = tab.load(patternfile)
+	elseif params.last_chance then
+		params.last_chance = nil
+	else
+		-- try *one time* to convert it.
+		params.last_chance = true
+		rw.rewrite(filename)
+		params:read(filename)
 	end
 	for _, player in pairs(nb:get_players()) do
 		player:stop_all()
 	end
+end
+
+params.action_write = function(filename, name, pset_number)
+	tab.save(data.patterns, filename .. ".kriapattern")
 end
 
 function Prms:add_globals()
@@ -212,34 +224,6 @@ function Prms:add_tracks()
 		end
 		track:hide('track_data')
 
-		-- for p = 1, NUM_PATTERNS do
-		-- 	local ptrack = data.patterns[p][t]
-		-- 	params:add_group('P' .. p .. ' T' .. t .. ' DATA', 296)
-		-- 	local num = 0
-		-- 	for k, v in ipairs(pages_with_steps) do
-		-- 		local ppage = ptrack[v]
-		-- 		ppage:add_number('loop_first', 'data', 1, 16, 1)
-		-- 		ppage:add_number('loop_last', 'data', 1, 16, 6)
-		-- 		ppage:add_number('divisor', 'data', 1, 16, 1)
-		-- 		-- print(asdf['it'])
-		-- 		num = num + 3
-		-- 		for i = 1, 16 do
-		-- 			local step = ppage[i]
-		-- 			step:add_number('prob', 'data', 1, 4, 4)
-		-- 			step:add_number('step', 'data',
-		-- 				page_defaults[v].min, page_defaults[v].max,
-		-- 				page_defaults[v].default, nil, (v == 'trig'))
-		-- 			num = num + 2
-		-- 			if v == 'retrig' then
-		-- 				step:add_number('subtrig', 'data', 1, 31, 1)
-		-- 				num = num + 1
-		-- 			end
-		-- 		end
-		-- 	end
-		-- 	-- print("group should be ", num)
-
-		-- 	params:hide('P' .. p .. ' T' .. t .. ' DATA')
-		-- end
 	end
 end
 
