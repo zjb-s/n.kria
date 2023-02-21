@@ -188,6 +188,14 @@ function Meta:edit_loop_extended(track, first, last, temporary)
 		if group_to_edit == 0 then
 			group_to_edit = data:get_track_val(track,'loop_group')
 		end
+		if temporary == 'clear' and self.temp_looping_pages then
+			for _, pg in ipairs(self.temp_looping_pages) do
+				pg.temp_loop_first = nil
+				pg.temp_loop_last = nil
+				pg.temp_pos = nil
+			end
+			return
+		end
 		for t=1,NUM_TRACKS do
 			for k,v in pairs(pages_with_steps) do
 				local this_page_group = data:get_page_val(t,v,'loop_group')
@@ -196,14 +204,10 @@ function Meta:edit_loop_extended(track, first, last, temporary)
 				end
 				if this_page_group == group_to_edit then
 					if temporary then
-						if temporary == 'clear' then
-							data.tracks[t][v].temp_loop_first = nil
-							data.tracks[t][v].temp_loop_last = nil
-							data.tracks[t][v].temp_pos = nil
-						else
-							data.tracks[t][v].temp_loop_first = f
-							data.tracks[t][v].temp_loop_last = l
-						end
+						data.tracks[t][v].temp_loop_first = f
+						data.tracks[t][v].temp_loop_last = l
+						self.temp_looping_pages = self.temp_looping_pages or {}
+						table.insert(self.temp_looping_pages, data.tracks[t][v])
 					else
 						data:set_page_val(t,v,'loop_first',f)
 						data:set_page_val(t,v,'loop_last',l)
@@ -211,7 +215,11 @@ function Meta:edit_loop_extended(track, first, last, temporary)
 				end
 			end
 		end
-		post('group '..group_to_edit..' loops: ['..f..'-'..l..']')
+		if temporary then
+			post('group '..group_to_edit..' tmp loops: ['..f..'-'..l..']')
+		else
+			post('group '..group_to_edit..' loops: ['..f..'-'..l..']')
+		end
 	end
 end
 
