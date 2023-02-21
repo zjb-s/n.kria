@@ -171,13 +171,23 @@ function Meta:edit_loop_classic(track, first, last)
 	end
 end
 
+function Meta:clear_temp_loops()
+	if self.temp_looping_pages then
+		for _, pg in ipairs(self.temp_looping_pages) do
+			pg.temp_loop_first = nil
+			pg.temp_loop_last = nil
+			pg.temp_pos = nil
+		end
+		self.temp_looping_pages = nil
+		return
+	end
+end
 
 function Meta:edit_loop_extended(track, first, last, temporary)
 	local f = math.min(first,last)
 	local l = math.max(first,last)
 	local p = get_page_name()
 	-- print('t is',track)
-
 	if p == 'pattern' and data:get_global_val('ms_active') == 1 then
 		data:set_global_val('ms_first',f)
 		data:set_global_val('ms_last',l)
@@ -187,14 +197,6 @@ function Meta:edit_loop_extended(track, first, last, temporary)
 		local group_to_edit = data:get_page_val(track,p,'loop_group')
 		if group_to_edit == 0 then
 			group_to_edit = data:get_track_val(track,'loop_group')
-		end
-		if temporary == 'clear' and self.temp_looping_pages then
-			for _, pg in ipairs(self.temp_looping_pages) do
-				pg.temp_loop_first = nil
-				pg.temp_loop_last = nil
-				pg.temp_pos = nil
-			end
-			return
 		end
 		for t=1,NUM_TRACKS do
 			for k,v in pairs(pages_with_steps) do

@@ -107,7 +107,7 @@ function gkeys:resolve_mod_keys() -- intentionally prioritizes leftmost held mod
 		loop_last = -1
 	end
 	if not kbuf[12][8] then
-		meta:edit_loop_extended(at(), 0, 0, 'clear')
+		meta:clear_temp_loops()
 	end
 	if data:get_global_val('mod') ~= 1 then
 		post(mod_names[data:get_global_val('mod')] .. ' mod')
