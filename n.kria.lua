@@ -50,8 +50,11 @@ g = grid.connect()
 m = midi.connect()
 
 -- matrix
-local status, matrix = pcall(require, 'matrix/lib/matrix')
-if not status then matrix = nil end
+matrix_status, matrix = pcall(require, 'matrix/lib/matrix')
+if not matrix_status then matrix = nil end
+
+-- mods
+local toolkit_status = util.file_exists('/home/we/dust/code/toolkit')
 
 function init()
 	globals:add()
@@ -85,8 +88,12 @@ end
 
 
 -- basic functions
-function update_grid() grid_graphics:render() end
-function update_visuals() redraw() end
+function update_grid()
+	grid_graphics:render()
+end
+function update_visuals() 
+	redraw()
+end
 
 function init_value_buffer()
 	for t=1,NUM_TRACKS do
@@ -135,10 +142,12 @@ function key(n,d) Onboard:key(n,d) end
 function enc(n,d) Onboard:enc(n,d) end
 function g.key(x,y,z) gkeys:key(x,y,z) end
 
-function clock.transport.start() params:set('playing',1); post('play') end
-function clock.transport.stop() params:set('playing',0); post('stop') end
+function clock.transport.start() data:set_global_val('playing',1); post('play') end
+function clock.transport.stop() data:global_set_val('playing',0); post('stop') end
 
 function post(str,intro) 
+	-- second arg: send true if we shouldn't interrupt the intro sequence.
+	-- basically don't worry about it
 	post_buffer = str 
 	if (not intro) and (coros.intro) then
 		clock.cancel(coros.intro)
@@ -148,19 +157,24 @@ end
 function add_modulation_sources()
 	if matrix == nil then return end
 	for i=1,NUM_TRACKS do
-		-- The final pitch
 		matrix:add_bipolar("pitch_t"..i, "track "..i.." final cv")
-		-- The raw note, unaffected by transpose or anything
-		-- matrix:add_unipolar("note_t"..i, "track "..i.." note")
-
 		for _,v in ipairs(matrix_sources) do
 			matrix:add_unipolar(v..'_t'..i, 'track '..i..' '..v)
+		end
+		
+		matrix:add_binary('trig_t'..i, 'track '..i..' trig')
+		table.insert(trig_sources,'trig_t'..i)
+	end
+
+	if toolkit_status then
+		for i=1,4 do
+			table.insert(trig_sources,'rhythm_'..i)
 		end
 	end
 end
 
 function note_clock(track)
-	local player = params:lookup_param("voice_t"..track):get_player()
+	local player = data:get_player(track)
 	local slide_or_modulate = current_val(track,'slide') -- to match stock kria times
 	local velocity = current_val(track,'velocity')
 	local divider = data:get_page_val(track,'trig','divisor')
@@ -176,17 +190,21 @@ function note_clock(track)
 	duration = duration * gate_multiplier
 	-- print('repeating note '..subdivision..' times')
 	for i=1,subdivision do
-		if data:get_subtrig(track,data:get_page_val(track,'retrig','pos'),i)==1 then
+		if data:get_subtrig(track,data:get_pos(track,'retrig'),i)==1 then
 			if data:get_track_val(track,'trigger_clock') == 1 then
 				for _,v in pairs(trigger_clock_pages) do transport:advance_page(track,v) end
 			end
 			local description = player:describe()
 			meta:update_last_notes()
 			local note = description.style == 'kit' and last_notes_raw[track] or last_notes[track]
-			-- print('playing note '..note)
 			player:play_note(note, (velocity-1)/6, duration/subdivision)
+			
+			if matrix ~= nil then 
+				matrix:set("pitch_t"..track, (note - 36)/(127-36))
+				matrix:set('trig_t'..track,1)
+				matrix:set('trig_t'..track,0)
+			end
 
-			if matrix ~= nil then matrix:set("pitch_t"..track, (note - 36)/(127-36)) end
 			local note_str
 			if description.style == 'kit' then
 				note_str = ''
@@ -214,14 +232,14 @@ end
 function step_ticker()
 	while true do
 		clock.sync(1/4)
-		if params:get('swing_this_step') == 1 then
-			params:set('swing_this_step',0)
-			local amt = (clock.get_beat_sec()/4)*((params:get('swing')-50)/100)
+		if data:get_global_val('swing_this_step') == 1 then
+			data:set_global_val('swing_this_step',0)
+			local amt = (clock.get_beat_sec()/4)*((data:get_global_val('swing')-50)/100)
 			clock.sleep(amt)
 		else
-			params:set('swing_this_step',1)
+			data:set_global_val('swing_this_step',1)
 		end
-		if params:get('playing') == 1 then
+		if data:get_global_val('playing') == 1 then
 			transport:advance_all()
 		end
 	end
@@ -230,29 +248,50 @@ end
 function redraw() screen_graphics:render() end 
 
 function at() -- get active track
-	return params:get('active_track')
+	return data:get_global_val('active_track')
+end
+
+function set_active_track(n)
+	data:set_global_val('active_track',n)
+	post('track ' .. n)
 end
 
 function ap() -- get active pattern
-	return params:get('active_pattern')
+	return data:get_global_val('active_pattern')
 end
 
-function out_of_bounds(track,p,value)
-	-- returns true if value is out of bounds on page p, track
+-- function track_available(t)
+-- 	local max = get_script_mode() == 'extended' and 7 or 4
+-- 	return t <= max
+-- end
+
+local function real_out_of_bounds(track,p,value)
+	-- returns true if value is out of bounds on page p, track —— for real not just temporary.
 	return 	(value < data:get_page_val(track,p,'loop_first'))
 	or 		(value > data:get_page_val(track,p,'loop_last'))
 end
 
+function out_of_bounds(track,p,value, real)
+	-- returns true if value is out of bounds on page p, track
+	if real then
+		return real_out_of_bounds(track, p, value)
+	end
+	return 	(value < data:get_loop_first(track,p))
+	or 		(value > data:get_loop_last(track,p))
+end
+
 function get_page_name(page,alt)
-	local page = page and page or params:get('page')
-	local alt = alt and alt or (params:get('alt_page') == 1)
-	return alt and alt_page_names[page] or page_names[page]
+	local r
+	local page = page and page or data:get_global_val('page')
+	local alt = alt and alt or (data:get_global_val('alt_page') == 1)
+	r = alt and alt_page_names[page] or page_names[page]
+	return r
 end
 
 function get_display_page_name()
 	local p = get_page_name()
 	if p == "slide" then
-		local description = params:lookup_param("voice_t"..at()):get_player():describe()
+		local description = data:get_player(at()):describe()
 		if not description.supports_slew then
 			p = description.modulate_description
 		end
@@ -265,15 +304,21 @@ function current_val(track,page)
 end
 
 function get_mod_key()
-	return mod_names[params:get('mod')]
+	return mod_names[data:get_global_val('mod')]
 end
 
 function get_overlay()
-	return overlay_names[params:get('overlay')]
+	return overlay_names[data:get_global_val('overlay')]
 end
 
-function set_overlay(n)
-	params:set('overlay',tab.key(overlay_names,n))
+function get_script_mode()
+	return params:string('script_mode')
+end
+
+function set_overlay(name)
+	local num = tab.key(overlay_names,name)
+	num = util.clamp(num,1,get_script_mode()=='extended' and 4 or 3)
+	data:set_global_val('overlay',num)
 	post('overlay: '..get_overlay())
 end
 
