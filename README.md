@@ -4,6 +4,12 @@ extensible native norns port of monome's Kria
 # changelog
 | num | description |
 |-|-|
+| 0.23
+|-| sync groups
+|-| temp looping
+|-| intense memory optimization
+|-| greatly tightened timing accuracy
+|-| some fixes to meta sequencer
 | 0.19
 |-| note, along with overall pitch, as a mod source
 |-| retooled stretch and push to be more musical
