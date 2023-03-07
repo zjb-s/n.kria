@@ -165,8 +165,8 @@ end
 
 function gkeys:time_mod_classic(x,y,z,t)
 	if z == 0 then return end
-	local g1 = params:string('note_div_sync')
-	local g2 = params:string('div_sync')
+	local g1 = data:get_global_val('note_div_sync') > 0 and 'on' or 'off'
+	local g2 = div_sync_modes[data:get_global_val('div_sync')]
 	local pn = get_page_name(false)
 
 	if g1 == 'off' and g2 == 'none' then
@@ -474,7 +474,7 @@ function gkeys:patchers(x,y,z,t)
 		data:delta_global_val('patcher',1)
 	elseif z == 1 and tab.contains({6,7,8,9,10,11},x) and y==7 then
 		set_overlay('none')
-	elseif params:string('patcher') == 'advance triggers' then
+	elseif patchers[data:get_global_val('patcher')] == 'advance triggers' then
 		self:advance_triggers_patcher(x,y,z,t)
 	end
 end
@@ -508,7 +508,7 @@ function gkeys:key(x,y,z)
 		if y == 8 and tab.contains({5,10,14},x) and get_script_mode() == 'extended' then
 			if kbuf[5][8] and kbuf[10][8] and kbuf[14][8] then 
 				data:set_global_val('overlay',4)
-				post('patcher: '..params:string('patcher'))
+				post('patcher: '..patchers[data:get_global_val('patcher')])
 			end
 		elseif y == 8 and tab.contains({1,2,3,4},x) then
 			self:track_select(x,y,z,t)
