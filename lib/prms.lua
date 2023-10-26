@@ -12,6 +12,7 @@ local rw = include('n.kria/lib/pset_rewriter')
 Prms = {}
 
 function Prms:script_mode_switch()
+	params:add_option('script_mode', 'SCRIPT MODE', { 'classic', 'extended' }, 1)
 	local extended_param_names = {
 		globals = {
 			'stretch'
@@ -67,8 +68,8 @@ end
 function Prms:add()
 	data:init()
 	params:add_separator('N.KRIA')
-	self:add_globals()
 	self:script_mode_switch()
+	self:add_globals()
 	self:add_tracks()
 	params:add_separator("VOICE CONTROLS")
 	nb:add_player_params()
@@ -111,7 +112,7 @@ function Prms:add_globals()
 		function(x) return division_names[x.value] end
 	)
 
-	params:add_option('script_mode', 'SCRIPT MODE', { 'classic', 'extended' }, 1)
+	-- params:add_option('script_mode', 'SCRIPT MODE', { 'classic', 'extended' }, 1)
 
 	params:add_group('OPTIONS', 7)
 	data:add_binary('note_div_sync', 'NOTE DIV SYNC', 'toggle')
