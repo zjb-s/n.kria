@@ -149,8 +149,8 @@ function Prms:add_globals()
 	data:add_number('ms_duration_pos', 'ms_duration_pos', 1, 99, 1)
 	data:add_binary('ms_active', 'ms_active', 'toggle')
 	for i = 1, 64 do
-		data:add_number('ms_pattern_' .. i, 'ms_' .. i .. '_pattern', 1, 64, 1)
-		data:add_number('ms_duration_' .. i, 'ms_' .. i .. '_duration', 1, 16, 1)
+		params:add_number('global_ms_pattern_' .. i, 'ms_' .. i .. '_pattern', 1, 64, 1)
+		params:add_number('global_ms_duration_' .. i, 'ms_' .. i .. '_duration', 1, 16, 1)
 	end
 	params:hide('ms_data')
 
