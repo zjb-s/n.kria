@@ -4,6 +4,8 @@ extensible native norns port of monome's Kria
 # changelog
 | num | description |
 |-|-|
+| 0.24 
+|-| fixed classic/extended switch behavior; menu no longer jumps when switching
 | 0.23
 |-| sync groups
 |-| temp looping
