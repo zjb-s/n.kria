@@ -216,7 +216,6 @@ if Data == nil then
 			self.patterns[self.pattern][track][page][name] = vv
 		else
 			self.tracks[track][page][name]:set(new_val)
-			if track==1 and page=='note' then print('new pos is',new_val) end
 		end
 	end
 

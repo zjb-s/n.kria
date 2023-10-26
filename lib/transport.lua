@@ -17,7 +17,7 @@ function Transport:reset_all()
 	data:set_global_val('pattern_quant_pos',1)
 	data:set_global_val('ms_duration_pos',1)
 	swing_this_step = false
-	post('reset all tracks')
+	post('reset all')
 end
 
 function Transport:reset_track(t)
@@ -29,7 +29,6 @@ function Transport:reset_track(t)
 end
 
 function Transport:reset_page(t,p)
-	-- print('resetting')
 	data:set_page_val(t,p,'pos',data:get_page_val(t,p,'loop_last'))
 	data:set_page_val(t,p,'counter',data:get_page_val(t,p,'divisor'))
 end
@@ -78,16 +77,7 @@ function Transport:advance_pattern_page()
 end
 
 function Transport:advance_track(t)
-	-- local pages_to_advance = (data:get_track_val(t,'trigger_clock') == 1) and {'trig','retrig'} or trigger_clock_pages
-	local pages_to_advance;
-	if data:get_track_val(t,'trigger_clock') == 1 then
-		if t==1 then print('trigger clock is on') end
-		pages_to_advance = trig_and_retrig_pages
-	else
-		if t==1 then print('trigger clock is off') end
-		pages_to_advance = pages_with_steps
-	end
-
+	local pages_to_advance = (data:get_track_val(t,'trigger_clock') == 1) and {'trig','retrig'} or pages_with_steps
 	local note_will_fire = false
 	for k,v in pairs(pages_to_advance) do
 		-- print('attempting to advance page',v)
@@ -113,7 +103,6 @@ function Transport:advance_page(t,p,real,playing) -- track,page
 	local mode = play_modes[data:get_track_val(t,'play_mode')]
 	local new_pos;
 	local resetting = false
-	-- if p=='note' and t==1 then print(mode) end
 
 	if mode == 'forward' then
 		new_pos = old_pos + 1
@@ -164,7 +153,6 @@ function Transport:advance_page(t,p,real,playing) -- track,page
 	end
 
 	if real then
-		if t==1 and p=='trig' then print('calling advance on trig page') end
 		data:set_page_val(t,p,'pos',new_pos)
 	else
 		data.tracks[t][p].temp_pos = new_pos
