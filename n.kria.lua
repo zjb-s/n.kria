@@ -1,5 +1,5 @@
 -- n.Kria                        :-)
--- v0.22 @zbs @sixolet
+-- v0.24 @zbs @sixolet
 --
 -- native norns kria
 -- original design by @tehn
@@ -105,7 +105,7 @@ function init_value_buffer()
 	end
 end
 
-function init_kbuf()
+function init_kbuf() -- grid key buffer
 	for x=1,16 do
 		table.insert(kbuf,{})
 		for y=1,8 do kbuf[x][y] = false end
@@ -192,6 +192,7 @@ function note_clock(track)
 	for i=1,subdivision do
 		if data:get_subtrig(track,data:get_pos(track,'retrig'),i)==1 then
 			if data:get_track_val(track,'trigger_clock') == 1 then
+				if t==1 then print('attempting to advance trigger clock pages on t1') end
 				for _,v in pairs(trigger_clock_pages) do transport:advance_page(track,v) end
 			end
 			local description = player:describe()

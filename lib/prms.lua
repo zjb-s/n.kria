@@ -12,6 +12,7 @@ local rw = include('n.kria/lib/pset_rewriter')
 Prms = {}
 
 function Prms:script_mode_switch()
+	params:add_option('script_mode', 'SCRIPT MODE', { 'classic', 'extended' }, 1)
 	local extended_param_names = {
 		globals = {
 			'stretch'
@@ -67,8 +68,8 @@ end
 function Prms:add()
 	data:init()
 	params:add_separator('N.KRIA')
-	self:add_globals()
 	self:script_mode_switch()
+	self:add_globals()
 	self:add_tracks()
 	params:add_separator("VOICE CONTROLS")
 	nb:add_player_params()
@@ -111,7 +112,7 @@ function Prms:add_globals()
 		function(x) return division_names[x.value] end
 	)
 
-	params:add_option('script_mode', 'SCRIPT MODE', { 'classic', 'extended' }, 1)
+	-- params:add_option('script_mode', 'SCRIPT MODE', { 'classic', 'extended' }, 1)
 
 	params:add_group('OPTIONS', 7)
 	data:add_binary('note_div_sync', 'NOTE DIV SYNC', 'toggle')
@@ -148,8 +149,8 @@ function Prms:add_globals()
 	data:add_number('ms_duration_pos', 'ms_duration_pos', 1, 99, 1)
 	data:add_binary('ms_active', 'ms_active', 'toggle')
 	for i = 1, 64 do
-		params:add_number('global_ms_pattern_' .. i, 'ms_' .. i .. '_pattern', 1, 64, 1)
-		params:add_number('global_ms_duration_' .. i, 'ms_' .. i .. '_duration', 1, 16, 1)
+		data:add_number('ms_pattern_' .. i, 'ms_' .. i .. '_pattern', 1, 64, 1)
+		data:add_number('ms_duration_' .. i, 'ms_' .. i .. '_duration', 1, 16, 1)
 	end
 	params:hide('ms_data')
 

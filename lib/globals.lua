@@ -128,6 +128,7 @@ return {
 		combined_page_list = {'trig','note','octave','gate','retrig','transpose','slide','velocity','scale','pattern'}
 		pages_with_steps = {'trig','retrig','note','transpose','octave','slide','gate','velocity'}
 		trigger_clock_pages = {'note','transpose','octave','slide','gate','velocity'}
+		trig_and_retrig_pages = {'trig','retrig'}
 		matrix_sources = {'note','transpose','octave','slide','gate','velocity'}
 		trig_sources = {}
 		mod_names = {'none','loop','time','prob'}
