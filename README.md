@@ -5,6 +5,8 @@ extensible native norns port of monome's Kria
 | num | description |
 |-|-|
 | 0.24 
+|-| reverted extended mode scale page changes
+|-| fixed play modes not working
 |-| fixed classic/extended switch behavior; menu no longer jumps when switching
 | 0.23
 |-| sync groups
